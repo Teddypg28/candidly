@@ -1,0 +1,848 @@
+<link rel='stylesheet' href="{{'reviews.css' | asset_url }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+
+{% assign product = block.settings.product %}
+
+<html>
+    <div class='mainReviewContainer'></div>
+</html>
+
+<script>
+
+// START: INITIALIZE VARIABLES BEFORE FETCHING DATA
+
+const reviewProductId = '{{product.id}}'
+
+let reviews = []
+
+let currentPage
+
+const reviewSettings = {
+    formHeading: 'Tell Us What You Think',
+    formSubheading: 'Rate it out of 5 stars:',
+    primaryColor: 'black',
+    backgroundColor: '#f6f6f6',
+    customQuestions:[]
+}
+
+// END: INITIALIZE VARIABLES BEFORE FETCHING DATA
+
+fetch(`https://blizzardbites.myshopify.com/apps/reviews/questions/${reviewProductId}`, {headers: new Headers({"ngrok-skip-browser-warning": "28"})}).then(data => {
+    return data.json()
+}).then(results => {
+
+    if (results.result.length > 0) {
+        results.result.forEach(result => {
+            reviewSettings.customQuestions.push(result)
+        })
+
+        reviewSettings.customQuestions.sort((a, b) => {
+            return a.answerChoices.length - b.answerChoices.length
+        })
+    }
+
+}).then(() => {
+
+fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new Headers({"ngrok-skip-browser-warning": "28"})}).then(data => {
+    return data.json()
+}).then(result => {
+    if (!result.error) {
+
+        const { formHeading, formSubheading, primaryColor, backgroundColor } = result
+
+        reviewSettings.formHeading = formHeading
+        reviewSettings.formSubheading = formSubheading
+        reviewSettings.primaryColor = primaryColor
+        reviewSettings.backgroundColor = backgroundColor
+
+    }
+
+    document.querySelector('.mainReviewContainer').style.backgroundColor = reviewSettings.backgroundColor
+
+}).then(() => {
+
+    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}`, {headers: new Headers({"ngrok-skip-browser-warning": "28"})}).then(res => {
+        return res.json()
+    }).then(data => {
+
+        reviews = data.reviews.sort((a, b) => {
+            return new Date(b.date) - new Date(a.date)
+        })
+        
+    }).then(() => {
+        
+        const totalReviews = reviews.length
+
+        // START: RENDER REVIEWS FOR CURRENT PAGE
+
+        const setCurrentPage = (page) => {
+
+            const targetPostsPerPage = 5
+
+            currentPage = parseInt(page)
+
+            const startIndex = (currentPage - 1) * targetPostsPerPage
+            const isEnoughPostsToMeetTarget = totalReviews - startIndex >= 5
+            const endIndex = isEnoughPostsToMeetTarget ? (targetPostsPerPage * currentPage) - 1 : totalReviews - 1
+
+            const numOfPages = Math.ceil(totalReviews / targetPostsPerPage)
+
+            const renderNumberButtons = () => {
+
+                const buttonMarkup = []
+                
+                const numOfTabsToShow = numOfPages >= 5 ? 5 : numOfPages
+                const middleIndex = Math.floor(5 / 2)
+
+                // See if current page is less than or equal to the middle page because
+                // no need to shift the page tabs for the middle and below pages
+
+                if (currentPage <= 5 - middleIndex) {
+                    for (let i = 1; i<=numOfTabsToShow; i++) {
+                        buttonMarkup.push(`<div data-page=${i} class="paginatorNumber">${i}</div>`)
+                    }
+                } else {
+                    if (currentPage + middleIndex > numOfPages) {
+                        for (let i = numOfPages - numOfTabsToShow + 1; i<=numOfPages; i++) {
+                            buttonMarkup.push(`<div data-page=${i} class="paginatorNumber">${i}</div>`)
+                        }
+                    } else {
+                        for (let i = currentPage - middleIndex; i<=currentPage + middleIndex; i++) {
+                            buttonMarkup.push(`<div data-page=${i} class="paginatorNumber">${i}</div>`)
+                        }
+                    }
+                }
+
+                return buttonMarkup.join('')
+            }
+
+            const renderPaginator = () => {
+
+                return (
+                    `
+                <div class='paginator'>
+                    <div class='paginatorBtn paginatorPrev'> < Prev </div>
+
+                    <div class='paginatorNumbersContainer'>
+                        ${renderNumberButtons()}
+                    </div>
+
+                    <div class='paginatorBtn paginatorNext'> Next > </div>
+                
+                </div>
+                `
+                )
+            }
+
+            const renderSeparatorOrPaginator = (index) => {
+                if (index !== endIndex - startIndex) {
+                    return "<div class='separator'> </div>"
+                }
+            
+                return renderPaginator()
+            }
+
+            const getStars = (stars) => {
+
+                let starMarkup = []
+
+                const emptyStars = 5 - stars
+
+                for (let i = 0; i<stars; i++) {
+                    starMarkup.push(`<svg class='reviewStar' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill=${reviewSettings.primaryColor}></path></g></svg>`)
+                }
+
+                for (let i = 0; i<emptyStars; i++) {
+                    starMarkup.push(`<svg class='reviewStar' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke='black'><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill="white"></path></g></svg>`)
+                }
+
+                return starMarkup.join('')
+        
+            }
+
+            const reviewMarkup = reviews.slice(startIndex, endIndex + 1).map((review, index) => {
+
+                const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+                const date = new Date(review.date)
+
+                const displayAnswers = () => {
+                    if (review.customQuestionAnswers.length > 0) {
+                        const answers = review.customQuestionAnswers.map(review => {
+                            return `<div> <strong>${review.label}:</strong> ${review.value}</div>`
+                        })
+
+                        return answers
+                    }
+
+                    return ''
+                }
+
+                return (
+                    `<div class='reviewContainer'>
+                        <p>${month[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}</p>
+                        <div class='ratingNameContainer'>
+                            <div>${getStars(review.rating)}</div>
+                            <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${review.name}</div>
+                        </div>
+                        <h2 class='reviewHeading'>${review.title}</h2>
+                        <div class='reviewBody'>${review.body}</div>
+                    </div>
+                    <div class='reviewAnswerDisplayContainer'>${displayAnswers()}</div>
+                    ${renderSeparatorOrPaginator(index)}
+                    `
+                )
+            }
+            )
+
+            document.getElementById('reviews').innerHTML = reviewMarkup.join('')
+            document.getElementById('reviewCount').textContent = `${startIndex + 1}-${endIndex + 1} of ${totalReviews} Reviews`
+
+            const prevPageBtn = document.querySelector('.paginatorPrev')
+            const nextPageBtn = document.querySelector('.paginatorNext')
+
+            if (currentPage === 1) {
+                prevPageBtn.style.color = 'lightgray'
+                prevPageBtn.style.cursor = 'not-allowed'
+                prevPageBtn.disabled = true
+            }
+
+            if (currentPage === numOfPages) {
+                nextPageBtn.style.color = 'lightgray'
+                nextPageBtn.style.cursor = 'not-allowed'
+                nextPageBtn.disabled = true
+
+            }
+
+            nextPageBtn.addEventListener('click', () => {
+
+                if (currentPage + 1 <= numOfPages) {
+                    setCurrentPage(currentPage + 1)
+                }
+
+            })
+
+            prevPageBtn.addEventListener('click', () => {
+
+                if (currentPage - 1 !== 0) {
+                    setCurrentPage(currentPage - 1)
+                }
+
+            })
+
+            const paginatorNumbers = document.querySelectorAll('.paginatorNumber')
+
+            paginatorNumbers.forEach(number => {
+
+                number.addEventListener('click', () => {
+                    setCurrentPage(number.dataset.page)
+                })
+
+                if (number.dataset.page === currentPage.toString()) {
+                    return number.classList.add('selected')
+                }
+            })
+
+        }
+
+        // END: RENDER REVIEWS FOR CURRENT PAGE
+
+        // START: RENDER REVIEW STATS OR NOTHING ON PAGE LOAD
+
+        const reviewStatsMarkup = []
+
+        for (let i = 5; i>0; i--) {
+
+            const arrayOfMatchingRatings = reviews.filter(review => {
+                return review.rating === i
+            })
+
+            const fillWidth = arrayOfMatchingRatings.length / totalReviews * 100
+
+            reviewStatsMarkup.push(
+                `<div class='reviewBarContainer'>
+                    <p>${i}</p>
+                    <div>★</div>
+                    <div class='outerFillContainer'>
+                        <div class='innerFillContainer' style="width: ${fillWidth}%; background-color: ${reviewSettings.primaryColor}"> </div>
+                    </div>
+                    <p>${arrayOfMatchingRatings.length}</p>
+                </div>`
+            )
+        }
+
+        const getAverageRating = () => {
+            
+            let totalRatingScore = 0
+
+            reviews.forEach(review => {
+                totalRatingScore += review.rating
+            })
+
+            return (totalRatingScore / totalReviews).toFixed(1)
+
+        }
+
+        document.querySelector('.mainReviewContainer').innerHTML = `
+            <div class='headingBtnContainer'>
+                <h1 class='heading'>Customer Reviews</h1>
+                <h3 class='noReviewsMobile'>Be the first to write a review!</h3>
+                <div class='writeReviewBtn'>Write a review</div>
+            </div>
+
+            <div class='noReviews'>
+                <h3>Be the first to write a review!</h3>
+            </div>
+
+            <div class='hasReviewsWrapper'>
+
+                <div class='reviewStatsWrapper'>
+                    <div class='reviewStatsContainer'>
+                        <p>Average Customer Rating</p>
+                        <h1 id='averageCustomerReview'></h1>
+                        <p id='totalCustomerReviews'></h1>
+                    </div>
+
+                    <div class='reviewStatsContainer'>
+                        <div id='reviewBarWrapper'></div>
+                    </div>
+                </div>
+
+                <div class='flexContainer'>
+
+                    <p id='reviewCount'></p>
+
+                    <div class='sortByContainer'>
+                        <div class='chevronIconContainer'></div>
+                        <div class='sortByItemsContainer hidden'>
+                            <div class='sortByItem' id='Newest'>Newest</div>
+                            <div class='sortByItem' id='Oldest'>Oldest</div>
+                            <div class='sortByItem' id='Highest'>Highest</div>
+                            <div class='sortByItem' id='Lowest'>Lowest</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id='reviews'></div>
+
+            </div>
+        `
+
+        if (totalReviews > 0) {
+
+            document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
+            document.querySelector('.noReviews').classList.add('hidden')
+            document.querySelector('.noReviewsMobile').classList.add('hidden')
+
+            document.getElementById('reviewBarWrapper').innerHTML = reviewStatsMarkup.join('')
+            document.getElementById('averageCustomerReview').textContent = `${getAverageRating()} out of 5`
+            document.getElementById('totalCustomerReviews').textContent = `${totalReviews} customer reviews`
+
+            setCurrentPage(1)
+
+        } else {
+
+            document.querySelector('.hasReviewsWrapper').classList.add('hidden')
+            document.querySelector('.noReviews').classList.remove('hidden')
+            document.querySelector('.noReviewsMobile').classList.remove('hidden')
+
+        }
+
+        const writeReviewBtn = document.querySelector('.writeReviewBtn')
+
+        writeReviewBtn.addEventListener('mouseover', () => {
+            writeReviewBtn.style.backgroundColor = reviewSettings.primaryColor
+            writeReviewBtn.style.borderColor = reviewSettings.primaryColor
+            writeReviewBtn.style.color = 'white'
+        })
+
+        writeReviewBtn.addEventListener('mouseleave', () => {
+            writeReviewBtn.style.backgroundColor = reviewSettings.backgroundColor
+            writeReviewBtn.style.borderColor = 'black'
+            writeReviewBtn.style.color = 'black'
+        })
+
+        // END: RENDER REVIEW STATS OR NOTHING ON PAGE LOAD
+
+        // START: SORT BY FILTERS FUNCTIONALITY
+
+        let areFilterOptionsVisible = false
+        let currentFilter = 'Newest'
+
+        const chevronIconContainer = document.querySelector('.chevronIconContainer')
+        const sortByItemsContainer = document.querySelector('.sortByItemsContainer')
+
+        chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
+
+        const filterItems = Array.from(document.querySelectorAll('.sortByItem'))
+
+        const closeSortByOptions = () => {
+
+            areFilterOptionsVisible = false
+            sortByItemsContainer.classList.add('hidden')
+            chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
+
+        }  
+
+        const setCheckedFilter = (filterItems) => {
+
+            filterItems.forEach(item => {
+                item.textContent = item.id
+            })
+            
+            const highlightedFilterItem = filterItems.find(item => {
+                return item.id.toLowerCase() === currentFilter.toLowerCase()
+            })
+
+            highlightedFilterItem.innerHTML += `<i class="check-icon fa-solid fa-check fa-xs" style="color: #000000;"></i>`
+
+        }
+
+        setCheckedFilter(filterItems)
+
+        filterItems.forEach(item => {
+            item.addEventListener('click', () => {
+                
+                currentFilter = item.id
+
+                closeSortByOptions()
+                setCheckedFilter(filterItems)
+
+                if (currentFilter === 'Lowest') {
+                    reviews = reviews.sort((a, b) => {
+                        return a.rating - b.rating
+                    })
+                } 
+                
+                if (currentFilter === 'Highest') {
+                    reviews = reviews.sort((a, b) => {
+                        return b.rating - a.rating
+                    })
+                }
+
+                if (currentFilter === 'Oldest') {
+                    reviews = reviews.sort((a, b) => {
+                        return new Date(a.date) - new Date(b.date)
+                    })
+                }
+
+                if (currentFilter === 'Newest') {
+                    reviews = reviews.sort((a, b) => {
+                        return new Date(b.date) - new Date(a.date)
+                    })
+                }
+
+                setCurrentPage(currentPage)
+
+            })
+        })
+
+        chevronIconContainer.addEventListener('click', () => {
+
+            if (!areFilterOptionsVisible) {
+
+                const closeSortByOptionsListenerFunction = () => {
+
+                    closeSortByOptions()
+                    document.removeEventListener('click', closeSortByOptionsListenerFunction)
+
+                }
+
+                setTimeout(() => {
+                    document.addEventListener('click', closeSortByOptionsListenerFunction)
+                }, 100)
+                
+                areFilterOptionsVisible = true
+                sortByItemsContainer.classList.remove('hidden')
+                chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-up fa-xs"></i>`
+
+            } else {
+                
+                closeSortByOptions()
+
+            }
+
+        })
+
+        // END: SORT BY FILTERS FUNCTIONALITY
+
+        // START: EDIT REVIEW WIDGET BACKGROUND
+
+        const divs = document.querySelectorAll('div')
+            divs.forEach(div => {
+                if (div.id.includes('reviews_app_reviews')) {
+                    const section = div.closest('section')
+                    section.style.backgroundColor = reviewSettings.backgroundColor
+                }
+            })
+
+        // END: EDIT REVIEW WIDGET BACKGROUND
+
+        // START: REVIEW FORM POPUP FUNCTIONALITY
+
+        let userRating = '5'
+
+        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating }
+
+        const handleUserInput = (event) => {
+
+            userInputState[event.target.name] = event.target.value
+
+        }
+
+        function clearErrors() {
+            const formErrorElements = document.querySelectorAll('.reviewFormValidationError')
+            formErrorElements.forEach(element => {
+            element.classList.add('hidden')
+            })
+        }
+
+        const isFormErrors = () => {
+
+            clearErrors()
+
+            let errors = []
+
+            const inputKeys = Object.keys(userInputState)
+
+            for (let i = 0; i<inputKeys.length; i++) {
+
+                if (inputKeys[i].includes('customQuestion')) {
+
+                    if (userInputState[inputKeys[i]].value.trim() === '') {
+                        errors.push({id: `${inputKeys[i]}Error`})
+                    }
+
+                } else if (userInputState[inputKeys[i]].trim() === '') { 
+                    errors.push({id: `${inputKeys[i]}Error`})
+                }
+            }
+
+            return errors
+
+        }
+
+        const handleFormSubmission = (event) => {
+
+            const errors = isFormErrors()
+
+            if (errors.length > 0) {
+
+                event.preventDefault()
+
+                errors.forEach(error => {
+                    document.querySelector(`#${error.id}`).classList.remove('hidden')
+                })
+
+                userRating = '5'
+
+            } else {
+
+                const data = {...userInputState, productId: parseInt(reviewProductId), rating: parseInt(userRating)}
+                
+                fetch('https://blizzardbites.myshopify.com/apps/reviews/create-review', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)}).then(res => {
+                  return res.json()
+                })
+
+            }
+
+        }
+
+        const renderStars = (rating) => {
+
+            const htmlMarkup = []
+
+            for (let i = 1; i<6; i++) {
+
+                if (i <= rating) {
+                    htmlMarkup.push(`<svg class='reviewFormStar' data-rating='${i}' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path class="star-${i}" d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill=${reviewSettings.primaryColor}></path></g></svg>`)
+                } else {
+                    htmlMarkup.push(`<svg class='reviewFormStar' data-rating='${i}' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path class="star-${i}" d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill="white"></path></g></svg>`)
+                }
+
+            }
+
+            const reviewFormStarsContainer = document.querySelector('.reviewFormStarsContainer')
+            reviewFormStarsContainer.innerHTML = htmlMarkup.join('')
+
+            const reviewFormStars = document.querySelectorAll('.reviewFormStar')
+            reviewFormStars.forEach(reviewFormStar => {
+
+                const reviewFormStarRating = reviewFormStar.dataset.rating
+
+                const fillStars = (maxRating) => {
+                    for (let i = 1; i<6; i++) {
+
+                        if (i<=maxRating) {
+                            document.querySelector(`.star-${i}`).style.fill = reviewSettings.primaryColor
+                        } else {
+                            document.querySelector(`.star-${i}`).style.fill = 'white'
+                        }
+
+                    }
+                }
+
+                reviewFormStar.addEventListener('mouseover', () => {
+                    
+                    fillStars(reviewFormStarRating)
+
+                })
+
+                reviewFormStar.addEventListener('mouseleave', () => {
+
+                    fillStars(rating)
+                    
+                })
+
+                reviewFormStar.addEventListener('click', () => {
+                    const reviewFormStarRating = reviewFormStar.dataset.rating
+                    userRating = reviewFormStarRating
+                    userInputState['rating'] = userRating
+                    renderStars(reviewFormStarRating)
+                })
+            })
+
+        }
+
+        const reviewFormOverlay = document.createElement('div')
+        reviewFormOverlay.className = 'hidden reviewFormOverlay'
+        const reviewFormMarkup = `
+            <form class='reviewForm'>
+                <div class='closeReviewFormBtn'>x</div>
+                <div class='reviewFormHeadingContainer'>
+                    <h1>${reviewSettings.formHeading}</h1>
+                    <h3>${reviewSettings.formSubheading}</h3>
+                    <div class='reviewFormStarsContainer'></div>
+                </div>
+                <div class='reviewFieldWrapper'>
+                    <label id='headlineLabel' for='reviewHeadline'> Give it a Headline * </label>
+                    <input class='reviewFormInput' id='reviewHeadline' name='title' placeholder='Sum up your experience in a few short words' />
+                    <p class='reviewFormValidationError hidden' id='titleError'>Headline is required</p>
+                </div>
+                <div class='reviewFieldWrapper'>
+                    <label id='bodyLabel' for='reviewTextArea'>Review *</label>
+                    <textarea class='reviewFormInput' name='body' id='reviewTextArea' placeholder='What did you like or not like?'></textarea>
+                    <p class='reviewFormValidationError hidden' id='bodyError'>Review is required</p>
+                </div>
+                <div class='customQuestionsContainer'></div>
+                <div class='reviewNameEmailWrapper'>
+                    <div class='reviewNameEmailContainer'>
+                        <label for='reviewerName'>Your First Name *</label>
+                        <input class='reviewFormInput' type='name' name='name' id='reviewerName' />
+                        <p class='reviewFormValidationError hidden' id='nameError'>Name is required</p>
+                    </div>
+                    <div class='reviewNameEmailContainer'>
+                        <label for='reviewerEmail'>Your Email Address *</label>
+                        <input class='reviewFormInput' type='email' name='email' id='reviewerEmail' />
+                        <p class='reviewFormValidationError hidden' id='emailError'>Email is required</p>
+                    </div>
+                </div>
+                <div class='uploadMediaContainer'>
+                    <input type='file' id='uploadMediaBtn' class='uploadMediaBtn' accepts='image/*, video/*' multiple />
+                    <label class='uploadMediaLabel' for='uploadMediaBtn'>
+                        <p>Upload Media</p>
+                        <svg viewBox="0 0 1024 1024" class="uploadIcon" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z" fill="#000000"></path><path d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z" fill="#39393A"></path><path d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z" fill="#000000"></path></g></svg>            
+                    </label>
+                    <div class='uploadedMediaContainer'></div>
+                </div>
+                <p class='uploadError'></p>
+                <button class='submitReviewBtn' style='background-color: ${reviewSettings.primaryColor}'>Submit Review</button>
+            </form>
+        `
+
+        document.body.appendChild(reviewFormOverlay)
+
+        writeReviewBtn.addEventListener('click', () => {
+
+            const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
+            reviewFormOverlay.innerHTML = reviewFormMarkup
+            reviewFormOverlay.classList.remove('hidden')
+
+            document.querySelector('.reviewForm').addEventListener('submit', handleFormSubmission)
+
+            // START: ADD CUSTOM QUESTIONS (IF ANY)
+
+            const insertCustomQuestion = (question) => {
+
+                const customQuestionsContainer = document.querySelector('.customQuestionsContainer')
+
+                let questionMarkup
+
+                if (question.answerChoices.length === 0) {
+                    questionMarkup = `
+                         <div class='reviewFieldWrapper' style="width: 100%">
+                            <label for='customQuestion-${question.id}'>${question.label} *</label>
+                            <textarea class='reviewFormInput reviewFormTextArea' name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="${question.title}"></textarea>
+                            <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
+                        </div>
+                    `
+
+                    customQuestionsContainer.innerHTML += questionMarkup
+
+                } else {
+
+                    questionMarkup = `<div style="display: flex; flex-direction: column" class='customQuestion-${question.id} customQuestionRadio'></div>`
+                    customQuestionsContainer.innerHTML += questionMarkup
+
+                    const questionMarkupContainer = document.querySelector(`.customQuestion-${question.id}`)
+                    questionMarkupContainer.innerHTML+= `
+                        <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
+                        <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
+                            <option value="">Select one</option>
+                        </select>
+                    `
+
+                    const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
+
+                    question.answerChoices.forEach((choice) => {
+                        answerChoicesContainer.innerHTML += `<option value="${choice.title}">${choice.title}</option>`
+                    })
+
+                    questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`
+                
+                }
+
+                userInputState[`customQuestion-${question.id}`] = {value: '', display: question.displayAnswer}
+
+            }
+
+            if (reviewSettings.customQuestions.length > 0) {
+
+                reviewSettings.customQuestions.forEach((question) => {
+                    
+                    insertCustomQuestion(question)
+
+                    const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
+
+                    if (customQuestionDropdowns.length > 0) {
+                        customQuestionDropdowns.forEach(dropdown => {
+                            dropdown.addEventListener('change', (e) => {
+                                userInputState[e.target.name] = {...userInputState[e.target.name], value: e.target.value}
+                            })
+                        })
+                    }
+
+                })
+            }
+
+            // END: ADD CUSTOM QUESTIONS (IF ANY)
+
+            document.querySelectorAll('.reviewFormInput').forEach(input => {
+                input.addEventListener('input', handleUserInput)
+            })
+
+            // START: DRAG AND DROP UPLOAD FILE FUNCTIONALITY
+            
+            const uploadMediaContainer = document.querySelector('.uploadMediaContainer')
+            const uploadedMediaContainer = document.querySelector('.uploadedMediaContainer')
+            const uploadMediaBtn = document.querySelector('.uploadMediaBtn')
+            const uploadError = document.querySelector('.uploadError')
+
+            const verifyFileType = (file) => {
+
+                if (file.type.split('/')[0] !== 'image' && file.type.split('/')[0] !== 'video') {
+                    return uploadError.innerText = 'Only image or video files are allowed'
+                } 
+
+                uploadError.innerText = ''
+
+                const reader = new FileReader()
+
+                reader.readAsDataURL(file)
+
+                reader.onloadend = () => {
+
+                    const imageContainer = document.createElement('figure')
+                    imageContainer.className = 'uploadedImage'
+
+                    const img = document.createElement('img')
+                    img.src = reader.result
+
+                    imageContainer.appendChild(img)
+                    imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+                    
+                    uploadedMediaContainer.appendChild(imageContainer)
+
+                }
+
+            }
+
+            const preventDefault = (e) => {
+                e.preventDefault()
+            }
+
+            const active = () => {
+                uploadMediaContainer.style.border = `2px dotted ${reviewSettings.primaryColor}`
+            }
+
+            const inactive = () => {
+                uploadMediaContainer.style.border = '2px dotted lightgray'
+            }
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+
+                uploadMediaContainer.addEventListener(event, preventDefault)
+
+            });
+
+            ['dragenter', 'dragover'].forEach(event => {
+
+                uploadMediaContainer.addEventListener(event, active)
+
+            });
+
+            ['dragleave', 'drop'].forEach(event => {
+
+                uploadMediaContainer.addEventListener(event, inactive)
+
+            });
+
+            uploadMediaContainer.addEventListener('drop', (e) => {
+                Array.from(e.dataTransfer.files).forEach(file => {
+                    verifyFileType(file)
+                })
+            })
+
+            uploadMediaBtn.addEventListener('change', () => {
+                Array.from(uploadMediaBtn.files).forEach(verifyFileType)
+            })
+
+            // END: DRAG AND DROP UPLOAD FILE FUNCTIONALITY
+
+            renderStars(userRating)
+
+            document.body.style.overflow = 'hidden'
+
+            const closeReviewForm = () => {
+                reviewFormOverlay.classList.add('hidden')
+                document.body.style.overflow = 'scroll'
+                userRating = 5
+            }
+
+            const closeFormBtn = document.querySelector('.closeReviewFormBtn')
+            closeFormBtn.addEventListener('click', closeReviewForm)
+
+        })
+
+        // END: REVIEW FORM POPUP FUNCTIONALITY
+
+    })
+})})
+
+
+</script>
+
+{% schema %}
+    {
+        "name": "Customer Reviews",
+        "target": "section",
+        "settings": [
+           { "type": "product",
+            "id": "product",
+            "label": "Product",
+            "autofill": true
+           }
+        ]
+    }
+{% endschema %}

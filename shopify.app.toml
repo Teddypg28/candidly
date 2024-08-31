@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "011abb4e5c3f2d0b5b73856e094f727e"
+name = "reviews-app"
+handle = "reviews-app-46"
+application_url = "https://e93b-76-39-73-28.ngrok-free.app"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "blizzardbites.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_orders,read_products,read_themes"
+
+[auth]
+redirect_urls = [
+  "https://e93b-76-39-73-28.ngrok-free.app/auth/callback",
+  "https://e93b-76-39-73-28.ngrok-free.app/auth/shopify/callback",
+  "https://e93b-76-39-73-28.ngrok-free.app/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks"
+
+[pos]
+embedded = false

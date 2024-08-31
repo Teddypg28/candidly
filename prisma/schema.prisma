@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model RestockFormSettings {
+  id                       Int    @id @default(autoincrement())
+  store                    String
+  heading                  String
+  subheading               String
+  buttonText               String
+  buttonColor              String
+  minimumInventoryForAlert Int
+}
+
+model ReviewSettings {
+  id              Int    @id @default(autoincrement())
+  store           String
+  formHeading     String
+  formSubheading  String
+  primaryColor    String
+  backgroundColor String
+}
+
+model CustomQuestionAnswer {
+  id       Int           @id
+  value    String
+  label    String
+  display  Boolean
+  reviewId Int
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model ProductReview {
+  id                    Int                    @id @default(autoincrement())
+  store                 String
+  productId             BigInt
+  title                 String
+  body                  String
+  name                  String
+  email                 String
+  rating                Int
+  date                  DateTime
+  customQuestionAnswers CustomQuestionAnswer[]
+}
+
+model ReviewFormQuestion {
+  id            Int                      @id @default(autoincrement())
+  store         String
+  productId     BigInt
+  title         String
+  label         String?
+  answerLabel   String?
+  displayAnswer Boolean
+  answerChoices ReviewFormAnswerChoice[]
+}
+
+model ReviewFormAnswerChoice {
+  id         Int                @id @default(autoincrement())
+  questionId Int
+  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  title      String
+}
+
+model SavedReviewsTableViews {
+  id               Int     @id @default(autoincrement())
+  store            String
+  name             String
+  queryValue       String
+  sortSelected     String
+  selectedProducts String?
+  selectedRatings  String?
+}
