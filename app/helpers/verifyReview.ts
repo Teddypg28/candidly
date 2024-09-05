@@ -86,7 +86,7 @@ export default async function verifyReview(graphql: any, reviewerEmail: string, 
                 
               }`
 
-            verify(query)
+            return verify(query)
 
         } else {
 

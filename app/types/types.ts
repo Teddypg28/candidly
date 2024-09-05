@@ -37,6 +37,15 @@ export interface ReviewsTableFilterState {
     itemStrings: string[]
 }
 
+export interface ImportReviewsFormState {
+    isImportingReviews: boolean,
+    numberOfReviews: number,
+    selectedImportRatings: string[],
+    productLink: any,
+    selectedProductData: any | undefined,
+    importFormErrors: any
+}
+
 export interface SavedView {
     id?: number,
     name: string, 

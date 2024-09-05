@@ -3,7 +3,7 @@
 client_id = "011abb4e5c3f2d0b5b73856e094f727e"
 name = "reviews-app"
 handle = "reviews-app-46"
-application_url = "https://e93b-76-39-73-28.ngrok-free.app"
+application_url = "https://6f0a-76-39-73-28.ngrok-free.app"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_customers,read_orders,read_products,read_themes"
 
 [auth]
 redirect_urls = [
-  "https://e93b-76-39-73-28.ngrok-free.app/auth/callback",
-  "https://e93b-76-39-73-28.ngrok-free.app/auth/shopify/callback",
-  "https://e93b-76-39-73-28.ngrok-free.app/api/auth/callback"
+  "https://6f0a-76-39-73-28.ngrok-free.app/auth/callback",
+  "https://6f0a-76-39-73-28.ngrok-free.app/auth/shopify/callback",
+  "https://6f0a-76-39-73-28.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]

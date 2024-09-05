@@ -67,7 +67,7 @@ model ProductReview {
   title                 String
   body                  String
   name                  String
-  email                 String
+  email                 String?
   rating                Int
   date                  DateTime
   customQuestionAnswers CustomQuestionAnswer[]

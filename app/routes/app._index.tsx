@@ -1,14 +1,25 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode } from "@shopify/polaris";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail } from "@shopify/polaris";
 
 import db from '../db.server'
 
 import { authenticate } from "~/shopify.server";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 
 import { json } from "@remix-run/node";
 import { useRef, useState } from "react";
-import { ReviewsTableFilterState, SavedView } from "~/types/types";
+import { ImportReviewsFormState, ReviewsTableFilterState, SavedView } from "~/types/types";
+import routeScraper from "~/scrapers/routeScraper";
+
+export const action = async ({ request } : ActionFunctionArgs) => {
+
+    const data = await request.json()
+
+    const result = await routeScraper(data)
+
+    return true
+
+}
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
 
@@ -85,6 +96,25 @@ export default function Index() {
         selected: 0,
         selectedProducts: undefined,
         selectedRatings: undefined
+    }
+
+    const initialImportReviewsState: ImportReviewsFormState = {
+        isImportingReviews: false,
+        numberOfReviews: 10,
+        selectedImportRatings: [],
+        productLink: '',
+        selectedProductData: undefined,
+        importFormErrors: {}
+    }
+
+    const [importReviewsFormState, setImportReviewsFormState] = useState(initialImportReviewsState)
+
+    const { isImportingReviews, numberOfReviews, selectedImportRatings, productLink, selectedProductData, importFormErrors } = importReviewsFormState
+
+    const navigation = useNavigation()
+
+    const handleNumOfReviewsChange = (value: number) => {
+        setImportReviewsFormState({...importReviewsFormState, numberOfReviews: value})
     }
 
     const [reviewsState, setReviewsState] = useState<ReviewsTableFilterState>(initialState)
@@ -450,56 +480,146 @@ export default function Index() {
             onAction: () => saveView(itemStrings[selected])
         }
     
+        const ratingChoices = ['1', '2', '3', '4', '5'].map(rating => {
+            return {label: `${rating} ${rating === '1' ? 'star' : 'stars'}`, value: rating}
+        })
+
+        const importReviews = () => {
+
+            setImportReviewsFormState({...importReviewsFormState, isImportingReviews: true})
+
+        }
+
+        const isFormErrors = () => {
+
+            const acceptedDomains = ['amazon.com', 'aliexpress.com', 'walmart.com']
+
+            const errors: any = {}
+
+            if (!selectedProductData) {
+                errors.selectProduct = true
+            }
+
+            if (productLink.trim() === '') {
+                errors.productLink = 'Product link is required'
+            } 
+
+            if (productLink.trim() !== '') {
+
+                errors.productLink = 'Amazon, AliExpress, and Walmart are the only supported sites'
+
+                for (let i = 0; i<acceptedDomains.length; i++) {
+
+                    if (productLink.includes(acceptedDomains[i])) {
+                        delete errors['productLink']
+                        break
+                    }
+                }
+            }
+
+            if (selectedImportRatings.length === 0) {
+                errors.ratings = true
+            }
+
+            setImportReviewsFormState({...importReviewsFormState, importFormErrors: errors})
+
+            return Object.keys(errors).length > 0
+
+        }
+
+        const verifyReadyToImport = async () => {
+
+            const errors = isFormErrors()
+
+            if (!errors) {
+
+                const payload = { productLink, selectedImportRatings, numberOfReviews }
+                
+                submit(JSON.stringify(payload), {method: 'POST', encType: 'application/json'})
+
+            } 
+
+        }
+
+        const selectProduct = async () => {
+            const selectedProduct = await window.shopify.resourcePicker({
+                type: 'product',
+                action: 'select',
+                multiple: false
+            })
+
+
+            if (selectedProduct) {
+
+                setImportReviewsFormState({...importReviewsFormState, selectedProductData: {id: selectedProduct[0].id, image: selectedProduct[0].images[0].originalSrc}})
+    
+            }
+            
+        }
 
     return (
         <Page
         title="Reviews"
-        primaryAction={{content: 'Import'}}
+        primaryAction={{content: 'Import', onAction: importReviews}}
         secondaryActions={[{content: 'Export', disabled: filteredReviews.length === 0}]}
         backAction={{url: '/app'}}
         >
+            <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initialImportReviewsState)} open={isImportingReviews}>
+                <Card>
+                    <BlockStack gap='300'>
+                        { selectedProductData ? 
+                        <InlineStack align="space-between">
+                            <Thumbnail source={selectedProductData.image} alt="product image thumbnail" /> 
+                            <Button variant="plain" onClick={selectProduct}>Change Product</Button>
+                        </InlineStack>
+
+                        :
+
+                        <InlineStack>
+                            <Button onClick={selectProduct}>Select Product</Button>
+                        </InlineStack>
+
+                        }
+                        {importFormErrors.selectProduct && <p style={{color: 'red', fontSize: '12px'}}>You must specify a product</p>}
+                        <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
+                        {importFormErrors.productLink && <p style={{color: 'red', fontSize: '12px'}}>{importFormErrors.productLink}</p>}
+                        <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
+                        <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
+                        {importFormErrors.ratings && <p style={{color: 'red', fontSize: '12px'}}>Ratings are required</p>}
+                        <InlineStack>
+                            <Button onClick={verifyReadyToImport} variant="primary" loading={navigation.state === 'submitting'}>Import Reviews</Button>
+                        </InlineStack>
+                    </BlockStack>
+                </Card>
+            </Modal>
             <Card>
-                {filteredReviews.length > 0 ?
-                <>
-                    <IndexFilters 
-                    sortOptions={sortOptions}
-                    sortSelected={sortSelected}
-                    onSort={value => setReviewsState({...reviewsState, sortSelected: value})}
-                    filters={filters}
-                    appliedFilters={appliedFilters}
-                    mode={mode}
-                    setMode={setMode}
-                    queryValue={queryValue}
-                    queryPlaceholder="Search by name, title, body, product, or date"
-                    onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
-                    onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
-                    onClearAll={() => setReviewsState({...reviewsState, selectedProducts: undefined, selectedRatings: undefined})}
-                    cancelAction={{onAction: () => updateViewState(itemStrings[selected], selected)}}
-                    primaryAction={primaryAction}
-                    tabs={tabs}
-                    onCreateNewView={createNewView}
-                    onSelect={(index: number) => updateViewState(itemStrings[index], index)}
-                    selected={selected}
-                    />
-                    <IndexTable
-                    headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}]}
-                    itemCount={filteredReviews.length}
-                    selectable={false}
-                    >
-                        {indexTableMarkup}
-                    </IndexTable>
-                </>
-
-                : 
-
-                <EmptyState 
-                heading="You Don't Have Any Reviews Yet" 
-                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png" 
+                <IndexFilters 
+                sortOptions={sortOptions}
+                sortSelected={sortSelected}
+                onSort={value => setReviewsState({...reviewsState, sortSelected: value})}
+                filters={filters}
+                appliedFilters={appliedFilters}
+                mode={mode}
+                setMode={setMode}
+                queryValue={queryValue}
+                queryPlaceholder="Search by name, title, body, product, or date"
+                onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
+                onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
+                onClearAll={() => setReviewsState({...reviewsState, selectedProducts: undefined, selectedRatings: undefined})}
+                cancelAction={{onAction: () => updateViewState(itemStrings[selected], selected)}}
+                primaryAction={primaryAction}
+                tabs={tabs}
+                onCreateNewView={createNewView}
+                onSelect={(index: number) => updateViewState(itemStrings[index], index)}
+                selected={selected}
+                />
+                <IndexTable
+                headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}]}
+                itemCount={filteredReviews.length}
+                selectable={false}
                 >
-                    <p>If you have existing reviews, click the 'import' button to import them</p>
-                </EmptyState>
-
-                }
+                    {indexTableMarkup}
+                </IndexTable>
             </Card>
         </Page>
     )

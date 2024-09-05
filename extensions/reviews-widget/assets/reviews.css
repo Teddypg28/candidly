@@ -53,6 +53,12 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     padding: 5px 20px;
 }
 
+.emailVerificationMessage {
+    padding: 0px;
+    margin: 0px;
+    font-size: 12px;
+}
+
 .flexContainer {
     display: flex;
     align-items: center;
