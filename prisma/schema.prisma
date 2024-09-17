@@ -71,6 +71,7 @@ model ProductReview {
   rating                Int
   date                  DateTime
   customQuestionAnswers CustomQuestionAnswer[]
+  scraped               Boolean
 }
 
 model ReviewFormQuestion {

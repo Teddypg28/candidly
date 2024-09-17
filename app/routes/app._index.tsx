@@ -1,24 +1,26 @@
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail } from "@shopify/polaris";
+import { ActionFunctionArgs, LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions } from "@shopify/polaris";
 
 import db from '../db.server'
 
 import { authenticate } from "~/shopify.server";
-import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 
 import { json } from "@remix-run/node";
 import { useRef, useState } from "react";
 import { ImportReviewsFormState, ReviewsTableFilterState, SavedView } from "~/types/types";
-import routeScraper from "~/scrapers/routeScraper";
 
-export const action = async ({ request } : ActionFunctionArgs) => {
+export const action = async ({request} : ActionFunctionArgs) => {
 
-    const data = await request.json()
+    const { session } = await authenticate.admin(request)
 
-    const result = await routeScraper(data)
+    const reviewIdsToDelete = await request.json()
+
+    await Promise.all(reviewIdsToDelete.map(async (id: string) => {
+        return await db.productReview.delete({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}})
+    }))
 
     return true
-
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
@@ -58,7 +60,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         }
   }`
 
-  const updatedReviews = await Promise.all(reviews.map(async ({productId, ...rest}) => {
+  const updatedReviews = await Promise.all(reviews.map(async ({productId, id, ...rest}) => {
 
       const fullProductId = `gid://shopify/Product/${productId}`
 
@@ -66,7 +68,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
       const product = await (await result.json()).data.product.title
 
-      return {product, ...rest}
+      return {product, id: id.toString(), ...rest}
       
   }))
 
@@ -111,7 +113,7 @@ export default function Index() {
 
     const { isImportingReviews, numberOfReviews, selectedImportRatings, productLink, selectedProductData, importFormErrors } = importReviewsFormState
 
-    const navigation = useNavigation()
+    const [isFormSubmitting, setIsFormSubmitting] = useState(false)
 
     const handleNumOfReviewsChange = (value: number) => {
         setImportReviewsFormState({...importReviewsFormState, numberOfReviews: value})
@@ -170,6 +172,8 @@ export default function Index() {
         return review
     })
 
+    const { handleSelectionChange, allResourcesSelected, selectedResources, removeSelectedResources } = useIndexResourceState(filteredReviews)
+
     const updateViewState = (viewName: string, index: number) => {
 
         if (viewName === 'All Reviews') {
@@ -206,7 +210,7 @@ export default function Index() {
         }
 
         return (
-            <IndexTable.Row id={review.id.toString()} position={index}>
+            <IndexTable.Row selected={selectedResources.includes(review.id)} id={review.id} position={index}>
                 <IndexTable.Cell>{new Date(review.date).toLocaleDateString()}</IndexTable.Cell>
                 <IndexTable.Cell>{review.product}</IndexTable.Cell>
                 <IndexTable.Cell>{review.name}</IndexTable.Cell>
@@ -492,7 +496,7 @@ export default function Index() {
 
         const isFormErrors = () => {
 
-            const acceptedDomains = ['amazon.com', 'aliexpress.com', 'walmart.com']
+            const acceptedDomains = ['amazon.com', 'aliexpress.us', 'walmart.com']
 
             const errors: any = {}
 
@@ -529,16 +533,31 @@ export default function Index() {
 
         const verifyReadyToImport = async () => {
 
+            setIsFormSubmitting(true)
+
             const errors = isFormErrors()
 
             if (!errors) {
 
-                const payload = { productLink, selectedImportRatings, numberOfReviews }
+                const id = selectedProductData.id.split('/Product/')[1]
+
+                const payload = { productLink, selectedImportRatings, numberOfReviews, id }
+
+                const response = await fetch('/api/reviews/import', {method: 'POST', body: JSON.stringify(payload)})
+
+                setIsFormSubmitting(false)
+
+                const responseMessage = (await response.json()).message
+
+                if (!response.ok) {
+
+                    return setImportReviewsFormState({...importReviewsFormState, importFormErrors: {productLink: responseMessage}})
+
+                }
+
+                return shopify.toast.show('Import Successful!', {duration: 3000})
                 
-                submit(JSON.stringify(payload), {method: 'POST', encType: 'application/json'})
-
             } 
-
         }
 
         const selectProduct = async () => {
@@ -548,7 +567,6 @@ export default function Index() {
                 multiple: false
             })
 
-
             if (selectedProduct) {
 
                 setImportReviewsFormState({...importReviewsFormState, selectedProductData: {id: selectedProduct[0].id, image: selectedProduct[0].images[0].originalSrc}})
@@ -557,39 +575,47 @@ export default function Index() {
             
         }
 
+        const deleteSelectedReviews = () => {
+
+            submit(JSON.stringify(selectedResources), {method: 'POST', encType: 'application/json'})
+            removeSelectedResources(selectedResources)
+
+        }
+
     return (
         <Page
-        title="Reviews"
+        title="All Product Reviews"
         primaryAction={{content: 'Import', onAction: importReviews}}
         secondaryActions={[{content: 'Export', disabled: filteredReviews.length === 0}]}
-        backAction={{url: '/app'}}
         >
             <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initialImportReviewsState)} open={isImportingReviews}>
                 <Card>
-                    <BlockStack gap='300'>
-                        { selectedProductData ? 
-                        <InlineStack align="space-between">
-                            <Thumbnail source={selectedProductData.image} alt="product image thumbnail" /> 
-                            <Button variant="plain" onClick={selectProduct}>Change Product</Button>
-                        </InlineStack>
+                    <Form onSubmit={verifyReadyToImport}>
+                        <BlockStack gap='300'>
+                            { selectedProductData ? 
+                            <InlineStack align="space-between">
+                                <Thumbnail source={selectedProductData.image} alt="product image thumbnail" /> 
+                                <Button variant="plain" onClick={selectProduct}>Change Product</Button>
+                            </InlineStack>
 
-                        :
+                            :
 
-                        <InlineStack>
-                            <Button onClick={selectProduct}>Select Product</Button>
-                        </InlineStack>
+                            <InlineStack>
+                                <Button onClick={selectProduct}>Select Product</Button>
+                            </InlineStack>
 
-                        }
-                        {importFormErrors.selectProduct && <p style={{color: 'red', fontSize: '12px'}}>You must specify a product</p>}
-                        <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
-                        {importFormErrors.productLink && <p style={{color: 'red', fontSize: '12px'}}>{importFormErrors.productLink}</p>}
-                        <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
-                        <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
-                        {importFormErrors.ratings && <p style={{color: 'red', fontSize: '12px'}}>Ratings are required</p>}
-                        <InlineStack>
-                            <Button onClick={verifyReadyToImport} variant="primary" loading={navigation.state === 'submitting'}>Import Reviews</Button>
-                        </InlineStack>
-                    </BlockStack>
+                            }
+                            {importFormErrors.selectProduct && <p style={{color: 'red', fontSize: '12px'}}>You must specify a product</p>}
+                            <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
+                            {importFormErrors.productLink && <p style={{color: 'red', fontSize: '12px'}}>{importFormErrors.productLink}</p>}
+                            <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
+                            <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
+                            {importFormErrors.ratings && <p style={{color: 'red', fontSize: '12px'}}>Ratings are required</p>}
+                            <InlineStack>
+                                <Button submit variant="primary" loading={isFormSubmitting}>Import Reviews</Button>
+                            </InlineStack>
+                        </BlockStack>
+                    </Form>
                 </Card>
             </Modal>
             <Card>
@@ -616,11 +642,17 @@ export default function Index() {
                 <IndexTable
                 headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}]}
                 itemCount={filteredReviews.length}
-                selectable={false}
+                onSelectionChange={handleSelectionChange}
+                selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
                 >
                     {indexTableMarkup}
                 </IndexTable>
             </Card>
+            <PageActions 
+            secondaryActions={[
+                {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews}
+            ]}
+            />
         </Page>
     )
 }

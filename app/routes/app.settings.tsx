@@ -83,8 +83,8 @@ export default function Settings() {
 
     const [isReviewPreviewShowing, setIsReviewPreviewShowing] = useState(false)
     
-    const [reviewFormHexColor, setReviewFormHexColor] = useState(hsbToHex(JSON.parse(primaryColor)))
-    const [backgroundHexColor, setBackgroundHexColor] = useState(hsbToHex(JSON.parse(backgroundColor)))
+    const [reviewFormHexColor, setReviewFormHexColor] = useState(hsbToHex(JSON.parse(cleanSettings.reviewSettings.primaryColor)))
+    const [backgroundHexColor, setBackgroundHexColor] = useState(hsbToHex(JSON.parse(cleanSettings.reviewSettings.backgroundColor)))
 
     const reviewsDeepLink = `https://${store}/admin/themes/current/editor?template=product&addAppBlockId=71f5b7e8-355e-4ae5-9482-6637e5f48118/reviews&target=newAppsSection`
 
@@ -126,6 +126,14 @@ export default function Settings() {
 
     }
 
+    const forgetChanges= () => {
+
+        setSettingsState(cleanSettings)
+        setReviewFormHexColor(hsbToHex(JSON.parse(cleanSettings.reviewSettings.primaryColor)))
+        setBackgroundHexColor(hsbToHex(JSON.parse(cleanSettings.reviewSettings.backgroundColor)))
+
+    }
+
     return (
         <Page
         title="App Settings"
@@ -133,7 +141,7 @@ export default function Settings() {
         >
             <SaveBar open={!isFormClean}>
                 <button variant='primary' onClick={handleSave}></button>
-                <button onClick={() => { setSettingsState(data)}}></button>
+                <button onClick={forgetChanges}></button>
             </SaveBar>
             <Modal 
             open={isReviewPreviewShowing}
