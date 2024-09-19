@@ -1,5 +1,5 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions } from "@shopify/polaris";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions, EmptyState } from "@shopify/polaris";
 
 import db from '../db.server'
 
@@ -618,41 +618,57 @@ export default function Index() {
                     </Form>
                 </Card>
             </Modal>
+
+            {reviews.length === 0 ?
+            
             <Card>
-                <IndexFilters 
-                sortOptions={sortOptions}
-                sortSelected={sortSelected}
-                onSort={value => setReviewsState({...reviewsState, sortSelected: value})}
-                filters={filters}
-                appliedFilters={appliedFilters}
-                mode={mode}
-                setMode={setMode}
-                queryValue={queryValue}
-                queryPlaceholder="Search by name, title, body, product, or date"
-                onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
-                onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
-                onClearAll={() => setReviewsState({...reviewsState, selectedProducts: undefined, selectedRatings: undefined})}
-                cancelAction={{onAction: () => updateViewState(itemStrings[selected], selected)}}
-                primaryAction={primaryAction}
-                tabs={tabs}
-                onCreateNewView={createNewView}
-                onSelect={(index: number) => updateViewState(itemStrings[index], index)}
-                selected={selected}
+                <EmptyState 
+                action={{content: 'Import Your First Reviews', onAction: importReviews}}
+                heading="You Don't Have Any Reviews Yet"
+                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
                 />
-                <IndexTable
-                headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}]}
-                itemCount={filteredReviews.length}
-                onSelectionChange={handleSelectionChange}
-                selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
-                >
-                    {indexTableMarkup}
-                </IndexTable>
             </Card>
-            <PageActions 
-            secondaryActions={[
-                {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews}
-            ]}
-            />
+                
+            :
+            
+            <>
+                <Card>
+                    <IndexFilters 
+                    sortOptions={sortOptions}
+                    sortSelected={sortSelected}
+                    onSort={value => setReviewsState({...reviewsState, sortSelected: value})}
+                    filters={filters}
+                    appliedFilters={appliedFilters}
+                    mode={mode}
+                    setMode={setMode}
+                    queryValue={queryValue}
+                    queryPlaceholder="Search by name, title, body, product, or date"
+                    onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
+                    onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
+                    onClearAll={() => setReviewsState({...reviewsState, selectedProducts: undefined, selectedRatings: undefined})}
+                    cancelAction={{onAction: () => updateViewState(itemStrings[selected], selected)}}
+                    primaryAction={primaryAction}
+                    tabs={tabs}
+                    onCreateNewView={createNewView}
+                    onSelect={(index: number) => updateViewState(itemStrings[index], index)}
+                    selected={selected}
+                    />
+                    <IndexTable
+                    headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}]}
+                    itemCount={filteredReviews.length}
+                    onSelectionChange={handleSelectionChange}
+                    selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
+                    >
+                        {indexTableMarkup}
+                    </IndexTable>
+                </Card>
+                <PageActions 
+                secondaryActions={[
+                    {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews}
+                ]}
+                />
+            </>
+            }
         </Page>
     )
 }

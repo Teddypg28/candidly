@@ -51,6 +51,8 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
             const answerChoices = reviewFormQuestion.answerChoices
 
+            // Updating DB when answers are removed, added, updated
+
             const numToAddOrDelete = data.answerChoices.length - answerChoices.length
 
             const updateChoicesFunctions = []
@@ -162,6 +164,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                     displayAnswer: result.displayAnswer,
                     numOfAnswerChoices: result.answerChoices.length === 0 ? 1 : result.answerChoices.length,
                     answerType: result.answerChoices.length > 0 ? ['radioBtns'] : ['textField'],
+                    allowMultipleAnswers: result.allowMultipleAnswers === true ? ['yes'] : ['no'],
                     answerChoices: getAnswerChoices()
                 }    
 
@@ -205,7 +208,7 @@ export default function Question() {
 
         setCleanState(state)
 
-        const { title, label, answerType, productId, answerChoices, questionId, displayAnswer, answerLabel } = state
+        const { title, label, answerType, productId, answerChoices, questionId, displayAnswer, answerLabel, allowMultipleAnswers } = state
 
         const slicedProductId = productId.includes('Product/') ? productId.split('Product/')[1] : null
 
@@ -224,6 +227,12 @@ export default function Question() {
                     title: answerChoices[key]
                 })
             })
+
+            if (allowMultipleAnswers[0] === 'no') {
+                data.allowMultipleAnswers = false
+            } else {
+                data.allowMultipleAnswers = true
+            }
 
             data.answerChoices = answerChoicesArray
         }
@@ -451,13 +460,27 @@ export default function Question() {
                 <Layout.Section variant="oneThird">
                     <BlockStack gap={'200'}>
                         <Card>
-                            <ChoiceList 
-                            selected={state.answerType} 
-                            onChange={value =>  { dispatch({type: 'setAnswerType', payload: value}); setErrors({}) }}
-                            title='Answer Type' 
-                            choices={[{label: 'Text Field', value: 'textField'}, {label: 'Radio Buttons', value: 'radioBtns'}]} 
-                            />
-                            {errors['answerType'] && <InlineError message='Answer type required' fieldID='' /> }
+                            <BlockStack gap='200'>
+                                <ChoiceList 
+                                selected={state.answerType} 
+                                onChange={value =>  { dispatch({type: 'setAnswerType', payload: value}); setErrors({}) }}
+                                title='Answer Type' 
+                                choices={[{label: 'Text Field', value: 'textField'}, {label: 'Radio Buttons', value: 'radioBtns'}]} 
+                                />
+
+                                {state.answerType[0] === 'radioBtns' &&
+                            
+                                    <ChoiceList 
+                                    selected={state.allowMultipleAnswers} 
+                                    onChange={value => dispatch({type: 'setAllowMultipleAnswers', payload: value})}
+                                    title='Allow Multiple Answers?' 
+                                    choices={[{label: 'Yes', value: 'yes'}, {label: 'No', value: 'no'}]} 
+                                    />
+
+                                }
+
+                                {errors['answerType'] && <InlineError message='Answer type required' fieldID='' /> }
+                            </BlockStack>
                         </Card>
                         {state.answerType[0] === 'radioBtns' && 
                         <Card>

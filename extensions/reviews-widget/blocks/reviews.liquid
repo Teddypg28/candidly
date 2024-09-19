@@ -483,7 +483,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
         let userRating = '5'
 
-        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating }
+        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating, media: [] }
 
         const handleUserInput = (event) => {
 
@@ -504,17 +504,21 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
             let errors = []
 
-            const inputKeys = Object.keys(userInputState)
+            const userInputStateCopy = {...userInputState}
+
+            delete userInputStateCopy['media']
+
+            const inputKeys = Object.keys(userInputStateCopy)
 
             for (let i = 0; i<inputKeys.length; i++) {
 
                 if (inputKeys[i].includes('customQuestion')) {
 
-                    if (userInputState[inputKeys[i]].value.trim() === '') {
+                    if (userInputStateCopy[inputKeys[i]].value.trim() === '') {
                         errors.push({id: `${inputKeys[i]}Error`})
                     }
 
-                } else if (userInputState[inputKeys[i]].trim() === '') { 
+                } else if (userInputStateCopy[inputKeys[i]].trim() === '') { 
                     errors.push({id: `${inputKeys[i]}Error`})
                 }
             }
@@ -524,6 +528,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
         }
 
         const handleFormSubmission = (event) => {
+
+            event.preventDefault()
 
             const errors = isFormErrors()
 
@@ -684,24 +690,52 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                 } else {
 
                     questionMarkup = `<div style="display: flex; flex-direction: column" class='customQuestion-${question.id} customQuestionRadio'></div>`
+                    
                     customQuestionsContainer.innerHTML += questionMarkup
 
                     const questionMarkupContainer = document.querySelector(`.customQuestion-${question.id}`)
-                    questionMarkupContainer.innerHTML+= `
-                        <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
-                        <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
-                            <option value="">Select one</option>
-                        </select>
-                    `
 
-                    const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
+                    if (question.allowMultipleAnswers) {
+                        
+                        const renderChoices = () => {
+                            return question.answerChoices.map(choice => {
+                                return (
+                                        `<div class="dropdownItem dropdownItem-${question.id}">
+                                            ${choice.title}
+                                            <div class="unchecked" data-value="${choice.title}"> </div>
+                                        </div>`
+                                )
+                        }).join('')}
 
-                    question.answerChoices.forEach((choice) => {
-                        answerChoicesContainer.innerHTML += `<option value="${choice.title}">${choice.title}</option>`
-                    })
+                        questionMarkupContainer.innerHTML+= `
+                            <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
+                            <div id='multipleChoicesContainer-${question.id}' class="multipleChoicesContainer">
+                                <div class="defaultOption" id="defaultOption-${question.id}">
+                                    <p class="selectedOptionsContainer" id="selectedOptionsContainer-${question.id}">Select</p>
+                                    <span class="chevronContainer" id='chevronContainer-${question.id}'> 
+                                        <i class="fa-solid fa-chevron-down" style="color: #000000;"></i> 
+                                    </span>
+                                </div>
+                                <div class="dropdownItemsContainer hidden" id="dropdownItemsContainer-${question.id}">
+                                    ${renderChoices()}
+                                </div>
+                            </div>`                  
 
-                    questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`
-                
+                    } else {
+
+                        questionMarkupContainer.innerHTML+= `
+                            <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
+                            <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
+                                <option value="">Select one</option>
+                            </select>
+                        `
+                        const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
+
+                        question.answerChoices.forEach((choice) => {
+                            answerChoicesContainer.innerHTML += `<option value="${choice.title}">${choice.title}</option>`
+                        })
+                    }
+                        questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`
                 }
 
                 userInputState[`customQuestion-${question.id}`] = {value: '', display: question.displayAnswer}
@@ -715,14 +749,116 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                     insertCustomQuestion(question)
 
                     const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
+                    const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
 
                     if (customQuestionDropdowns.length > 0) {
+
                         customQuestionDropdowns.forEach(dropdown => {
                             dropdown.addEventListener('change', (e) => {
                                 userInputState[e.target.name] = {...userInputState[e.target.name], value: e.target.value}
                             })
                         })
                     }
+
+                    if (customQuestionMultipleChoices.length > 0) {
+
+                        customQuestionMultipleChoices.forEach(dropdown => {
+
+                            const id = dropdown.id.split('-')[1]
+
+                            const defaultItem = document.querySelector(`#defaultOption-${id}`)
+                            const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${id}`)
+                            const chevronContainer = document.querySelector(`#chevronContainer-${id}`)
+
+                            defaultItem.addEventListener('click', () => {
+
+                                const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${id}`)
+
+                                if (dropdownItemsContainer.classList.contains('hidden')) {
+
+                                    dropdownItemsContainer.classList.remove('hidden')
+                                    chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-up" style="color: #000000;"></i>'
+                                    
+                                } else {
+
+                                    dropdownItemsContainer.classList.add('hidden')
+                                    chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #000000;"></i>'
+
+                                }
+
+                            })
+
+                            document.querySelectorAll(`.dropdownItem-${id}`).forEach(element => {
+
+                                element.addEventListener('click', (e) => {
+
+                                    if (e.target.className.includes(`dropdownItem-${id}`)) {
+
+                                        if (e.target.children[0].classList.contains('checked')) {
+
+                                            e.target.children[0].textContent = ' '
+
+                                            e.target.children[0].classList = 'unchecked'
+
+                                        } else {
+
+                                            e.target.children[0].textContent = '•'
+
+                                            e.target.children[0].classList = `checked checked-${id}`
+
+                                        }
+
+                                    } else {
+
+                                        if (e.target.classList.contains('checked')) {
+
+                                            e.target.textContent = ' '
+
+                                            e.target.classList = 'unchecked'
+
+                                        } else {
+
+                                            e.target.textContent = '•'
+
+                                            e.target.classList = `checked checked-${id}`
+
+                                        }
+
+                                    }
+
+                                    const checkedValues = []
+
+                                    document.querySelectorAll(`.checked-${id}`).forEach(checkedElement => {
+                                        checkedValues.push(checkedElement.dataset.value)
+
+                                    })
+
+                                    const selectedAnswers = checkedValues.join(', ')
+
+                                    if (checkedValues.length === 0) {
+
+                                        selectedOptionsContainer.textContent = 'Select'
+                                        
+                                    }
+
+                                    else {
+
+                                        selectedOptionsContainer.textContent = selectedAnswers
+
+                                    }
+
+                                    userInputState[`customQuestion-${id}`] = {...userInputState[`customQuestion-${id}`], value: selectedAnswers.length > 0 ? selectedAnswers : ''}
+
+                                })
+
+                            })
+
+                        })
+
+
+                    }
+
+                    
 
                 })
             }
@@ -760,8 +896,18 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                     const img = document.createElement('img')
                     img.src = reader.result
 
+                    userInputState.media.push(reader.result)
+
                     imageContainer.appendChild(img)
                     imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+
+                    imageContainer.innerHTML += `
+                        <div class="removeUploadedImageContainer">
+                            <div class="removeUploadedImage">
+                                <i class="fa-solid fa-trash-can fa-2xl" style="color: #f2455f;"></i>
+                            </div>
+                        </div>
+                    `
                     
                     uploadedMediaContainer.appendChild(imageContainer)
 

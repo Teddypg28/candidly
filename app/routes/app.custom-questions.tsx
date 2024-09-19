@@ -50,7 +50,7 @@ const CustomQuestions = () => {
 
         let questionObjectKeys = Object.keys(question)
         questionObjectKeys = questionObjectKeys.filter(key => {
-            return key !== 'id' && key !== 'answerLabel' && key !== 'displayAnswer'
+            return key !== 'id' && key !== 'answerLabel' && key !== 'displayAnswer' && key !== 'allowMultipleAnswers'
         })
 
         questionObjectKeys.forEach((key: any) => {

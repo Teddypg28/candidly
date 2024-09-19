@@ -20,6 +20,7 @@ export interface CustomReviewFormQuestionState {
     displayAnswer: boolean,
     numOfAnswerChoices: number,
     answerType: string[],
+    allowMultipleAnswers: string[],
     answerChoices: CustomReviewFormAnswerOption
 }
 

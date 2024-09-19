@@ -31,11 +31,11 @@ export async function action({request} : ActionFunctionArgs) {
     
                         const id = parseInt(key.split('-')[1])
     
-                        const result = await db.reviewFormQuestion.findFirst({where: { id }})
+                        const result = await db.reviewFormQuestion.findFirst({where: { id: {equals: id} }})
     
                         const answerLabel = result?.answerLabel
     
-                        customQuestionAnswerData.push({id, label: answerLabel, ...keyData})
+                        customQuestionAnswerData.push({label: answerLabel, ...keyData})
 
                     })()
 
@@ -55,7 +55,6 @@ export async function action({request} : ActionFunctionArgs) {
                 return new Response(JSON.stringify({status: 'success'}), {status: 200})
 
             }
-
 
             return new Response(JSON.stringify({status: 'review verification failed'}), {status: 400})
 

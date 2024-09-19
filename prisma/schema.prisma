@@ -52,10 +52,17 @@ model ReviewSettings {
 }
 
 model CustomQuestionAnswer {
-  id       Int           @id
+  id       Int           @id @default(autoincrement())
   value    String
   label    String
   display  Boolean
+  reviewId Int
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model ProductReviewMedia {
+  id       Int           @id @default(autoincrement())
+  path     String
   reviewId Int
   review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 }
@@ -69,20 +76,21 @@ model ProductReview {
   name                  String
   email                 String?
   rating                Int
+  media                 ProductReviewMedia[]
   date                  DateTime
   customQuestionAnswers CustomQuestionAnswer[]
-  scraped               Boolean
 }
 
 model ReviewFormQuestion {
-  id            Int                      @id @default(autoincrement())
-  store         String
-  productId     BigInt
-  title         String
-  label         String?
-  answerLabel   String?
-  displayAnswer Boolean
-  answerChoices ReviewFormAnswerChoice[]
+  id                   Int                      @id @default(autoincrement())
+  store                String
+  productId            BigInt
+  title                String
+  label                String?
+  answerLabel          String?
+  displayAnswer        Boolean
+  answerChoices        ReviewFormAnswerChoice[]
+  allowMultipleAnswers Boolean?
 }
 
 model ReviewFormAnswerChoice {

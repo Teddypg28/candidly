@@ -312,6 +312,19 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     padding: 8px;
 }
 
+.removeUploadedImage {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+}
+
+.removeUploadedImageContainer {
+    position: relative;
+    background-color: rgb(254, 254, 254);
+    height: 100%;
+    width: 100%;
+}
+
 .sortByContainer {
     height: fit-content;
     width: fit-content;
@@ -368,6 +381,11 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     background-color: lightgray;
 }
 
+.selectedOptionsContainer {
+    margin: 0px;
+    padding: 0px;
+}
+
 .uploadMediaContainer {
     border: 2px dotted lightgray;
     border-radius: 5px;
@@ -416,6 +434,15 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     flex-direction: column;
 }
 
+.uploadedImage {
+    position: relative;
+    z-index: 2;
+}
+
+.uploadedImage:hover {
+    cursor: pointer
+}
+
 .uploadedImage > img {
     width: 60px;
     height: 60px;
@@ -438,6 +465,60 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
+}
+
+.checked, .unchecked {
+    border: 1px solid black;
+    border-radius: 5px;
+    height: 20px;
+    width: 20px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.defaultOption {
+    width: 250px;
+    height: fit-content;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    display: flex;
+    font-size: 14px;
+    font-family: inherit;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.dropdownItemsContainer {
+    position: relative;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    width: 100%;
+    height: fit-content;
+    margin-top: 5px;
+}
+
+.dropdownItem {
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdownItem:hover {
+    background-color: rgb(241, 241, 241);
+    cursor: pointer;
+}
+
+.multipleChoicesContainer {
+    position: relative; 
+}
+
+.hidden {
+    display: none;
 }
 
 @media only screen and (max-width: 2000px) {
