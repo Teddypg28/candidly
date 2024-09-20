@@ -60,13 +60,6 @@ model CustomQuestionAnswer {
   review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 }
 
-model ProductReviewMedia {
-  id       Int           @id @default(autoincrement())
-  path     String
-  reviewId Int
-  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-}
-
 model ProductReview {
   id                    Int                    @id @default(autoincrement())
   store                 String
@@ -76,7 +69,7 @@ model ProductReview {
   name                  String
   email                 String?
   rating                Int
-  media                 ProductReviewMedia[]
+  media                 String
   date                  DateTime
   customQuestionAnswers CustomQuestionAnswer[]
 }

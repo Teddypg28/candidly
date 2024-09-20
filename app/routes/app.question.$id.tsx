@@ -1,4 +1,4 @@
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import db from '../db.server'
 
 import { Layout, Page, Card, Button, InlineStack, BlockStack, InlineError, Text, TextField, ChoiceList, Label, Thumbnail, PageActions } from "@shopify/polaris";
@@ -34,6 +34,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         if (params.id === 'new') {
 
             if (data.hasOwnProperty('answerChoices')) {
+                
                 const question = await db.reviewFormQuestion.create({data: {...completeData, answerChoices: {create: data.answerChoices}}, omit: {productId: true}})
 
                 return redirect(`/app/question/${question.id}`)
@@ -153,22 +154,22 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                 const data = await res.json()
 
                 const initalState: CustomReviewFormQuestionState = {
-                    questionId: result.id,
+                    id: result.id,
                     productTitle: data.data.product.title || '',
                     productId: result.productId.toString(),
                     productImage: data.data.product.featuredImage.url || '',
                     productVariants: data.data.product.variants.nodes,
-                    title: result.title,
+                    title: 'TEEEDDDDY',
                     label: result.label || undefined,
                     answerLabel: result.answerLabel || '',
                     displayAnswer: result.displayAnswer,
                     numOfAnswerChoices: result.answerChoices.length === 0 ? 1 : result.answerChoices.length,
                     answerType: result.answerChoices.length > 0 ? ['radioBtns'] : ['textField'],
                     allowMultipleAnswers: result.allowMultipleAnswers === true ? ['yes'] : ['no'],
-                    answerChoices: getAnswerChoices()
+                    answerChoices: getAnswerChoices(),
                 }    
 
-                return initalState
+                return json(initalState)
 
             } else {
 
@@ -187,8 +188,9 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 export default function Question() {
 
     const questionData = useLoaderData<typeof loader>()
-    
+        
     const [state, dispatch] = useReducer(reducer, questionData)
+
     const [errors, setErrors] = useState<any>({})
 
     const [cleanState, setCleanState] = useState(questionData)
@@ -208,11 +210,11 @@ export default function Question() {
 
         setCleanState(state)
 
-        const { title, label, answerType, productId, answerChoices, questionId, displayAnswer, answerLabel, allowMultipleAnswers } = state
+        const { title, label, answerType, productId, answerChoices, id, displayAnswer, answerLabel, allowMultipleAnswers } = state
 
         const slicedProductId = productId.includes('Product/') ? productId.split('Product/')[1] : null
 
-        const data: any = {questionId, productId: slicedProductId ? parseInt(slicedProductId) : productId, title, label, displayAnswer, answerLabel}
+        const data: any = {id, productId: slicedProductId ? parseInt(slicedProductId) : productId, title, label, displayAnswer, answerLabel}
 
         answerType[0] === 'radioBtns' && delete data['label']
 
@@ -507,7 +509,7 @@ export default function Question() {
                 <Layout.Section>
                     <PageActions
                     primaryAction={{content: 'Save', loading: isSaving ? true : undefined, disabled: !isStateDirty, onAction: saveQuestion}}
-                    secondaryActions={[{content: 'Delete', loading: isDeleting, disabled: !state.hasOwnProperty('questionId'), onAction: () => submit({action: 'delete', id: state.questionId as any}, {method: 'POST', encType: 'application/json'}), destructive: true}]}
+                    secondaryActions={[{content: 'Delete', loading: isDeleting, disabled: !questionData.hasOwnProperty('id'), onAction: () => submit({action: 'delete', id: questionData.id as any}, {method: 'POST', encType: 'application/json'}), destructive: true}]}
                     />
                 </Layout.Section>
             </Layout>

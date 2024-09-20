@@ -9,7 +9,7 @@ export interface ProductVariant {
 }
 
 export interface CustomReviewFormQuestionState {
-    questionId?: number,
+    id?: number,
     productTitle: string,
     productId: string,
     productImage: string,

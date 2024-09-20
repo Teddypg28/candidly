@@ -1,4 +1,4 @@
-import { DataTable, EmptyState, Link, Page } from "@shopify/polaris";
+import { DataTable, EmptyState, IndexFilters, IndexTable, Link, Page } from "@shopify/polaris";
 
 import { Card } from "@shopify/polaris"
 
@@ -45,54 +45,16 @@ const CustomQuestions = () => {
 
     const nav = useNavigate()
 
-    const dataTableRows = currentQuestions.map((question: any) => {
-        const values: any = []
-
-        let questionObjectKeys = Object.keys(question)
-        questionObjectKeys = questionObjectKeys.filter(key => {
-            return key !== 'id' && key !== 'answerLabel' && key !== 'displayAnswer' && key !== 'allowMultipleAnswers'
-        })
-
-        questionObjectKeys.forEach((key: any) => {
-
-            if (question[key] === null) {
-
-                values.push('N/A')
-
-            } else if (key === 'answerChoices') {
-
-                values.push(question[key].length === 0 ? 'N/A' : question[key].length)
-
-            } else if (key === 'title') {
-
-                values.push(<Link url={`/app/question/${question.id}`}>{question[key]}</Link>)
-
-            } else if (key === 'product') {
-
-                const truncatedProductTitle = (question[key] as string).substring(0, 50)
-
-                if (truncatedProductTitle.trim() === question[key].trim()) {
-
-                    values.push((question[key]))
-
-                } else {
-
-                    values.push(`${truncatedProductTitle}...`)
-                }
-
-                
-            } else {
-
-                values.push(question[key])
-
-            }
-
-        })
-
-        return values
-
+    const indexTableMarkup = currentQuestions.map((question: any, index: number) => {
+        return (
+            <IndexTable.Row position={index} id={question.id}>
+                <IndexTable.Cell>{question.title}</IndexTable.Cell>
+                <IndexTable.Cell>{question.product}</IndexTable.Cell>
+                <IndexTable.Cell>{question.label || 'N/A'}</IndexTable.Cell>
+                <IndexTable.Cell>{question.answerChoices.length === 0 ? 'N/A' : question.answerChoices.length}</IndexTable.Cell>
+            </IndexTable.Row>
+        )
     })
-
 
   return (
         <Page
@@ -113,12 +75,15 @@ const CustomQuestions = () => {
             </Card>
 
             :
-
-            <DataTable
-            headings={['Product', 'Title', 'Label', 'Answer Choices']}
-            columnContentTypes={['text', 'text', 'text', 'text']}
-            rows={dataTableRows}
-            />
+            
+            <Card>
+                <IndexTable
+                itemCount={currentQuestions.length}
+                headings={[{title: 'Title'}, {title: 'Product'}, {title: 'Label'}, {title: 'Answer Choices'}]}
+                >
+                    {indexTableMarkup}
+                </IndexTable>
+            </Card>
 
             }
         </Page>

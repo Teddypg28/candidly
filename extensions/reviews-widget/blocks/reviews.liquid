@@ -483,7 +483,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
         let userRating = '5'
 
-        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating, media: [] }
+        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating }
 
         const handleUserInput = (event) => {
 
@@ -527,13 +527,15 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
         }
 
-        const handleFormSubmission = (event) => {
+        let addedFiles = []
 
-            event.preventDefault()
+        const handleFormSubmission = (event) => {
 
             const errors = isFormErrors()
 
             if (errors.length > 0) {
+
+                console.log('TRUE')
 
                 event.preventDefault()
 
@@ -545,7 +547,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
             } else {
 
-                const data = {...userInputState, productId: parseInt(reviewProductId), rating: parseInt(userRating)}
+                const data = {...userInputState, productId: parseInt(reviewProductId), rating: parseInt(userRating), media: addedFiles.toString()}
                 
                 fetch('https://blizzardbites.myshopify.com/apps/reviews/create-review', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)}).then(res => {
                   return res.json()
@@ -646,12 +648,12 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                     </div>
                 </div>
                 <div class='uploadMediaContainer'>
-                    <input type='file' id='uploadMediaBtn' class='uploadMediaBtn' accepts='image/*, video/*' multiple />
                     <label class='uploadMediaLabel' for='uploadMediaBtn'>
                         <p>Upload Media</p>
                         <svg viewBox="0 0 1024 1024" class="uploadIcon" version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z" fill="#000000"></path><path d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z" fill="#39393A"></path><path d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z" fill="#000000"></path></g></svg>            
                     </label>
                     <div class='uploadedMediaContainer'></div>
+                    <input type='file' id='uploadMediaBtn' class='uploadMediaBtn' accepts='image/*, video/*' multiple />
                 </div>
                 <p class='uploadError'></p>
                 <button class='submitReviewBtn' style='background-color: ${reviewSettings.primaryColor}'>Submit Review</button>
@@ -700,9 +702,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                         const renderChoices = () => {
                             return question.answerChoices.map(choice => {
                                 return (
-                                        `<div class="dropdownItem dropdownItem-${question.id}">
+                                        `<div class="dropdownItem" id="dropdownQuestion${question.id}Item">
                                             ${choice.title}
-                                            <div class="unchecked" data-value="${choice.title}"> </div>
+                                            <div class="checkbox" data-value="${choice.title}"> </div>
                                         </div>`
                                 )
                         }).join('')}
@@ -710,7 +712,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                         questionMarkupContainer.innerHTML+= `
                             <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
                             <div id='multipleChoicesContainer-${question.id}' class="multipleChoicesContainer">
-                                <div class="defaultOption" id="defaultOption-${question.id}">
+                                <div class="dropdownTop" id="dropdownTop-${question.id}">
                                     <p class="selectedOptionsContainer" id="selectedOptionsContainer-${question.id}">Select</p>
                                     <span class="chevronContainer" id='chevronContainer-${question.id}'> 
                                         <i class="fa-solid fa-chevron-down" style="color: #000000;"></i> 
@@ -751,6 +753,10 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                     const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
                     const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
 
+                    // START: CONFIGURE EVENT LISTENERS FOR DROPDOWNS (SINGLE CHOICE + MULTIPLE CHOICE)
+
+                    // SINGLE CHOICE
+
                     if (customQuestionDropdowns.length > 0) {
 
                         customQuestionDropdowns.forEach(dropdown => {
@@ -760,67 +766,96 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                         })
                     }
 
+                    // MULTIPLE CHOICE
+
                     if (customQuestionMultipleChoices.length > 0) {
 
                         customQuestionMultipleChoices.forEach(dropdown => {
 
                             const id = dropdown.id.split('-')[1]
 
-                            const defaultItem = document.querySelector(`#defaultOption-${id}`)
+                            const dropdownTop = document.querySelector(`#dropdownTop-${id}`)
                             const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${id}`)
                             const chevronContainer = document.querySelector(`#chevronContainer-${id}`)
 
-                            defaultItem.addEventListener('click', () => {
+                            let isDropdownOpen = false
+
+                            dropdownTop.addEventListener('click', () => {
+
+                                isDropdownOpen = !isDropdownOpen
+
+                                const closeDropdown = (e) => {
+
+                                    if (
+                                        e.target.classList.contains('checkbox') === false &&
+                                        e.target.classList.contains('dropdownItem') === false
+                                    ) {
+                                        
+                                        dropdownItemsContainer.classList.add('hidden')
+                                        chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #000000;"></i>'
+                                        isDropdownOpen = false
+
+                                        document.removeEventListener('click', closeDropdown)
+
+                                    }
+
+                                }
 
                                 const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${id}`)
 
-                                if (dropdownItemsContainer.classList.contains('hidden')) {
+                                 if (dropdownItemsContainer.classList.contains('hidden')) {
 
                                     dropdownItemsContainer.classList.remove('hidden')
                                     chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-up" style="color: #000000;"></i>'
                                     
                                 } else {
-
+                                    
                                     dropdownItemsContainer.classList.add('hidden')
                                     chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #000000;"></i>'
 
                                 }
 
+                                if (isDropdownOpen) {
+
+                                    setTimeout(() => document.addEventListener('click', closeDropdown), 100)
+
+                                }
+
                             })
 
-                            document.querySelectorAll(`.dropdownItem-${id}`).forEach(element => {
+                            document.querySelectorAll(`#dropdownQuestion${id}Item`).forEach(element => {
 
                                 element.addEventListener('click', (e) => {
 
-                                    if (e.target.className.includes(`dropdownItem-${id}`)) {
+                                    if (e.target.id === `dropdownQuestion${id}Item`) {
 
-                                        if (e.target.children[0].classList.contains('checked')) {
+                                        if (e.target.children[0].classList.contains(`checked-${id}`)) {
 
                                             e.target.children[0].textContent = ' '
 
-                                            e.target.children[0].classList = 'unchecked'
+                                            e.target.children[0].classList.remove(`checked-${id}`)
 
                                         } else {
 
                                             e.target.children[0].textContent = '•'
 
-                                            e.target.children[0].classList = `checked checked-${id}`
+                                            e.target.children[0].classList.add(`checked-${id}`)
 
                                         }
 
                                     } else {
 
-                                        if (e.target.classList.contains('checked')) {
+                                        if (e.target.classList.contains(`checked-${id}`)) {
 
                                             e.target.textContent = ' '
 
-                                            e.target.classList = 'unchecked'
+                                            e.target.classList.remove(`checked-${id}`)
 
                                         } else {
 
                                             e.target.textContent = '•'
 
-                                            e.target.classList = `checked checked-${id}`
+                                            e.target.classList.add(`checked-${id}`)
 
                                         }
 
@@ -854,12 +889,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                             })
 
                         })
-
-
                     }
 
-                    
-
+                    // END: CONFIGURE EVENT LISTENERS FOR DROPDOWNS (SINGLE CHOICE + MULTIPLE CHOICE)
                 })
             }
 
@@ -896,20 +928,73 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                     const img = document.createElement('img')
                     img.src = reader.result
 
-                    userInputState.media.push(reader.result)
+                    userInputState.media += `${reader.result}, `
 
                     imageContainer.appendChild(img)
                     imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
 
-                    imageContainer.innerHTML += `
-                        <div class="removeUploadedImageContainer">
-                            <div class="removeUploadedImage">
-                                <i class="fa-solid fa-trash-can fa-2xl" style="color: #f2455f;"></i>
-                            </div>
-                        </div>
-                    `
-                    
+                    const removeUploadedMediaContainer = document.createElement('div')
+                    removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
+                    removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
+                    removeUploadedMediaContainer.dataset.fileName = file.name
+
+                    const trashCanIconContainer = document.createElement('div')
+                    trashCanIconContainer.className = "removeUploadedMedia hidden"
+                    trashCanIconContainer.dataset.fileName = file.name
+
+                    const trashCanIcon = document.createElement('i')
+                    trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
+                    trashCanIcon.id = "deleteMedia"
+                    trashCanIcon.dataset.fileName = file.name
+                    trashCanIcon.style.color = "#ffffff"
+
+                    trashCanIconContainer.appendChild(trashCanIcon)
+
+                    removeUploadedMediaContainer.appendChild(trashCanIconContainer)
+
+                    removeUploadedMediaContainer.addEventListener('mouseover', () => {
+                        
+                        removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
+                        trashCanIconContainer.classList.remove('hidden')
+
+                    })
+
+                    removeUploadedMediaContainer.addEventListener('mouseleave', () => {
+                        
+                        removeUploadedMediaContainer.style.backgroundColor = 'transparent'
+                        trashCanIconContainer.classList.add('hidden')
+
+                    })
+
+                     removeUploadedMediaContainer.addEventListener('click', (e) => {
+                        
+                        if (e.target.id.includes('deleteMedia')) {
+                            
+                            const dt = new DataTransfer()
+
+                            const currentFiles = Array.from(uploadMediaBtn.files)
+
+                            currentFiles.forEach(file => {
+                                if (file.name !== e.target.dataset.fileName) {
+                                    dt.items.add(file)
+                                }
+                            })
+
+                            uploadMediaBtn.files = dt.files
+
+                            addedFiles = addedFiles.filter(fileName => {
+                                return fileName !== e.target.dataset.fileName
+                            })
+
+                            imageContainer.remove()
+
+                        }
+                    })
+
+                    imageContainer.appendChild(removeUploadedMediaContainer)
                     uploadedMediaContainer.appendChild(imageContainer)
+
+                    addedFiles.push(file.name)
 
                 }
 
@@ -926,12 +1011,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
             const inactive = () => {
                 uploadMediaContainer.style.border = '2px dotted lightgray'
             }
-            
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
-
-                uploadMediaContainer.addEventListener(event, preventDefault)
-
-            });
 
             ['dragenter', 'dragover'].forEach(event => {
 
@@ -944,12 +1023,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                 uploadMediaContainer.addEventListener(event, inactive)
 
             });
-
-            uploadMediaContainer.addEventListener('drop', (e) => {
-                Array.from(e.dataTransfer.files).forEach(file => {
-                    verifyFileType(file)
-                })
-            })
 
             uploadMediaBtn.addEventListener('change', () => {
                 Array.from(uploadMediaBtn.files).forEach(verifyFileType)

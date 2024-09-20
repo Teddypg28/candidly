@@ -5,11 +5,11 @@ import verifyReview from "~/helpers/verifyReview"
 
 export async function action({request} : ActionFunctionArgs) {
 
-    const { session, admin } = await authenticate.public.appProxy(request)
+    try {
 
-    if (session) {
+        const { session, admin } = await authenticate.public.appProxy(request)
 
-        try {
+        if (session) {
 
             const data = await request.json()
 
@@ -57,13 +57,14 @@ export async function action({request} : ActionFunctionArgs) {
             }
 
             return new Response(JSON.stringify({status: 'review verification failed'}), {status: 400})
+        }
 
-        } catch (error) {
 
-            console.log(error)
+    } catch (error) {
 
-            return new Response(JSON.stringify({error}), {status: 500})
+        console.log(error)
 
-        }   
-    }
+        return new Response(JSON.stringify({error}), {status: 500})
+
+    }   
 }
