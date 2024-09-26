@@ -102,3 +102,13 @@ model SavedReviewsTableViews {
   selectedProducts String?
   selectedRatings  String?
 }
+
+model savedCustomQuestionsTableView {
+  id                    Int     @id @default(autoincrement())
+  store                 String
+  name                  String
+  queryValue            String
+  sortSelected          String
+  selectedProducts      String?
+  selectedQuestionTypes String?
+}

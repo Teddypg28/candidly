@@ -10,38 +10,38 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     const { session } = await authenticate.admin(request)
 
-    const req = await request.json()
+    const data = await request.json()
 
-    if (req.action === 'delete') {
+    if (data.action === 'rename') {
 
-        const { id, name } = req.data
+        return await db.savedReviewsTableViews.update({where: {id: data.id, AND: {store: {equals: session.shop}}}, data: {name: data.name}})
 
-        if (req.data.id) {
+    }
 
-            return await db.savedReviewsTableViews.delete({where: {id}})
+    if (data.action === 'edit') {
 
-        }
+        const updatedView = await db.savedReviewsTableViews.update({where: {id: data.id, AND: {store: {equals: session.shop}}}, data: data.updatedData})
+        return json({...updatedView, sortSelected: [updatedView.sortSelected]})
 
-        const viewToDelete = await db.savedReviewsTableViews.findFirst({where: {store: {equals: session.shop}, AND: {name: {equals: name}}}})
+    }
 
-        if (viewToDelete) {
+    if (data.action === 'delete') {
 
-            return await db.savedReviewsTableViews.delete({where: {id: viewToDelete.id}})
-
-        }
+        return await db.savedReviewsTableViews.delete({where: {id: data.id, AND: {store: {equals: session.shop}}}})
+        
     }
 
     const updatedData =  {
-        ...req.data, 
+        ...data.data, 
         store: session.shop, 
-        sortSelected: req.data.sortSelected?.toString(),
-        selectedRatings: req.data.selectedRatings?.toString() || null, 
-        selectedProducts: req.data.selectedProducts?.toString() || null
+        sortSelected: data.data.sortSelected?.toString(),
+        selectedRatings: data.data.selectedRatings?.toString() || null, 
+        selectedProducts: data.data.selectedProducts?.toString() || null
     }
 
-    if (req.data.id !== undefined) {
+    if (data.data.id !== undefined) {
         
-        const rowId = req.data.id
+        const rowId = data.data.id
 
         delete updatedData['id']
 
@@ -51,7 +51,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     }
 
-    delete req.data['id']
+    delete data.data['id']
 
     const newView = await db.savedReviewsTableViews.create({data: updatedData, omit: {store: true}})
 

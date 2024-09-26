@@ -2,6 +2,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
 
 {% assign product = block.settings.product %}
+{% assign avg_rating = block.settings.product.metafields.avg_rating.stars.value %}
+
 
 <html>
     <div class='mainReviewContainer'></div>
@@ -70,6 +72,30 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
         })
         
     }).then(() => {
+
+        const avgRating = '{{avg_rating}}'
+
+        const stars = document.createElement('div')
+        const navigationTag = document.createElement('a')
+
+        navigationTag.href = '#shopify-block-reviews_app_reviews_FtVgWw'
+
+        for (let i = 1; i<=5; i++) {
+
+            if (i <= avgRating) {
+                navigationTag.innerHTML += `<svg class='reviewStar' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill=${reviewSettings.primaryColor}></path></g></svg>`
+            } else {
+                navigationTag.innerHTML += `<svg class='reviewStar' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke='black'><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill="white"></path></g></svg>`
+            }
+
+            }
+
+        const priceContainer = document.querySelector('.price__container')
+
+        priceContainer.appendChild(navigationTag)
+        priceContainer.style.display = 'flex'
+        priceContainer.style.alignItems = 'center'
+        priceContainer.style.gap = '5px'
         
         const totalReviews = reviews.length
 

@@ -32,10 +32,9 @@ export interface ReducerAction {
 export interface ReviewsTableFilterState {
     queryValue: string, 
     sortSelected: IndexFiltersProps['sortSelected'], 
-    selectedProducts?: string[],
-    selectedRatings?: string[],
-    selected: number,
-    itemStrings: string[]
+    selectedProducts: string[] | null,
+    selectedRatings: string[] | null,
+    selected: number
 }
 
 export interface ImportReviewsFormState {
@@ -52,6 +51,6 @@ export interface SavedView {
     name: string, 
     queryValue: string, 
     sortSelected: IndexFiltersProps['sortSelected'], 
-    selectedProducts?: string[],
-    selectedRatings?: string[]
+    selectedProducts: string[],
+    selectedRatings: string[]
 }

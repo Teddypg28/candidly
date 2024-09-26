@@ -1,10 +1,11 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions, EmptyState } from "@shopify/polaris";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text } from "@shopify/polaris";
 
 import db from '../db.server'
 
 import { authenticate } from "~/shopify.server";
 import { useLoaderData, useSubmit } from "@remix-run/react";
+import arraysToStrings from "~/helpers/arraysToStrings";
 
 import { json } from "@remix-run/node";
 import { useRef, useState } from "react";
@@ -12,7 +13,50 @@ import { ImportReviewsFormState, ReviewsTableFilterState, SavedView } from "~/ty
 
 export const action = async ({request} : ActionFunctionArgs) => {
 
-    const { session } = await authenticate.admin(request)
+    const { session, admin } = await authenticate.admin(request)
+
+    try {
+    
+        const metafields = admin.rest.resources.Metafield.all({product_id: 8805145608356, session: session});
+    
+        const metafieldsData = (await metafields).data
+
+        for (let i = 0; i<metafieldsData.length; i++) {
+
+            if (metafieldsData[i].owner_id === 8805145608356) {
+
+                const sampleMath = Math.round(((4 + 5 + 4 + 5 + 1 + 3) / 6) * 10) / 10
+
+                const metafield = new admin.rest.resources.Metafield({session: session});
+
+                metafield.id = metafieldsData[i].id;
+                metafield.value = sampleMath;
+                metafield.type = "number_decimal";
+
+                await metafield.save({
+                    update: true,
+                });
+
+                const returnedData = admin.rest.resources.Metafield.all({session, product_id: 8805145608356})
+                
+                console.log((await returnedData).data)
+
+                break
+                
+            }
+
+        }
+    
+        return true
+        
+    } catch (error) {
+
+        console.log(error)
+
+        return true
+        
+    }
+
 
     const reviewIdsToDelete = await request.json()
 
@@ -21,6 +65,7 @@ export const action = async ({request} : ActionFunctionArgs) => {
     }))
 
     return true
+    
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
@@ -66,9 +111,9 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
       const result = await admin.graphql(query, {variables: {id: fullProductId}})
 
-      const product = await (await result.json()).data.product.title
+      const productTitle = await (await result.json()).data.product?.title || 'Product Deleted'
 
-      return {product, id: id.toString(), ...rest}
+      return {productTitle, id: id.toString(), ...rest}
       
   }))
 
@@ -76,8 +121,8 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
   const formattedTableViews = savedTableViews.map(tableView => {
 
-      const splitSelectedProducts = tableView.selectedProducts?.split(',')
-      const splitSelectedRatings = tableView.selectedRatings?.split(',')
+      const splitSelectedProducts = tableView.selectedProducts?.split(',') || []
+      const splitSelectedRatings = tableView.selectedRatings?.split(',') || []
 
       return {...tableView, sortSelected: [tableView.sortSelected], selectedProducts: splitSelectedProducts, selectedRatings: splitSelectedRatings}
 
@@ -91,16 +136,9 @@ export default function Index() {
     
     const { reviews, savedTableViews } = useLoaderData<typeof loader>()
 
-    const initialState: ReviewsTableFilterState = {
-        sortSelected: ['date asc'],
-        queryValue: '',
-        itemStrings: ['All Reviews', ...savedTableViews.map(table => table.name)],
-        selected: 0,
-        selectedProducts: undefined,
-        selectedRatings: undefined
-    }
+    const submit = useSubmit()
 
-    const initialImportReviewsState: ImportReviewsFormState = {
+    const initialImportState = {
         isImportingReviews: false,
         numberOfReviews: 10,
         selectedImportRatings: [],
@@ -109,24 +147,24 @@ export default function Index() {
         importFormErrors: {}
     }
 
-    const [importReviewsFormState, setImportReviewsFormState] = useState(initialImportReviewsState)
+    const [importReviewsFormState, setImportReviewsFormState] = useState<ImportReviewsFormState>(initialImportState)
 
     const { isImportingReviews, numberOfReviews, selectedImportRatings, productLink, selectedProductData, importFormErrors } = importReviewsFormState
 
     const [isFormSubmitting, setIsFormSubmitting] = useState(false)
 
-    const handleNumOfReviewsChange = (value: number) => {
-        setImportReviewsFormState({...importReviewsFormState, numberOfReviews: value})
-    }
-
-    const [reviewsState, setReviewsState] = useState<ReviewsTableFilterState>(initialState)
+    const [reviewsState, setReviewsState] = useState<ReviewsTableFilterState>({
+        sortSelected: ['date asc'],
+        queryValue: '',
+        selected: 0,
+        selectedProducts: null as string[] | null,
+        selectedRatings: null as string[] | null
+    })
+    
     const savedViews = useRef<SavedView[]>(savedTableViews)
-    
-    const { itemStrings, queryValue, selected, sortSelected, selectedProducts, selectedRatings } = reviewsState
-    
-    const {mode, setMode} = useSetIndexFiltersMode()
+    const { queryValue, selected, sortSelected, selectedProducts, selectedRatings } = reviewsState
 
-    const submit = useSubmit()
+    const {mode, setMode} = useSetIndexFiltersMode()
 
     const filteredReviews = reviews.sort((a, b) => {
 
@@ -149,13 +187,13 @@ export default function Index() {
 
         return new Date(review.date).toLocaleDateString().includes(queryValue) ||
         review.body.toLowerCase().includes(queryValue.toLowerCase()) || review.title.toLowerCase().includes(queryValue.toLowerCase()) 
-        || review.product.toLowerCase().includes(queryValue.toLowerCase()) || review.name.toLowerCase().includes(queryValue.toLowerCase())
+        || review.productTitle.toLowerCase().includes(queryValue.toLowerCase()) || review.name.toLowerCase().includes(queryValue.toLowerCase())
 
     }).filter(review => {
 
         if (selectedProducts && selectedProducts.length > 0) {
 
-            return selectedProducts.includes(review.product)
+            return selectedProducts.includes(review.productTitle)
 
         }
 
@@ -174,26 +212,31 @@ export default function Index() {
 
     const { handleSelectionChange, allResourcesSelected, selectedResources, removeSelectedResources } = useIndexResourceState(filteredReviews)
 
-    const updateViewState = (viewName: string, index: number) => {
+    const handleNumOfReviewsChange = (value: number) => {
+        setImportReviewsFormState({...importReviewsFormState, numberOfReviews: value})
+    }
+
+    const updateViewState = (index: number) => {
+
+        const viewName = itemStrings[index]
 
         if (viewName === 'All Reviews') {
            return setReviewsState({
-            ...reviewsState, 
             queryValue: '', 
-            selectedProducts: undefined, 
-            selectedRatings: undefined, 
+            selectedProducts: null, 
+            selectedRatings: null, 
             sortSelected: ['date asc'],
             selected: index
         })}
 
-        const viewStateObject = savedViews.current.find((view: SavedView) => view.name === viewName)
+        const viewStateObject = savedViews.current.find(view => view.name === viewName)
 
-        setReviewsState({
-            ...reviewsState, 
-            ...viewStateObject,
-            selected: index
-        })
-        
+        if (viewStateObject) {
+
+           return setReviewsState({...viewStateObject, selected: index})
+
+        }
+
     }
 
     const indexTableMarkup = filteredReviews.map((review, index) => {
@@ -212,7 +255,7 @@ export default function Index() {
         return (
             <IndexTable.Row selected={selectedResources.includes(review.id)} id={review.id} position={index}>
                 <IndexTable.Cell>{new Date(review.date).toLocaleDateString()}</IndexTable.Cell>
-                <IndexTable.Cell>{review.product}</IndexTable.Cell>
+                <IndexTable.Cell><Text as="p" tone={review.productTitle === 'Product Deleted' ? "critical" : "base"}>{review.productTitle}</Text></IndexTable.Cell>
                 <IndexTable.Cell>{review.name}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <Link url={`/app/review/${review.id}`}>{review.title}</Link>
@@ -231,7 +274,7 @@ export default function Index() {
     ]
 
     const productNames = reviews.map(review => {
-        return review.product
+        return review.productTitle
     })
 
     const productNameChoices = productNames.filter((productName, index) => {
@@ -248,7 +291,7 @@ export default function Index() {
     const filters: IndexFiltersProps['filters'] = [
         {
             key: 'products', 
-            label: 'Product', 
+            label: 'Product Name', 
             filter: ( 
                 <ChoiceList 
                 allowMultiple 
@@ -274,96 +317,57 @@ export default function Index() {
         }
     ]
 
+    const itemStrings = ['All Reviews', ...savedViews.current.map(table => table.name)]
+
     const tabs: IndexFiltersProps['tabs'] = itemStrings.map((itemName, index) => {
         return {
             content: itemName,
             id: index.toString(),
             actions: index === 0 ? [] : [
 
-                {type: 'rename', onPrimaryAction: (newName: string) => {
+                {type: 'rename', onPrimaryAction: (name: string) => {
 
-                    const updatedStringNames = itemStrings.map((name, innerIndex) => {
+                    const viewToRename = savedViews.current[selected-1]
 
-                        if (innerIndex === index) {
-                            
-                            return newName
+                    const id = viewToRename.id
 
-                        }
-
-                        return name
-
-                    })
-
-                    const updatedViewState = savedViews.current.map((view) => {
-
-                        if (view.name === itemName) {
-
-                            const payload = {...view, name: newName}
-
-                            submit(JSON.stringify({data: payload}), {method: 'POST', encType: 'application/json', action: '/api/review-table-view', navigate: false})
-
-                            return payload
-
+                    savedViews.current = savedViews.current.map((view, index) => {
+                        if (selected-1 === index) {
+                            view.name = name
                         }
 
                         return view
-
                     })
 
-                    setReviewsState({...reviewsState, itemStrings: updatedStringNames})
+                    submit(JSON.stringify({action: 'rename', name, id}), {method: 'POST', encType: 'application/json', action: '/api/review-table-views', navigate: false}) 
+                }
+            },
 
-                    savedViews.current = updatedViewState
+                {type: 'duplicate', onPrimaryAction: async (name: string) => {
 
-                    }
-
-                },
-
-                {type: 'duplicate', onPrimaryAction: async (nameOfDuplicatedView: string) => {
-
-                    setReviewsState(
-                        {
-                            ...reviewsState, 
-                            itemStrings: [...itemStrings, nameOfDuplicatedView], 
-                            selected: itemStrings.length
-                        })
-                    
-                    const newViewPayload = {id: undefined, name: nameOfDuplicatedView, sortSelected, queryValue, selectedProducts, selectedRatings}
-
-                    const result = await fetch('/api/review-table-view', {method: 'POST', body: JSON.stringify({data: newViewPayload}), headers: {'Content-Type':'application/json'}})
-                    
-                    const updatedView = await result.json()
-
-                    savedViews.current = [...savedViews.current, updatedView]
-
-                    return true
+                    return createNewView(name)
                     
                 }},
 
-                {type: 'delete', onPrimaryAction: (viewName: string) => {
+                {type: 'delete', onPrimaryAction: (name: string) => {
                   
-                    const viewStateObjectToDelete = savedViews.current.find(view => {
-                        return view.name === viewName
+                    const viewToDelete = savedViews.current.find(view => view.name === name)
+
+                    const id = viewToDelete?.id
+
+                    submit(JSON.stringify({action: 'delete', id}), {method: 'POST', action: '/api/review-table-views', encType: 'application/json', navigate: false})
+
+                    const updatedViews = savedViews.current.filter(view => view.id !== id)
+                    savedViews.current = updatedViews
+
+                    setReviewsState({
+                        queryValue: '',
+                        selected: 0,
+                        sortSelected: ['choices asc'],
+                        selectedRatings: null as string[] | null,
+                        selectedProducts: null as string[] | null
                     })
-
-                    if (viewStateObjectToDelete) {
-
-                        const filteredViewState = savedViews.current.filter(view => {
-                            return JSON.stringify(view) !== JSON.stringify(viewStateObjectToDelete)
-                        })
-    
-                        const filteredStrings = itemStrings.filter(string => {
-                            return string !== viewName
-                        })
-    
-                        setReviewsState({...initialState, itemStrings: filteredStrings})
-    
-                        savedViews.current = filteredViewState
-    
-                        submit(JSON.stringify({action: 'delete', data: {id: viewStateObjectToDelete.id, name: viewStateObjectToDelete.name}}), 
-                            {method: 'POST', encType: 'application/json', action: '/api/review-table-view', navigate: false})
-
-                    }
-
+                   
                 }}
             ]
         }
@@ -384,14 +388,15 @@ export default function Index() {
     }
 
     if (selectedProducts) {
+
         appliedFilters.push(
             {
                 key: 'products', 
                 label: clarifyLabel('products', selectedProducts), 
                 onRemove: () => { 
-                    setReviewsState({...reviewsState, selectedProducts: undefined})
+                    setReviewsState({...reviewsState, selectedProducts: []})
                     savedViews.current = savedViews.current.map(view => {
-                        return {...view, selectedProducts: undefined}
+                        return {...view, selectedProducts: []}
                     })
                 }
             }
@@ -403,16 +408,16 @@ export default function Index() {
             {
                 key: 'ratings', 
                 label: clarifyLabel('ratings', selectedRatings), 
-                onRemove: () => setReviewsState({...reviewsState, selectedRatings: undefined})
+                onRemove: () => setReviewsState({...reviewsState, selectedRatings: []})
             }
         )
     }
 
     const createNewView = async (name: string) => {
 
-        const newViewData = {id: undefined, name, sortSelected, queryValue, selectedProducts, selectedRatings}
+        const newViewData = {name, sortSelected, queryValue, selectedProducts, selectedRatings}
 
-        const result = await fetch('/api/review-table-view', {method: 'POST', body: JSON.stringify({data: newViewData}), headers: {'Content-Type':'application/json'}})
+        const result = await fetch('/api/review-table-views', {method: 'POST', body: JSON.stringify({data: newViewData}), headers: {'Content-Type':'application/json'}})
         
         const data = await result.json()
         
@@ -420,51 +425,30 @@ export default function Index() {
 
         setReviewsState({
             ...reviewsState, 
-            itemStrings: [...itemStrings, name], 
-            selected: itemStrings.length,
+            selected: itemStrings.length
         })
 
         return true
 
     }
 
-    const saveView = async (viewName: string) => {
+    const editAndSaveView = async () => {
 
-        const view = savedViews.current.find(view => view.name === viewName)
+        const viewToEditAndSave = savedViews.current[selected-1]
+        const id = viewToEditAndSave.id
 
-        if (view) {
+        const { queryValue, sortSelected, selectedProducts, selectedRatings } = reviewsState
 
-            const payload = {
-                ...view,
-                queryValue,
-                sortSelected: sortSelected?.toString(),
-                selectedProducts: selectedProducts?.toString(),
-                selectedRatings: selectedRatings?.toString()
-            }
-    
-            const updatedSavedViews = savedViews.current.map(view => {
-                if (view.name === viewName) {
-                    return {
-                        ...view,
-                        queryValue,
-                        sortSelected,
-                        selectedProducts,
-                        selectedRatings
-                    }
-                }
-    
-                return view
-            })
-    
-            savedViews.current = updatedSavedViews
-    
-            submit(JSON.stringify({data: payload}), {method: 'POST', encType: 'application/json', action: '/api/review-table-view', navigate: false})
-    
-            return true      
+        const editedViewData = arraysToStrings({selectedProducts, selectedRatings, sortSelected, queryValue}, 'reviews')
+        
+        const res = await fetch('/api/review-table-views', {method: 'POST', body: JSON.stringify({action: 'edit', id, updatedData: editedViewData}), headers: {'Content-Type':'application/json'}})
 
-        }
+        const updatedView = await res.json()
 
-        return false
+        savedViews.current = savedViews.current.filter(view => view.id !== id)
+        savedViews.current = [...savedViews.current, updatedView]
+
+        return true
 
     }
 
@@ -481,7 +465,7 @@ export default function Index() {
 
         {
             type: 'save',
-            onAction: () => saveView(itemStrings[selected])
+            onAction: () => editAndSaveView()
         }
     
         const ratingChoices = ['1', '2', '3', '4', '5'].map(rating => {
@@ -588,7 +572,7 @@ export default function Index() {
         primaryAction={{content: 'Import', onAction: importReviews}}
         secondaryActions={[{content: 'Export', disabled: filteredReviews.length === 0}]}
         >
-            <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initialImportReviewsState)} open={isImportingReviews}>
+            <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initialImportState)} open={isImportingReviews}>
                 <Card>
                     <Form onSubmit={verifyReadyToImport}>
                         <BlockStack gap='300'>
@@ -645,12 +629,12 @@ export default function Index() {
                     queryPlaceholder="Search by name, title, body, product, or date"
                     onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
                     onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
-                    onClearAll={() => setReviewsState({...reviewsState, selectedProducts: undefined, selectedRatings: undefined})}
-                    cancelAction={{onAction: () => updateViewState(itemStrings[selected], selected)}}
+                    onClearAll={() => setReviewsState({...reviewsState, selectedProducts: [], selectedRatings: []})}
+                    cancelAction={{onAction: () => updateViewState(selected)}}
                     primaryAction={primaryAction}
                     tabs={tabs}
                     onCreateNewView={createNewView}
-                    onSelect={(index: number) => updateViewState(itemStrings[index], index)}
+                    onSelect={(index: number) => updateViewState(index)}
                     selected={selected}
                     />
                     <IndexTable

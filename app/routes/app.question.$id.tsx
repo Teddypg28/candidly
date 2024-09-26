@@ -76,7 +76,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
             delete completeData['answerChoices']
 
-            updateChoicesFunctions.push((async () => { return await db.reviewFormQuestion.update({where: {id: data.questionId, AND: {store: {equals: session.shop}}}, data: completeData, omit: {productId: true}})})())
+            updateChoicesFunctions.push((async () => { return await db.reviewFormQuestion.update({where: {id: data.id, AND: {store: {equals: session.shop}}}, data: completeData, omit: {productId: true}})})())
 
             for (let i = 0; i<data.answerChoices.length; i++) {
                 updateChoicesFunctions.push((async () => { return await db.reviewFormAnswerChoice.update({where: {id: answerChoices[i].id}, data: data.answerChoices[i]})})())
@@ -86,7 +86,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
         }
 
-        const question = await db.reviewFormQuestion.update({where: {id: data.questionId, AND: {store: {equals: session.shop}} }, data: completeData, omit: {productId: true}})
+        const question = await db.reviewFormQuestion.update({where: {id: data.id, AND: {store: {equals: session.shop}} }, data: completeData, omit: {productId: true}})
 
         return question
 
@@ -155,11 +155,11 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
                 const initalState: CustomReviewFormQuestionState = {
                     id: result.id,
-                    productTitle: data.data.product.title || '',
+                    productTitle: data.data.product?.title || 'Product Deleted',
                     productId: result.productId.toString(),
-                    productImage: data.data.product.featuredImage.url || '',
-                    productVariants: data.data.product.variants.nodes,
-                    title: 'TEEEDDDDY',
+                    productImage: data.data.product?.featuredImage.url,
+                    productVariants: data.data.product?.variants.nodes,
+                    title: result.title,
                     label: result.label || undefined,
                     answerLabel: result.answerLabel || '',
                     displayAnswer: result.displayAnswer,
@@ -407,7 +407,7 @@ export default function Question() {
 
                             <InlineStack blockAlign="center" gap={'200'}>
                                 <Thumbnail alt="featured product image" source={state.productImage || ImageIcon} />
-                                <Text as="span" variant="bodyLg">{state.productTitle}</Text>
+                                <Text as="span" variant="bodyLg" tone={state.productTitle === 'Product Deleted' ? 'critical' : 'base'}>{state.productTitle}</Text>
                             </InlineStack>
                             
                             :
