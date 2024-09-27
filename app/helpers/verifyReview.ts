@@ -99,5 +99,3 @@ export default async function verifyReview(graphql: any, reviewerEmail: string, 
     return await verify(initialQuery)
 
 }
-
-

@@ -13,50 +13,7 @@ import { ImportReviewsFormState, ReviewsTableFilterState, SavedView } from "~/ty
 
 export const action = async ({request} : ActionFunctionArgs) => {
 
-    const { session, admin } = await authenticate.admin(request)
-
-    try {
-    
-        const metafields = admin.rest.resources.Metafield.all({product_id: 8805145608356, session: session});
-    
-        const metafieldsData = (await metafields).data
-
-        for (let i = 0; i<metafieldsData.length; i++) {
-
-            if (metafieldsData[i].owner_id === 8805145608356) {
-
-                const sampleMath = Math.round(((4 + 5 + 4 + 5 + 1 + 3) / 6) * 10) / 10
-
-                const metafield = new admin.rest.resources.Metafield({session: session});
-
-                metafield.id = metafieldsData[i].id;
-                metafield.value = sampleMath;
-                metafield.type = "number_decimal";
-
-                await metafield.save({
-                    update: true,
-                });
-
-                const returnedData = admin.rest.resources.Metafield.all({session, product_id: 8805145608356})
-                
-                console.log((await returnedData).data)
-
-                break
-                
-            }
-
-        }
-    
-        return true
-        
-    } catch (error) {
-
-        console.log(error)
-
-        return true
-        
-    }
-
+    const { session } = await authenticate.admin(request)
 
     const reviewIdsToDelete = await request.json()
 
