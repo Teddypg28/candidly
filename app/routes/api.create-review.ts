@@ -51,37 +51,73 @@ export async function action({request} : ActionFunctionArgs) {
 
             await db.productReview.create({data: {...data, store: session.shop, date: new Date(), customQuestionAnswers: {create: customQuestionAnswerData}}})
 
-            const totalReviews = await db.productReview.findMany({where: {productId: {equals: data.productId}, AND: {store: {equals: session.shop}}}})
-
-            let totalReviewsScore = 0
-
-            totalReviews.forEach(review => {
-                totalReviewsScore += review.rating
-            })
-
-            const metafields = admin.rest.resources.Metafield.all({product_id: data.productId, session});
+            const metafields = await admin.rest.resources.Metafield.all({product_id: data.productId, session});
     
-            const metafieldsData = (await metafields).data
+            const ratingMetafieldExists = metafields.data.find((metafield: any) => metafield.owner_id === data.productId && metafield.key === 'rating')
 
-            for (let i = 0; i<metafieldsData.length; i++) {
+            if (ratingMetafieldExists) {
 
-                if (metafieldsData[i].owner_id === data.productId) {
+                const ratingCountMetafield = metafields.data.find((metafield: any) => metafield.owner_id === data.productId && metafield.key === 'rating_count')
 
-                    const updatedValue = Math.round((totalReviewsScore / totalReviews.length) * 2) / 2
+                const totalReviews = await db.productReview.findMany({where: {productId: {equals: data.productId}, AND: {store: {equals: session.shop}}}})
 
-                    const metafield = new admin.rest.resources.Metafield({session});
+                let totalReviewsScore = 0
 
-                    metafield.id = metafieldsData[i].id;
-                    metafield.value = updatedValue;
-                    metafield.type = "number_decimal";
+                totalReviews.forEach(review => {
+                    totalReviewsScore += review.rating
+                })
 
-                    await metafield.save({
-                        update: true,
-                    });
+                const updatedAvgProductRating = Math.round((totalReviewsScore / totalReviews.length) * 2) / 2
 
-                    break
-                    
-                }
+                const updatedRatingMetafield = new admin.rest.resources.Metafield({session: session});
+
+                updatedRatingMetafield.namespace = "reviews";
+                updatedRatingMetafield.key = "rating";
+                updatedRatingMetafield.product_id = data.productId;
+                updatedRatingMetafield.id = ratingMetafieldExists.id;
+                updatedRatingMetafield.value = JSON.stringify({value: updatedAvgProductRating, scale_min: 1.0, scale_max: 5.0});
+                updatedRatingMetafield.type = "rating";
+
+                await updatedRatingMetafield.save({
+                    update: true,
+                });
+
+                const updatedRatingCountMetafield = new admin.rest.resources.Metafield({session: session});
+
+                updatedRatingCountMetafield.namespace = "reviews";
+                updatedRatingCountMetafield.key = "rating_count";
+                updatedRatingCountMetafield.product_id = data.productId;
+                updatedRatingCountMetafield.id = ratingCountMetafield.id;
+                updatedRatingCountMetafield.value = totalReviews.length;
+                updatedRatingCountMetafield.type = "number_integer";
+
+                await updatedRatingCountMetafield.save({
+                    update: true,
+                });
+
+            } else {
+
+                const newRatingMetafield = await new admin.rest.resources.Metafield({session})
+
+                newRatingMetafield.namespace = "reviews";
+                newRatingMetafield.key = "rating";
+                newRatingMetafield.product_id = data.productId;
+                newRatingMetafield.value = JSON.stringify({value: data.rating, scale_min: 1.0, scale_max: 5.0});
+                newRatingMetafield.type = "rating";
+                await newRatingMetafield.save({
+                    update: true,
+                });
+
+                const newRatingCountMetafield = await new admin.rest.resources.Metafield({session})
+
+                newRatingCountMetafield.product_id = data.productId;
+                newRatingCountMetafield.namespace = "reviews";
+                newRatingCountMetafield.key = "rating_count";
+                newRatingCountMetafield.value = 1;
+                newRatingCountMetafield.type = "number_integer";
+                await newRatingCountMetafield.save({
+                    update: true,
+                });
 
             }
 

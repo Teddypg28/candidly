@@ -2,8 +2,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
 
 {% assign product = block.settings.product %}
-{% assign avg_rating = block.settings.product.metafields.avg_rating.stars.value %}
-
+{% assign avg_rating = block.settings.product.metafields.reviews.rating.value %}
 
 <html>
     <div class='mainReviewContainer'></div>
@@ -73,68 +72,80 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
         
     }).then(() => {
 
-        const avgRating = parseFloat('{{avg_rating}}')
+        if (reviews.length > 0) {
 
-        const stars = document.createElement('div')
-        const navigationTag = document.createElement('a')
+            const avgRating = parseFloat('{{avg_rating}}')
 
-        navigationTag.href = '#shopify-block-reviews_app_reviews_FtVgWw'
+            const navigationTag = document.createElement('a')
+            navigationTag.style.textDecoration = 'none'
+            navigationTag.style.color = 'black'
+            navigationTag.style.display = 'flex'
+            navigationTag.style.alignItems = 'flex-start'
+            navigationTag.style.fontSize = '16px'
 
-        let starsLeft
+            const numOfReviewsContainer = document.createElement('div')
+            numOfReviewsContainer.textContent = `${reviews.length} ${reviews.length === 1 ? 'Review' : 'Reviews'}`
+            numOfReviewsContainer.style.marginLeft = '10px'
 
-        for (let i = 1; i<=5; i++) {
+            navigationTag.href = '#shopify-block-reviews_app_reviews_FtVgWw'
+            navigationTag.style.marginTop = '15px'
 
-            starsLeft = avgRating - i
+            let starsLeft
 
-            if (starsLeft >= 0) {
+            for (let i = 1; i<=5; i++) {
 
-            navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
-                                        <defs>
-                                        <linearGradient id="grad-${i}">
-                                            <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
-                                            <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
-                                        </linearGradient>
-                                        </defs>
-                                        <path fill="url(#grad-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
-                                    l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>`
+                starsLeft = avgRating - i
 
-            } else if (i - 0.5 === avgRating) {
+                if (starsLeft >= 0) {
 
-            navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
-                                        <defs>
-                                        <linearGradient id="grad-${i}">
-                                            <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
-                                            <stop offset="50%" stop-color="#e8e8e8"/>
-                                        </linearGradient>
-                                        </defs>
-                                        <path fill="url(#grad-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
-                                    l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>`                                
-
-            } else {
-
-            navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
+                navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
                                             <defs>
                                             <linearGradient id="grad-${i}">
-                                                <stop offset="50%" stop-color="#e8e8e8"/>
-                                                <stop offset="50%" stop-color="#e8e8e8"/>
+                                                <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
+                                                <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
                                             </linearGradient>
                                             </defs>
                                             <path fill="url(#grad-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
                                         l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                         </svg>`
-            }
 
-            }
+                } else if (i - 0.5 === avgRating) {
 
-        const priceContainer = document.querySelector('.price__container')
+                navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
+                                            <defs>
+                                            <linearGradient id="grad-${i}">
+                                                <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
+                                                <stop offset="50%" stop-color="#e8e8e8"/>
+                                            </linearGradient>
+                                            </defs>
+                                            <path fill="url(#grad-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
+                                        l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                        </svg>`                                
 
-        priceContainer.appendChild(navigationTag)
-        priceContainer.style.display = 'flex'
-        priceContainer.style.alignItems = 'center'
-        priceContainer.style.gap = '5px'
-        
+                } else {
+
+                navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
+                                                <defs>
+                                                <linearGradient id="grad-${i}">
+                                                    <stop offset="50%" stop-color="#e8e8e8"/>
+                                                    <stop offset="50%" stop-color="#e8e8e8"/>
+                                                </linearGradient>
+                                                </defs>
+                                                <path fill="url(#grad-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
+                                            l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                            </svg>`
+                }
+
+                }
+
+            navigationTag.appendChild(numOfReviewsContainer)
+
+            const priceContainer = document.querySelector('.price__container')
+
+            priceContainer.appendChild(navigationTag)
+
+        }
+
         const totalReviews = reviews.length
 
         // START: RENDER REVIEWS FOR CURRENT PAGE
@@ -213,11 +224,29 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                 const emptyStars = 5 - stars
 
                 for (let i = 0; i<stars; i++) {
-                    starMarkup.push(`<svg class='reviewStar' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill=${reviewSettings.primaryColor}></path></g></svg>`)
+                    starMarkup.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
+                                        <defs>
+                                        <linearGradient id="fullStar-${i}">
+                                            <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
+                                            <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
+                                        </linearGradient>
+                                        </defs>
+                                        <path fill="url(#fullStar-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
+                                    l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>`)
                 }
 
                 for (let i = 0; i<emptyStars; i++) {
-                    starMarkup.push(`<svg class='reviewStar' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke='black'><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill="white"></path></g></svg>`)
+                    starMarkup.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
+                                            <defs>
+                                            <linearGradient id="emptyStar-${i}">
+                                                <stop offset="50%" stop-color="#e8e8e8"/>
+                                                <stop offset="50%" stop-color="#e8e8e8"/>
+                                            </linearGradient>
+                                            </defs>
+                                            <path fill="url(#emptyStar-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
+                                        l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                        </svg>`)
                 }
 
                 return starMarkup.join('')
@@ -401,7 +430,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
             document.getElementById('reviewBarWrapper').innerHTML = reviewStatsMarkup.join('')
             document.getElementById('averageCustomerReview').textContent = `${getAverageRating()} out of 5`
-            document.getElementById('totalCustomerReviews').textContent = `${totalReviews} customer reviews`
+            document.getElementById('totalCustomerReviews').textContent = `${totalReviews} customer ${totalReviews > 1 ? 'reviews' : 'review'}`
 
             setCurrentPage(1)
 
@@ -628,9 +657,15 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
             for (let i = 1; i<6; i++) {
 
                 if (i <= rating) {
-                    htmlMarkup.push(`<svg class='reviewFormStar' data-rating='${i}' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path class="star-${i}" d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill=${reviewSettings.primaryColor}></path></g></svg>`)
+                    htmlMarkup.push(`<svg data-rating='${i}' class="reviewFormStar" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32">
+                                        <path class="star-${i}" fill="${reviewSettings.primaryColor}" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
+                                        l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>`)
                 } else {
-                    htmlMarkup.push(`<svg class='reviewFormStar' data-rating='${i}' viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione-monotone" preserveAspectRatio="xMidYMid meet" fill="#000000" stroke=${reviewSettings.primaryColor}><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path class="star-${i}" d="M62 25.154H39.082L32 3l-7.082 22.154H2l18.541 13.693L13.459 61L32 47.309L50.541 61l-7.082-22.152L62 25.154z" fill="white"></path></g></svg>`)
+                    htmlMarkup.push(`<svg data-rating='${i}' class="reviewFormStar star-" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32">
+                                            <path class="star-${i}" fill="#e8e8e8" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
+                                        l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>`)
                 }
 
             }
@@ -649,7 +684,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                         if (i<=maxRating) {
                             document.querySelector(`.star-${i}`).style.fill = reviewSettings.primaryColor
                         } else {
-                            document.querySelector(`.star-${i}`).style.fill = 'white'
+                            document.querySelector(`.star-${i}`).style.fill = '#e8e8e8'
                         }
 
                     }
@@ -980,88 +1015,103 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
                 uploadError.innerText = ''
 
-                const reader = new FileReader()
+                // Verify no duplicate files are being added -- uses array to verify since file list changes if multiple drag and drops are used
 
-                reader.readAsDataURL(file)
+                if (!addedFiles.find(uploadedFile => uploadedFile.name === file.name)) {
 
-                reader.onloadend = () => {
+                    // Push files to saved uploaded files array and update input element file list
+                    // since file list changes if user drags and drops multiple sets of files
 
-                    const imageContainer = document.createElement('figure')
-                    imageContainer.className = 'uploadedImage'
+                    addedFiles.push(file)
 
-                    const img = document.createElement('img')
-                    img.src = reader.result
+                    const dt = new DataTransfer()
 
-                    userInputState.media += `${reader.result}, `
-
-                    imageContainer.appendChild(img)
-                    imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
-
-                    const removeUploadedMediaContainer = document.createElement('div')
-                    removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
-                    removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
-                    removeUploadedMediaContainer.dataset.fileName = file.name
-
-                    const trashCanIconContainer = document.createElement('div')
-                    trashCanIconContainer.className = "removeUploadedMedia hidden"
-                    trashCanIconContainer.dataset.fileName = file.name
-
-                    const trashCanIcon = document.createElement('i')
-                    trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
-                    trashCanIcon.id = "deleteMedia"
-                    trashCanIcon.dataset.fileName = file.name
-                    trashCanIcon.style.color = "#ffffff"
-
-                    trashCanIconContainer.appendChild(trashCanIcon)
-
-                    removeUploadedMediaContainer.appendChild(trashCanIconContainer)
-
-                    removeUploadedMediaContainer.addEventListener('mouseover', () => {
-                        
-                        removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
-                        trashCanIconContainer.classList.remove('hidden')
-
+                    addedFiles.forEach(file => {
+                        dt.items.add(file)
                     })
 
-                    removeUploadedMediaContainer.addEventListener('mouseleave', () => {
-                        
-                        removeUploadedMediaContainer.style.backgroundColor = 'transparent'
-                        trashCanIconContainer.classList.add('hidden')
+                    uploadMediaBtn.files = dt.files
 
-                    })
+                    const reader = new FileReader()
 
-                     removeUploadedMediaContainer.addEventListener('click', (e) => {
-                        
-                        if (e.target.id.includes('deleteMedia')) {
+                    reader.readAsDataURL(file)
+
+                    reader.onloadend = () => {
+
+                        const imageContainer = document.createElement('figure')
+                        imageContainer.className = 'uploadedImage'
+
+                        const img = document.createElement('img')
+                        img.src = reader.result
+
+                        imageContainer.appendChild(img)
+                        imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+
+                        const removeUploadedMediaContainer = document.createElement('div')
+                        removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
+                        removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
+                        removeUploadedMediaContainer.dataset.fileName = file.name
+
+                        const trashCanIconContainer = document.createElement('div')
+                        trashCanIconContainer.className = "removeUploadedMedia hidden"
+                        trashCanIconContainer.dataset.fileName = file.name
+
+                        const trashCanIcon = document.createElement('i')
+                        trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
+                        trashCanIcon.id = "deleteMedia"
+                        trashCanIcon.dataset.fileName = file.name
+                        trashCanIcon.style.color = "#ffffff"
+
+                        trashCanIconContainer.appendChild(trashCanIcon)
+
+                        removeUploadedMediaContainer.appendChild(trashCanIconContainer)
+
+                        removeUploadedMediaContainer.addEventListener('mouseover', () => {
                             
-                            const dt = new DataTransfer()
+                            removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
+                            trashCanIconContainer.classList.remove('hidden')
 
-                            const currentFiles = Array.from(uploadMediaBtn.files)
+                        })
 
-                            currentFiles.forEach(file => {
-                                if (file.name !== e.target.dataset.fileName) {
-                                    dt.items.add(file)
-                                }
-                            })
+                        removeUploadedMediaContainer.addEventListener('mouseleave', () => {
+                            
+                            removeUploadedMediaContainer.style.backgroundColor = 'transparent'
+                            trashCanIconContainer.classList.add('hidden')
 
-                            uploadMediaBtn.files = dt.files
+                        })
 
-                            addedFiles = addedFiles.filter(fileName => {
-                                return fileName !== e.target.dataset.fileName
-                            })
+                        removeUploadedMediaContainer.addEventListener('click', (e) => {
+                            
+                            if (e.target.id.includes('deleteMedia')) {
 
-                            imageContainer.remove()
+                                // Remove deleted file from file list
+                                                        
+                                const dt = new DataTransfer()
 
-                        }
-                    })
+                                const currentFiles = Array.from(uploadMediaBtn.files)
 
-                    imageContainer.appendChild(removeUploadedMediaContainer)
-                    uploadedMediaContainer.appendChild(imageContainer)
+                                currentFiles.forEach(file => {
+                                    if (file.name !== e.target.dataset.fileName) {
+                                        dt.items.add(file)
+                                    }
+                                })
 
-                    addedFiles.push(file.name)
+                                uploadMediaBtn.files = dt.files
 
+                                // Remove deleted files from saved uploaded files array
+
+                                addedFiles = addedFiles.filter(uploadedFile => uploadedFile !== file)
+
+                                imageContainer.remove()
+
+                            }
+                        })
+
+                        imageContainer.appendChild(removeUploadedMediaContainer)
+                        uploadedMediaContainer.appendChild(imageContainer)
+
+                    }
                 }
-
             }
 
             const preventDefault = (e) => {
