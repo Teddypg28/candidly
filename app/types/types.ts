@@ -37,13 +37,33 @@ export interface ReviewsTableFilterState {
     selected: number
 }
 
-export interface ImportReviewsFormState {
-    isImportingReviews: boolean,
+export interface Review {
+    store: string;
+    title: string;
+    body: string;
+    name: string;
+    email: string | null;
+    rating: number;
+    media: string;
+    date: Date | string;
+    productTitle: string;
+    id: string
+}
+
+export interface Import3rdPartyReviewsFormState {
+    isImporting3rdPartyReviews: boolean,
     numberOfReviews: number,
     selectedImportRatings: string[],
     productLink: any,
     selectedProductData: any | undefined,
     importFormErrors: any
+}
+
+export interface importFileReviewsFormState {
+    errors: boolean,
+    fileUploaded: boolean,
+    isImportingFileReviews: boolean,
+    heading: string,
 }
 
 export interface SavedView {
