@@ -11,7 +11,7 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import arraysToStrings from "~/helpers/arraysToStrings";
 
 import { json } from "@remix-run/node";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Import3rdPartyReviewsFormState, importFileReviewsFormState, ReviewsTableFilterState, SavedView } from "~/types/types";
 
 export const action = async ({request} : ActionFunctionArgs) => {
@@ -165,6 +165,18 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
   })
 
   return json({reviews: updatedReviews, savedTableViews: formattedTableViews, totalReviews, newReviewsToday, reviewsPastMonth, averageRating})
+
+}
+
+const clarifyLabel = (key: string, value: any[]) => {
+
+    if (key === 'ratings') {
+        return value.map(value => {
+            return `${value} ${value === '1' ? 'star' : 'stars'}`
+        }).join(', ')
+    }
+
+    return value.join(', ')
 
 }
 
@@ -483,18 +495,6 @@ export default function Index() {
 
     const appliedFilters: IndexFiltersProps['appliedFilters'] = []
 
-    const clarifyLabel = (key: string, value: any[]) => {
-
-        if (key === 'ratings') {
-            return value.map(value => {
-                return `${value} ${value === '1' ? 'star' : 'stars'}`
-            }).join(', ')
-        }
-
-        return value.join(', ')
-
-    }
-
     if (selectedProducts) {
 
         appliedFilters.push(
@@ -580,19 +580,19 @@ export default function Index() {
             return {label: `${rating} ${rating === '1' ? 'star' : 'stars'}`, value: rating}
         })
 
-        const import3rdPartyReviews = () => {
+        const import3rdPartyReviews = useCallback(() => {
 
             setImportReviewsFormState({...importReviewsFormState, isImporting3rdPartyReviews: true})
 
-        }
+        }, [])
 
-        const importFileReviews = () => {
+        const importFileReviews = useCallback(() => {
 
             setFileImportState({...fileImportState, isImportingFileReviews: true})
 
-        }
+        }, [])
 
-        const isFormErrors = () => {
+        const isFormErrors = useCallback(async () => {
 
             const acceptedDomains = ['amazon.com', 'aliexpress.us', 'walmart.com']
 
@@ -627,9 +627,9 @@ export default function Index() {
 
             return Object.keys(errors).length > 0
 
-        }
+        }, [importReviewsFormState])
 
-        const verifyReadyToImport = async () => {
+        const verifyReadyToImport = useCallback(async () => {
 
             const errors = isFormErrors()
 
@@ -656,7 +656,8 @@ export default function Index() {
                 return shopify.toast.show('Import Successful!', {duration: 3000})
                 
             } 
-        }
+
+        }, [isFormErrors])
 
         const selectProduct = async () => {
             const selectedProduct = await window.shopify.resourcePicker({
@@ -673,12 +674,12 @@ export default function Index() {
             
         }
 
-        const deleteSelectedReviews = () => {
+        const deleteSelectedReviews = useCallback(() => {
 
             submit(JSON.stringify(selectedResources), {method: 'POST', encType: 'application/json'})
             removeSelectedResources(selectedResources)
 
-        }
+        }, [selectedResources])
 
         const exportAsCsv = () => {
 
@@ -700,7 +701,7 @@ export default function Index() {
 
         }
 
-        const handleFileUpload = (e: any) => {
+        const handleFileUpload = useCallback((e: any) => {
 
             const acceptedTypes = ['vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'csv']
 
@@ -715,6 +716,12 @@ export default function Index() {
                 setFileImportState({...fileImportState, heading: uploadedFile.name, errors: false, fileUploaded: true})
 
             }
+
+        }, [fileImportState])
+
+        const importReviewsFromFile = async () => {
+
+
 
         }
 
@@ -735,7 +742,7 @@ export default function Index() {
                     </label>
                 </div>
                 <div style={{width: 'fit-content', marginLeft: 'auto', marginRight: '20px', marginBottom: '20px'}}>
-                    <Button variant="primary" disabled={errors || !fileUploaded}>Import Reviews</Button>
+                    <Button onClick={importFileReviews} variant="primary" disabled={errors || !fileUploaded}>Import Reviews</Button>
                 </div>
             </Modal>
             <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initial3rdPartyImportState)} open={isImporting3rdPartyReviews}>
