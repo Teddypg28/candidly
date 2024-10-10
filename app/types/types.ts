@@ -55,15 +55,23 @@ export interface Import3rdPartyReviewsFormState {
     numberOfReviews: number,
     selectedImportRatings: string[],
     productLink: any,
-    selectedProductData: any | undefined,
+    selectedProductData3rdParty?: SelectedProductData,
     importFormErrors: any
+}
+
+interface SelectedProductData {
+    id: string, 
+    image: string,
+    title: string
 }
 
 export interface importFileReviewsFormState {
     errors: boolean,
     fileUploaded: boolean,
     isImportingFileReviews: boolean,
+    selectedProductDataFile?: SelectedProductData,
     heading: string,
+    file?: File
 }
 
 export interface SavedView {

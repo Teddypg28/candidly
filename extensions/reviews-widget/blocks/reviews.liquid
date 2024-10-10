@@ -640,7 +640,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
                 const data = {...userInputState, productId: parseInt(reviewProductId), rating: parseInt(userRating), media: addedFiles.toString()}
                 
-                fetch('https://blizzardbites.myshopify.com/apps/reviews/create-review', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)}).then(res => {
+                fetch('https://blizzardbites.myshopify.com/apps/reviews/reviews/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)}).then(res => {
                   return res.json()
                 })
 

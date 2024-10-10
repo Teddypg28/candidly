@@ -191,24 +191,28 @@ export default function Index() {
         numberOfReviews: 10,
         selectedImportRatings: [],
         productLink: '',
-        selectedProductData: undefined,
+        selectedProductData3rdParty: undefined,
         importFormErrors: {}
     }
 
     const initialFileImportState = {
+        file: undefined,
         errors: false,
         fileUploaded: false,
         isImportingFileReviews: false,
+        selectedProductDataFile: undefined,
         heading: 'Import File Here',
     }
 
     const [fileImportState, setFileImportState] = useState<importFileReviewsFormState>(initialFileImportState)
     const [importReviewsFormState, setImportReviewsFormState] = useState<Import3rdPartyReviewsFormState>(initial3rdPartyImportState)
 
-    const { errors, fileUploaded, isImportingFileReviews, heading } = fileImportState
-    const { isImporting3rdPartyReviews, numberOfReviews, selectedImportRatings, productLink, selectedProductData, importFormErrors } = importReviewsFormState
+    const { errors, fileUploaded, isImportingFileReviews, selectedProductDataFile, heading } = fileImportState
+    const { isImporting3rdPartyReviews, numberOfReviews, selectedImportRatings, productLink, selectedProductData3rdParty, importFormErrors } = importReviewsFormState
 
-    const [isFormSubmitting, setIsFormSubmitting] = useState(false)
+    const [is3rdPartyReviewFormSubmitting, setIs3rdPartyReviewFormSubmitting] = useState(false)
+    const [isFileReviewFormSubmitting, setIsFileReviewFormSubmitting] = useState(false)
+
     const [downloadHrefValue, setDownloadHrefValue] = useState('')
 
     const [reviewsState, setReviewsState] = useState<ReviewsTableFilterState>({
@@ -598,8 +602,8 @@ export default function Index() {
 
             const errors: any = {}
 
-            if (!selectedProductData) {
-                errors.selectProduct = true
+            if (!selectedProductData3rdParty) {
+                errors.selectProduct3rdParty = true
             }
 
             if (productLink.trim() === '') {
@@ -635,15 +639,15 @@ export default function Index() {
 
             if (!errors) {
 
-                setIsFormSubmitting(true)
+                setIs3rdPartyReviewFormSubmitting(true)
 
-                const id = selectedProductData.id.split('/Product/')[1]
+                const id = selectedProductData3rdParty?.id.split('/Product/')[1]
 
                 const payload = { productLink, selectedImportRatings, numberOfReviews, id }
 
-                const response = await fetch('/api/reviews/import', {method: 'POST', body: JSON.stringify(payload)})
+                const response = await fetch('/api/reviews/import/third-party', {method: 'POST', body: JSON.stringify(payload)})
 
-                setIsFormSubmitting(false)
+                setIs3rdPartyReviewFormSubmitting(false)
 
                 const responseMessage = (await response.json()).message
 
@@ -659,7 +663,7 @@ export default function Index() {
 
         }, [isFormErrors])
 
-        const selectProduct = async () => {
+        const selectProduct3rdParty = async () => {
             const selectedProduct = await window.shopify.resourcePicker({
                 type: 'product',
                 action: 'select',
@@ -668,10 +672,36 @@ export default function Index() {
 
             if (selectedProduct) {
 
-                setImportReviewsFormState({...importReviewsFormState, selectedProductData: {id: selectedProduct[0].id, image: selectedProduct[0].images[0].originalSrc}})
-    
+                setImportReviewsFormState(
+                    {
+                    ...importReviewsFormState, 
+                    selectedProductData3rdParty: {
+                        id: selectedProduct[0].id, 
+                        image: selectedProduct[0].images[0].originalSrc,
+                        title: selectedProduct[0].title
+                    }})
             }
-            
+        }
+
+        const selectProductFile = async () => {
+
+            const selectedProduct = await window.shopify.resourcePicker({
+                type: 'product',
+                action: 'select',
+                multiple: false
+            })
+
+            if (selectedProduct) {
+
+                setFileImportState({
+                    ...fileImportState, 
+                    selectedProductDataFile: 
+                    {
+                        id: selectedProduct[0].id, 
+                        image: selectedProduct[0].images[0].originalSrc,
+                        title: selectedProduct[0].title
+                    }})
+            }
         }
 
         const deleteSelectedReviews = useCallback(() => {
@@ -713,7 +743,7 @@ export default function Index() {
 
             } else {
 
-                setFileImportState({...fileImportState, heading: uploadedFile.name, errors: false, fileUploaded: true})
+                setFileImportState({...fileImportState, file: uploadedFile, heading: uploadedFile.name, errors: false, fileUploaded: true})
 
             }
 
@@ -721,7 +751,31 @@ export default function Index() {
 
         const importReviewsFromFile = async () => {
 
+            if (fileImportState.file && fileImportState.selectedProductDataFile) {
 
+                const formData = new FormData()
+                formData.append('reviews', fileImportState.file)
+                formData.append('productId', fileImportState.selectedProductDataFile.id)
+
+                setIsFileReviewFormSubmitting(true)
+
+                const result = await fetch('/api/reviews/import/file', {method: 'POST', body: formData})
+
+                setIsFileReviewFormSubmitting(false)
+
+                if (result.status === 200) {
+
+                    setFileImportState(initialFileImportState)
+                    shopify.toast.show('Reviews Successfully Imported!', {duration: 3000})
+
+
+                } else {
+
+                    shopify.toast.show('Error Importing Reviews', {duration: 3000})
+
+                }
+
+            }
 
         }
 
@@ -735,14 +789,41 @@ export default function Index() {
         ]}
         >
             <Modal title='Import CSV File' onClose={() => setFileImportState(initialFileImportState)} open={isImportingFileReviews}>
-                <div className={styles.container} id="importFileReviewsContainer">
-                    <label className={styles.label} id="importFileReviews">
-                        <Text as="p" variant="bodyMd" tone={fileUploaded && !errors ? 'success' : errors ? 'critical' : 'base'}>{heading}</Text>
-                        <input onChange={handleFileUpload} className={styles.input} id="importFileReviews" type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
-                    </label>
-                </div>
-                <div style={{width: 'fit-content', marginLeft: 'auto', marginRight: '20px', marginBottom: '20px'}}>
-                    <Button onClick={importFileReviews} variant="primary" disabled={errors || !fileUploaded}>Import Reviews</Button>
+                <div className={styles.container}>
+                    <BlockStack gap='200'>
+                        <div>
+                            <BlockStack gap='200'>
+                                { 
+                                
+                                selectedProductDataFile ?
+
+                                <InlineStack align="space-between">
+                                    <InlineStack blockAlign="center" gap="150">
+                                        <Thumbnail alt="product image" source={selectedProductDataFile.image} />
+                                        <Text as="h1" variant="bodyMd">{selectedProductDataFile.title}</Text>
+                                    </InlineStack>
+                                    <Button variant="plain" onClick={selectProductFile}>Change Product</Button>
+                                </InlineStack>
+
+                                :
+
+                                <InlineStack>
+                                    <Button onClick={selectProductFile}>Select Product</Button>
+                                </InlineStack>
+
+                                }
+                            </BlockStack>
+                        </div>
+                        <div className={styles.importContainer} id="importFileReviewsContainer">
+                            <label className={styles.label} id="importFileReviews">
+                                <Text as="p" variant="bodyMd" tone={fileUploaded && !errors ? 'success' : errors ? 'critical' : 'base'}>{heading}</Text>
+                                <input onChange={handleFileUpload} className={styles.input} id="importFileReviews" type="file" accept=".csv" />
+                            </label>
+                        </div>
+                        <div style={{width: 'fit-content', marginLeft: 'auto'}}>
+                            <Button onClick={importReviewsFromFile} loading={isFileReviewFormSubmitting} variant="primary" disabled={errors || !fileUploaded || !selectedProductDataFile}>Import Reviews</Button>
+                        </div>
+                    </BlockStack>
                 </div>
             </Modal>
             <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initial3rdPartyImportState)} open={isImporting3rdPartyReviews}>
@@ -752,20 +833,24 @@ export default function Index() {
                             <Text as="h1" variant="headingMd">3rd Party Website</Text>
                             <Form onSubmit={verifyReadyToImport}>
                                 <BlockStack gap='300'>
-                                    { selectedProductData ? 
+                                    { selectedProductData3rdParty ? 
+
                                     <InlineStack align="space-between">
-                                        <Thumbnail source={selectedProductData.image} alt="product image thumbnail" /> 
-                                        <Button variant="plain" onClick={selectProduct}>Change Product</Button>
+                                        <InlineStack blockAlign="center" gap="150">
+                                            <Thumbnail source={selectedProductData3rdParty.image} alt="product image thumbnail" /> 
+                                            <Text as="h1" variant="bodyMd">{selectedProductData3rdParty.title}</Text>
+                                        </InlineStack>
+                                        <Button variant="plain" onClick={selectProduct3rdParty}>Change Product</Button>
                                     </InlineStack>
 
                                     :
 
                                     <InlineStack>
-                                        <Button onClick={selectProduct}>Select Product</Button>
+                                        <Button onClick={selectProduct3rdParty}>Select Product</Button>
                                     </InlineStack>
 
                                     }
-                                    {importFormErrors.selectProduct && <Text as="p" tone="critical">You must specify a product</Text>}
+                                    {importFormErrors.selectProduct3rdParty && <Text as="p" tone="critical">You must specify a product</Text>}
                                     <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
                                     <Text as="p" variant="bodyXs">Currently supports Amazon, AliExpress, and Walmart</Text>
                                     {importFormErrors.productLink && <Text as="p" tone="critical">{importFormErrors.productLink}</Text>}
@@ -773,7 +858,7 @@ export default function Index() {
                                     <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
                                     {importFormErrors.ratings && <Text as="p" tone="critical">Ratings are required</Text>}
                                     <InlineStack>
-                                        <Button submit variant="primary" loading={isFormSubmitting}>Import Reviews</Button>
+                                        <Button submit variant="primary" loading={is3rdPartyReviewFormSubmitting}>Import Reviews</Button>
                                     </InlineStack>
                                 </BlockStack>
                             </Form>
