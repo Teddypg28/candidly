@@ -6,103 +6,13 @@ import db from '../db.server'
 import styles from '../styles/ImportReviews.module.css'
 
 import { authenticate } from "~/shopify.server";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
 
 import arraysToStrings from "~/helpers/arraysToStrings";
 
 import { json } from "@remix-run/node";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Import3rdPartyReviewsFormState, importFileReviewsFormState, ReviewsTableFilterState, SavedView } from "~/types/types";
-
-export const action = async ({request} : ActionFunctionArgs) => {
-
-    const { session, admin } = await authenticate.admin(request)
-
-    try {
-
-        const reviewIdsToDelete = await request.json()
-
-        const productIds: any = []
-
-        const deletedReviews = await Promise.all(reviewIdsToDelete.map(async (id: string) => {
-
-            return await db.productReview.delete({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}})
-
-        }))
-
-        deletedReviews.forEach(review => productIds.push(review.productId))
-
-        const updateMetafield = async (productId: any) => {
-
-            const ratingMetafields = await admin.rest.resources.Metafield.all({session, product_id: productId})
-
-            const ratingScoreMetafield = ratingMetafields.data.find((metafield: any) => metafield.key === 'rating')
-            const ratingCountMetafield = ratingMetafields.data.find((metafield: any) => metafield.key === 'rating_count')
-
-            if (ratingScoreMetafield && ratingCountMetafield) {
-
-                const totalReviews = await db.productReview.findMany({where: {productId: {equals: productId}, AND: {store: {equals: session.shop}}}})
-    
-                let totalReviewsScore = 0
-
-                if (totalReviews.length === 0 && ratingScoreMetafield.id && ratingCountMetafield.id) {
-
-                    await admin.rest.resources.Metafield.delete({session, id: ratingCountMetafield.id})
-                    await admin.rest.resources.Metafield.delete({session, id: ratingScoreMetafield.id})
-
-                    return
-
-                }
-
-                totalReviews.forEach(review => {
-                    totalReviewsScore += review.rating
-                })
-    
-                const updatedAvgProductRating = Math.round((totalReviewsScore / totalReviews.length) * 2) / 2
-    
-                const updatedRatingMetafield = new admin.rest.resources.Metafield({session: session});
-    
-                updatedRatingMetafield.product_id = ratingScoreMetafield.owner_id;
-                updatedRatingMetafield.id = ratingScoreMetafield.id;
-                updatedRatingMetafield.type = "rating";
-                updatedRatingMetafield.value = JSON.stringify({value: updatedAvgProductRating, scale_min: 1.0, scale_max: 5.0});
-
-                await updatedRatingMetafield.save({
-                    update: true,
-                })
-
-                const updatedRatingCountMetafield = new admin.rest.resources.Metafield({session: session});
-    
-                updatedRatingCountMetafield.product_id = ratingCountMetafield.owner_id;
-                updatedRatingCountMetafield.id = ratingCountMetafield.id;
-                updatedRatingCountMetafield.type = "number_integer";
-                updatedRatingCountMetafield.value = totalReviews.length;
-    
-                await updatedRatingCountMetafield.save({
-                    update: true,
-                });
-
-                return true
-            }
-        }
-
-        await Promise.all(productIds.map(async (id: any) => {
-
-            return await updateMetafield(id)
-
-        }))
-
-        return true
-        
-    } catch (error) {
-
-        console.log(error)
-
-        return error
-        
-    }
-
-}
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
 
@@ -185,6 +95,7 @@ export default function Index() {
     const { reviews, savedTableViews } = useLoaderData<typeof loader>()
 
     const submit = useSubmit()
+    const navigate = useNavigate()
 
     const initial3rdPartyImportState = {
         isImporting3rdPartyReviews: false,
@@ -596,7 +507,7 @@ export default function Index() {
 
         }, [])
 
-        const isFormErrors = useCallback(async () => {
+        const isFormErrors = useCallback(() => {
 
             const acceptedDomains = ['amazon.com', 'aliexpress.us', 'walmart.com']
 
@@ -645,17 +556,17 @@ export default function Index() {
 
                 const payload = { productLink, selectedImportRatings, numberOfReviews, id }
 
-                const response = await fetch('/api/reviews/import/third-party', {method: 'POST', body: JSON.stringify(payload)})
+                const response = await fetch('/api/reviews/admin/import', {method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'}})
 
                 setIs3rdPartyReviewFormSubmitting(false)
 
-                const responseMessage = (await response.json()).message
-
                 if (!response.ok) {
 
-                    return setImportReviewsFormState({...importReviewsFormState, importFormErrors: {productLink: responseMessage}})
+                    return shopify.toast.show('Error importing reviews', {duration: 3000})
 
                 }
+
+                setImportReviewsFormState(initial3rdPartyImportState)
 
                 return shopify.toast.show('Import Successful!', {duration: 3000})
                 
@@ -704,10 +615,13 @@ export default function Index() {
             }
         }
 
-        const deleteSelectedReviews = useCallback(() => {
+        const deleteSelectedReviews = useCallback(async () => {
 
-            submit(JSON.stringify(selectedResources), {method: 'POST', encType: 'application/json'})
+            await fetch('/api/reviews/admin/delete', {body: JSON.stringify({ids: selectedResources}), method: 'POST', headers: {'Content-Type': 'application/json'}})
+
             removeSelectedResources(selectedResources)
+
+            navigate('.', {replace: true})
 
         }, [selectedResources])
 
@@ -759,19 +673,21 @@ export default function Index() {
 
                 setIsFileReviewFormSubmitting(true)
 
-                const result = await fetch('/api/reviews/import/file', {method: 'POST', body: formData})
+                const response = await fetch('/api/reviews/admin/import', {method: 'POST', body: formData})
 
                 setIsFileReviewFormSubmitting(false)
 
-                if (result.status === 200) {
+                const data = await response.json()
 
+                if (data.success) {
+
+                    shopify.toast.show('Reviews successfully imported!', {duration: 3000})
                     setFileImportState(initialFileImportState)
-                    shopify.toast.show('Reviews Successfully Imported!', {duration: 3000})
-
+                    navigate('.', {replace: true})
 
                 } else {
 
-                    shopify.toast.show('Error Importing Reviews', {duration: 3000})
+                    shopify.toast.show('Error importing reviews', {duration: 3000})
 
                 }
 
@@ -820,6 +736,8 @@ export default function Index() {
                                 <input onChange={handleFileUpload} className={styles.input} id="importFileReviews" type="file" accept=".csv" />
                             </label>
                         </div>
+                        <Text as="p" variant="bodySm">Please make sure the column headings are ordered as such:</Text>
+                        <Text as="p" variant="bodySm" tone="success">Title, Body, Name, Email, Rating, Media, Date</Text>
                         <div style={{width: 'fit-content', marginLeft: 'auto'}}>
                             <Button onClick={importReviewsFromFile} loading={isFileReviewFormSubmitting} variant="primary" disabled={errors || !fileUploaded || !selectedProductDataFile}>Import Reviews</Button>
                         </div>
@@ -831,37 +749,35 @@ export default function Index() {
                     <BlockStack gap='500'>
                         <BlockStack gap='300'>
                             <Text as="h1" variant="headingMd">3rd Party Website</Text>
-                            <Form onSubmit={verifyReadyToImport}>
-                                <BlockStack gap='300'>
-                                    { selectedProductData3rdParty ? 
+                            <BlockStack gap='300'>
+                                { selectedProductData3rdParty ? 
 
-                                    <InlineStack align="space-between">
-                                        <InlineStack blockAlign="center" gap="150">
-                                            <Thumbnail source={selectedProductData3rdParty.image} alt="product image thumbnail" /> 
-                                            <Text as="h1" variant="bodyMd">{selectedProductData3rdParty.title}</Text>
-                                        </InlineStack>
-                                        <Button variant="plain" onClick={selectProduct3rdParty}>Change Product</Button>
+                                <InlineStack align="space-between">
+                                    <InlineStack blockAlign="center" gap="150">
+                                        <Thumbnail source={selectedProductData3rdParty.image} alt="product image thumbnail" /> 
+                                        <Text as="h1" variant="bodyMd">{selectedProductData3rdParty.title}</Text>
                                     </InlineStack>
+                                    <Button variant="plain" onClick={selectProduct3rdParty}>Change Product</Button>
+                                </InlineStack>
 
-                                    :
+                                :
 
-                                    <InlineStack>
-                                        <Button onClick={selectProduct3rdParty}>Select Product</Button>
-                                    </InlineStack>
+                                <InlineStack>
+                                    <Button onClick={selectProduct3rdParty}>Select Product</Button>
+                                </InlineStack>
 
-                                    }
-                                    {importFormErrors.selectProduct3rdParty && <Text as="p" tone="critical">You must specify a product</Text>}
-                                    <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
-                                    <Text as="p" variant="bodyXs">Currently supports Amazon, AliExpress, and Walmart</Text>
-                                    {importFormErrors.productLink && <Text as="p" tone="critical">{importFormErrors.productLink}</Text>}
-                                    <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
-                                    <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
-                                    {importFormErrors.ratings && <Text as="p" tone="critical">Ratings are required</Text>}
-                                    <InlineStack>
-                                        <Button submit variant="primary" loading={is3rdPartyReviewFormSubmitting}>Import Reviews</Button>
-                                    </InlineStack>
-                                </BlockStack>
-                            </Form>
+                                }
+                                {importFormErrors.selectProduct3rdParty && <Text as="p" tone="critical">You must specify a product</Text>}
+                                <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
+                                <Text as="p" variant="bodyXs">Currently supports Amazon, AliExpress, and Walmart</Text>
+                                {importFormErrors.productLink && <Text as="p" tone="critical">{importFormErrors.productLink}</Text>}
+                                <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
+                                <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
+                                {importFormErrors.ratings && <Text as="p" tone="critical">Ratings are required</Text>}
+                                <InlineStack>
+                                    <Button onClick={verifyReadyToImport} variant="primary" loading={is3rdPartyReviewFormSubmitting}>Import Reviews</Button>
+                                </InlineStack>
+                            </BlockStack>
                         </BlockStack>
                     </BlockStack>
                 </Card>

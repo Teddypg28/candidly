@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
 import { BlockStack, Card, Layout, Page, PageActions, Text, TextField } from "@shopify/polaris";
 
 import db from '../db.server'
@@ -96,12 +96,13 @@ export default function Review() {
 
     const review = useLoaderData<typeof loader>()
 
+    const navigate = useNavigate()
+
     const [state, setState] = useState(review)
     const [cleanState, setCleanState] = useState(review)
-
     const [uploadState, setUploadState] = useState({errors: false, files: null as File[] | null})
-  
     const [filesToSave, setFilesToSave] = useState<File[]>([])
+
     const filesToSaveRef = useRef<File[]>([])
 
     const truncateFileName = (name: string) => {
@@ -332,6 +333,13 @@ export default function Review() {
 
     }
 
+    const deleteReview = () => {
+
+        submit(JSON.stringify({ids: [review.id]}), {method: 'POST', encType: 'application/json', action: '/api/reviews/admin/delete', navigate: false})
+        navigate('/app')
+
+    }
+
   return (
     <Page
     title="Review"
@@ -395,7 +403,7 @@ export default function Review() {
             <Layout.Section>
                 <PageActions 
                 primaryAction={{content: 'Save', disabled: isStateClean, onAction: handleSave}}
-                secondaryActions={[{content: 'Delete', destructive: true}]}
+                secondaryActions={[{content: 'Delete', destructive: true, onAction: deleteReview}]}
                 />
             </Layout.Section>
         </Layout>
