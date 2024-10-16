@@ -195,7 +195,7 @@ export default function Settings() {
                                         </BlockStack>
                                         <InlineStack blockAlign="end" gap='200'>
                                             <TextField value={backgroundHexColor} onChange={(value) => convertToHsb(value, 'reviewBackground')} label="Widget Background Color" placeholder="Enter color code here" autoComplete="off" />
-                                            <div style={{backgroundColor: backgroundHexColor, height: '32px', width: '32px', borderRadius: '5px'}}></div>
+                                            <div style={{backgroundColor: backgroundHexColor, height: '32px', width: '32px', borderRadius: '5px', border: '2px solid white'}}></div>
                                         </InlineStack>
                                     </BlockStack>
                                 </InlineStack>

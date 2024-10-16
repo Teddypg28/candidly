@@ -3,12 +3,34 @@
 
 {% assign product = block.settings.product %}
 {% assign avg_rating = block.settings.product.metafields.reviews.rating.value %}
+{% assign rating_count = block.settings.product.metafields.reviews.rating_count.value %}
 
 <html>
     <div class='mainReviewContainer'></div>
 </html>
 
 <script>
+
+// CONFIGURE PRODUCT RATING RICH SNIPPET
+
+const richSnippetScriptTag = document.createElement('script')
+richSnippetScriptTag.type = "application/ld+json"
+richSnippetScriptTag.textContent = `
+
+    {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": '{{product.title}}',
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": '{{avg_rating}}',
+            "reviewCount": '{{rating_count}}'
+        }
+    }
+
+`
+
+document.querySelector('head').appendChild(richSnippetScriptTag)
 
 // START: INITIALIZE VARIABLES BEFORE FETCHING DATA
 
@@ -607,7 +629,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
                 if (inputKeys[i].includes('customQuestion')) {
 
-                    if (userInputStateCopy[inputKeys[i]].value.trim() === '') {
+                    if (userInputStateCopy[inputKeys[i]].value.trim() === '' && userInputStateCopy[inputKeys[i]].isMandatory) {
                         errors.push({id: `${inputKeys[i]}Error`})
                     }
 
@@ -622,7 +644,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
         let addedFiles = []
 
-        const handleFormSubmission = (event) => {
+        const handleFormSubmission = async (event) => {
 
             const errors = isFormErrors()
 
@@ -640,9 +662,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
 
                 const data = {...userInputState, productId: parseInt(reviewProductId), rating: parseInt(userRating), media: addedFiles.toString()}
                 
-                fetch('https://blizzardbites.myshopify.com/apps/reviews/reviews/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)}).then(res => {
-                  return res.json()
-                })
+                await fetch('https://blizzardbites.myshopify.com/apps/reviews/reviews/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)})
 
             }
 
@@ -778,7 +798,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                 if (question.answerChoices.length === 0) {
                     questionMarkup = `
                          <div class='reviewFieldWrapper' style="width: 100%">
-                            <label for='customQuestion-${question.id}'>${question.label} *</label>
+                            <label for='customQuestion-${question.id}'>${question.label} ${question.isMandatory ? '*' : ''}</label>
                             <textarea class='reviewFormInput reviewFormTextArea' name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="${question.title}"></textarea>
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
                         </div>
@@ -807,7 +827,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                         }).join('')}
 
                         questionMarkupContainer.innerHTML+= `
-                            <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
+                            <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isMandatory ? '*' : ''}</label>
                             <div id='multipleChoicesContainer-${question.id}' class="multipleChoicesContainer">
                                 <div class="dropdownTop" id="dropdownTop-${question.id}">
                                     <p class="selectedOptionsContainer" id="selectedOptionsContainer-${question.id}">Select</p>
@@ -823,7 +843,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                     } else {
 
                         questionMarkupContainer.innerHTML+= `
-                            <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} *</label>
+                            <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isMandatory ? '*' : ''}</label>
                             <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
                                 <option value="">Select one</option>
                             </select>
@@ -837,7 +857,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                         questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`
                 }
 
-                userInputState[`customQuestion-${question.id}`] = {value: '', display: question.displayAnswer}
+                userInputState[`customQuestion-${question.id}`] = {value: '', display: question.displayAnswer, isMandatory: question.isMandatory}
 
             }
 

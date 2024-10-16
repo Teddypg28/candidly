@@ -174,7 +174,7 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     align-items: center;
     width: 100%;
     gap: 5px;
-    height: 30px;
+    height: 30px
 }
 
 .reviewBarContainersWrapper {

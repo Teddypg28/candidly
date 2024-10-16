@@ -344,7 +344,7 @@ export default function Review() {
     <Page
     title="Review"
     subtitle="Edit or delete review details"
-    backAction={{url: '/app'}}
+    backAction={{url: '/app/reviews'}}
     >
         <SaveBar open={!isStateClean}>
             <button variant='primary' onClick={handleSave}></button>

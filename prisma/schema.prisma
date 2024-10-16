@@ -83,7 +83,8 @@ model ReviewFormQuestion {
   answerLabel          String?
   displayAnswer        Boolean
   answerChoices        ReviewFormAnswerChoice[]
-  allowMultipleAnswers Boolean?
+  allowMultipleAnswers Boolean
+  isMandatory          Boolean
 }
 
 model ReviewFormAnswerChoice {

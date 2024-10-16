@@ -165,8 +165,9 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                     displayAnswer: result.displayAnswer,
                     numOfAnswerChoices: result.answerChoices.length === 0 ? 1 : result.answerChoices.length,
                     answerType: result.answerChoices.length > 0 ? ['radioBtns'] : ['textField'],
-                    allowMultipleAnswers: result.allowMultipleAnswers === true ? ['yes'] : ['no'],
-                    answerChoices: getAnswerChoices(),
+                    allowMultipleAnswers: result.allowMultipleAnswers,
+                    isMandatory: result.isMandatory,
+                    answerChoices: getAnswerChoices()
                 }    
 
                 return json(initalState)
@@ -210,11 +211,11 @@ export default function Question() {
 
         setCleanState(state)
 
-        const { title, label, answerType, productId, answerChoices, id, displayAnswer, answerLabel, allowMultipleAnswers } = state
+        const { title, label, answerType, productId, answerChoices, id, displayAnswer, answerLabel, allowMultipleAnswers, isMandatory } = state
 
         const slicedProductId = productId.includes('Product/') ? productId.split('Product/')[1] : null
 
-        const data: any = {id, productId: slicedProductId ? parseInt(slicedProductId) : productId, title, label, displayAnswer, answerLabel}
+        const data: any = {id, productId: slicedProductId ? parseInt(slicedProductId) : productId, title, label, displayAnswer, answerLabel, isMandatory}
 
         answerType[0] === 'radioBtns' && delete data['label']
 
@@ -230,7 +231,7 @@ export default function Question() {
                 })
             })
 
-            if (allowMultipleAnswers[0] === 'no') {
+            if (allowMultipleAnswers === false) {
                 data.allowMultipleAnswers = false
             } else {
                 data.allowMultipleAnswers = true
@@ -473,15 +474,23 @@ export default function Question() {
                                 {state.answerType[0] === 'radioBtns' &&
                             
                                     <ChoiceList 
-                                    selected={state.allowMultipleAnswers} 
+                                    selected={[state.allowMultipleAnswers.toString()]} 
                                     onChange={value => dispatch({type: 'setAllowMultipleAnswers', payload: value})}
-                                    title='Allow Multiple Answers?' 
-                                    choices={[{label: 'Yes', value: 'yes'}, {label: 'No', value: 'no'}]} 
+                                    title='Allow Multiple Answers' 
+                                    choices={[{label: 'True', value: 'true'}, {label: 'False', value: 'false'}]} 
                                     />
 
                                 }
 
                                 {errors['answerType'] && <InlineError message='Answer type required' fieldID='' /> }
+
+                                <ChoiceList 
+                                selected={[state.isMandatory.toString()]} 
+                                onChange={value => dispatch({type: 'setIsAnswerMandatory', payload: value})}
+                                title='Answer Mandatory' 
+                                choices={[{label: 'True', value: 'true'}, {label: 'False', value: 'false'}]} 
+                                />
+
                             </BlockStack>
                         </Card>
                         {state.answerType[0] === 'radioBtns' && 

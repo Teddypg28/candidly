@@ -11,7 +11,8 @@ export const initialState: CustomReviewFormQuestionState = {
     displayAnswer: false,
     numOfAnswerChoices: 1,
     answerType: [''],
-    allowMultipleAnswers: ['no'],
+    allowMultipleAnswers: false,
+    isMandatory: false,
     answerChoices: {[`choiceField-1`]: ''}
 }
 
@@ -56,10 +57,6 @@ export const reducer: Reducer<CustomReviewFormQuestionState, ReducerAction> = (s
 
             return {...state, answerChoices: {...state.answerChoices, [id]: value}}
 
-        case 'setAllowMultipleAnswers':
-
-            return {...state, allowMultipleAnswers: payload}
-
         case 'addVariantsAsOptions':
 
             const { numOfVariants } = payload
@@ -91,6 +88,14 @@ export const reducer: Reducer<CustomReviewFormQuestionState, ReducerAction> = (s
         case 'setErrors': 
 
             return {...state, errors: {...payload}}
+        
+        case 'setIsAnswerMandatory':
+
+            return {...state, isAnswerMandatory: payload.toString() === 'true'}
+
+        case 'setAllowMultipleAnswers':
+
+            return {...state, allowMultipleAnswers: payload.toString() === true}
 
         case 'revertState':
 

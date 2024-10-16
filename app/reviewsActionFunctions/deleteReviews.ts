@@ -81,6 +81,8 @@ export default async function deleteReviews(session: SessionData, admin: AdminAp
 
     } catch (error) {
 
+        console.log(error)
+
         return {success: false}
         
     }

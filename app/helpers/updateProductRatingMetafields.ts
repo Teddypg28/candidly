@@ -7,8 +7,8 @@ export default async function updateProductRatingMetafields(productId: number, r
 
     const metafields = await admin.rest.resources.Metafield.all({product_id: productId, session});
             
-        const ratingMetafieldExists = metafields.data.find((metafield: any) => metafield.owner_id === productId && metafield.key === 'rating')
-    
+    const ratingMetafieldExists = metafields.data.find((metafield: any) => metafield.owner_id === productId && metafield.key === 'rating')
+
         if (ratingMetafieldExists) {
     
             const ratingCountMetafield = metafields.data.find((metafield: any) => metafield.owner_id === productId && metafield.key === 'rating_count')
