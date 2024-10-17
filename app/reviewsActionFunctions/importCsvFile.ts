@@ -39,6 +39,7 @@ export default async function importCsvFile(session: SessionData, data: FormData
     
             reviewsObj['productId'] = parseInt((productId as string).split('Product/')[1])
             reviewsObj['store'] = session.shop
+            reviewsObj['isPublished'] = false
     
             return reviewsObj
             

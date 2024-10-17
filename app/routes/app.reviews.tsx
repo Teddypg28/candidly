@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Divider } from "@shopify/polaris";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge } from "@shopify/polaris";
 
 import db from '../db.server'
 
@@ -297,6 +297,9 @@ export default function Reviews() {
                 </IndexTable.Cell>
                 <IndexTable.Cell>{renderReviewBody()}</IndexTable.Cell>
                 <IndexTable.Cell>{review.rating}</IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Badge tone={review.isPublished ? "success" : "warning"}>{review.isPublished.toString()}</Badge>
+                </IndexTable.Cell>
             </IndexTable.Row>
         )
     })
@@ -625,6 +628,16 @@ export default function Reviews() {
 
         }, [selectedResources])
 
+        const publishSelectedReviews = useCallback(async () => {
+
+            await fetch('/api/reviews/admin/publish', {body: JSON.stringify({ids: selectedResources}), method: 'POST', headers: {'Content-Type': 'application/json'}})
+
+            removeSelectedResources(selectedResources)
+
+            navigate('.', {replace: true})
+
+        }, [selectedResources])
+
         const exportAsCsv = () => {
 
             const rows = filteredReviews.map(review => {
@@ -698,140 +711,146 @@ export default function Reviews() {
     return (
         <Page
         title="All Product Reviews"
-        primaryAction={{content: 'Import Reviews', onAction: import3rdPartyReviews}}
+        primaryAction={{content: 'Scrape Reviews', onAction: import3rdPartyReviews}}
         secondaryActions={[
             {content: 'Export as CSV', disabled: filteredReviews.length === 0, onAction: exportAsCsv, id: 'exportCsvBtn'},
             {content: 'Import CSV', onAction: importFileReviews}
         ]}
         >
-            <Modal title='Import CSV File' onClose={() => setFileImportState(initialFileImportState)} open={isImportingFileReviews}>
-                <div className={styles.container}>
-                    <BlockStack gap='200'>
-                        <div>
-                            <BlockStack gap='200'>
-                                { 
-                                
-                                selectedProductDataFile ?
+            <BlockStack gap='100'>
+                <Modal title='Import CSV File' onClose={() => setFileImportState(initialFileImportState)} open={isImportingFileReviews}>
+                    <div className={styles.container}>
+                        <BlockStack gap='200'>
+                            <div>
+                                <BlockStack gap='200'>
+                                    { 
+                                    
+                                    selectedProductDataFile ?
 
-                                <InlineStack align="space-between">
-                                    <InlineStack blockAlign="center" gap="150">
-                                        <Thumbnail alt="product image" source={selectedProductDataFile.image} />
-                                        <Text as="h1" variant="bodyMd">{selectedProductDataFile.title}</Text>
+                                    <InlineStack align="space-between">
+                                        <InlineStack blockAlign="center" gap="150">
+                                            <Thumbnail alt="product image" source={selectedProductDataFile.image} />
+                                            <Text as="h1" variant="bodyMd">{selectedProductDataFile.title}</Text>
+                                        </InlineStack>
+                                        <Button variant="plain" onClick={selectProductFile}>Change Product</Button>
                                     </InlineStack>
-                                    <Button variant="plain" onClick={selectProductFile}>Change Product</Button>
-                                </InlineStack>
 
-                                :
+                                    :
 
-                                <InlineStack>
-                                    <Button onClick={selectProductFile}>Select Product</Button>
-                                </InlineStack>
+                                    <InlineStack>
+                                        <Button onClick={selectProductFile}>Select Product</Button>
+                                    </InlineStack>
 
-                                }
-                            </BlockStack>
-                        </div>
-                        <div className={styles.importContainer} id="importFileReviewsContainer">
-                            <label className={styles.label} id="importFileReviews">
-                                <Text as="p" variant="bodyMd" tone={fileUploaded && !errors ? 'success' : errors ? 'critical' : 'base'}>{heading}</Text>
-                                <input onChange={handleFileUpload} className={styles.input} id="importFileReviews" type="file" accept=".csv" />
-                            </label>
-                        </div>
-                        <Text as="p" variant="bodySm">Please make sure the column headings are ordered as such:</Text>
-                        <Text as="p" variant="bodySm" tone="success">Title, Body, Name, Email, Rating, Media, Date</Text>
-                        <div style={{width: 'fit-content', marginLeft: 'auto'}}>
-                            <Button onClick={importReviewsFromFile} loading={isFileReviewFormSubmitting} variant="primary" disabled={errors || !fileUploaded || !selectedProductDataFile}>Import Reviews</Button>
-                        </div>
-                    </BlockStack>
-                </div>
-            </Modal>
-            <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initial3rdPartyImportState)} open={isImporting3rdPartyReviews}>
-                <Card>
-                    <BlockStack gap='500'>
-                        <BlockStack gap='300'>
-                            <Text as="h1" variant="headingMd">3rd Party Website</Text>
+                                    }
+                                </BlockStack>
+                            </div>
+                            <div className={styles.importContainer} id="importFileReviewsContainer">
+                                <label className={styles.label} id="importFileReviews">
+                                    <Text as="p" variant="bodyMd" tone={fileUploaded && !errors ? 'success' : errors ? 'critical' : 'base'}>{heading}</Text>
+                                    <input onChange={handleFileUpload} className={styles.input} id="importFileReviews" type="file" accept=".csv" />
+                                </label>
+                            </div>
+                            <Text as="p" variant="bodySm">Please make sure the column headings are ordered as such:</Text>
+                            <Text as="p" variant="bodySm" tone="success">Title, Body, Name, Email, Rating, Media, Date</Text>
+                            <div style={{width: 'fit-content', marginLeft: 'auto'}}>
+                                <Button onClick={importReviewsFromFile} loading={isFileReviewFormSubmitting} variant="primary" disabled={errors || !fileUploaded || !selectedProductDataFile}>Import Reviews</Button>
+                            </div>
+                        </BlockStack>
+                    </div>
+                </Modal>
+                <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initial3rdPartyImportState)} open={isImporting3rdPartyReviews}>
+                    <Card>
+                        <BlockStack gap='500'>
                             <BlockStack gap='300'>
-                                { selectedProductData3rdParty ? 
+                                <Text as="h1" variant="headingMd">3rd Party Website</Text>
+                                <BlockStack gap='300'>
+                                    { selectedProductData3rdParty ? 
 
-                                <InlineStack align="space-between">
-                                    <InlineStack blockAlign="center" gap="150">
-                                        <Thumbnail source={selectedProductData3rdParty.image} alt="product image thumbnail" /> 
-                                        <Text as="h1" variant="bodyMd">{selectedProductData3rdParty.title}</Text>
+                                    <InlineStack align="space-between">
+                                        <InlineStack blockAlign="center" gap="150">
+                                            <Thumbnail source={selectedProductData3rdParty.image} alt="product image thumbnail" /> 
+                                            <Text as="h1" variant="bodyMd">{selectedProductData3rdParty.title}</Text>
+                                        </InlineStack>
+                                        <Button variant="plain" onClick={selectProduct3rdParty}>Change Product</Button>
                                     </InlineStack>
-                                    <Button variant="plain" onClick={selectProduct3rdParty}>Change Product</Button>
-                                </InlineStack>
 
-                                :
+                                    :
 
-                                <InlineStack>
-                                    <Button onClick={selectProduct3rdParty}>Select Product</Button>
-                                </InlineStack>
+                                    <InlineStack>
+                                        <Button onClick={selectProduct3rdParty}>Select Product</Button>
+                                    </InlineStack>
 
-                                }
-                                {importFormErrors.selectProduct3rdParty && <Text as="p" tone="critical">You must specify a product</Text>}
-                                <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
-                                <Text as="p" variant="bodyXs">Currently supports Amazon, AliExpress, and Walmart</Text>
-                                {importFormErrors.productLink && <Text as="p" tone="critical">{importFormErrors.productLink}</Text>}
-                                <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
-                                <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
-                                {importFormErrors.ratings && <Text as="p" tone="critical">Ratings are required</Text>}
-                                <InlineStack>
-                                    <Button onClick={verifyReadyToImport} variant="primary" loading={is3rdPartyReviewFormSubmitting}>Import Reviews</Button>
-                                </InlineStack>
+                                    }
+                                    {importFormErrors.selectProduct3rdParty && <Text as="p" tone="critical">You must specify a product</Text>}
+                                    <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
+                                    <Text as="p" variant="bodyXs">Currently supports Amazon, AliExpress, and Walmart</Text>
+                                    {importFormErrors.productLink && <Text as="p" tone="critical">{importFormErrors.productLink}</Text>}
+                                    <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
+                                    <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
+                                    {importFormErrors.ratings && <Text as="p" tone="critical">Ratings are required</Text>}
+                                    <InlineStack>
+                                        <Button onClick={verifyReadyToImport} variant="primary" loading={is3rdPartyReviewFormSubmitting}>Import Reviews</Button>
+                                    </InlineStack>
+                                </BlockStack>
                             </BlockStack>
                         </BlockStack>
-                    </BlockStack>
-                </Card>
-            </Modal>
+                    </Card>
+                </Modal>
 
-            {reviews.length === 0 ?
-            
-            <Card>
-                <EmptyState 
-                action={{content: 'Import Your First Reviews', onAction: importFileReviews}}
-                heading="You Don't Have Any Reviews Yet"
-                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                />
-            </Card>
+                {reviews.length === 0 ?
                 
-            :
-            
-            <>
                 <Card>
-                    <IndexFilters 
-                    sortOptions={sortOptions}
-                    sortSelected={sortSelected}
-                    onSort={value => setReviewsState({...reviewsState, sortSelected: value})}
-                    filters={filters}
-                    appliedFilters={appliedFilters}
-                    mode={mode}
-                    setMode={setMode}
-                    queryValue={queryValue}
-                    queryPlaceholder="Search by name, title, body, product, or date"
-                    onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
-                    onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
-                    onClearAll={() => setReviewsState({...reviewsState, selectedProducts: [], selectedRatings: []})}
-                    cancelAction={{onAction: () => updateViewState(selected)}}
-                    primaryAction={primaryAction}
-                    tabs={tabs}
-                    onCreateNewView={createNewView}
-                    onSelect={(index: number) => updateViewState(index)}
-                    selected={selected}
+                    <EmptyState 
+                    action={{content: 'Import Your First Reviews', onAction: importFileReviews}}
+                    heading="You Don't Have Any Reviews Yet"
+                    image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
                     />
-                    <IndexTable
-                    headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}]}
-                    itemCount={filteredReviews.length}
-                    onSelectionChange={handleSelectionChange}
-                    selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
-                    >
-                        {indexTableMarkup}
-                    </IndexTable>
                 </Card>
+                    
+                :
+                
+                <>
+                    <Card>
+                        <IndexFilters 
+                        sortOptions={sortOptions}
+                        sortSelected={sortSelected}
+                        onSort={value => setReviewsState({...reviewsState, sortSelected: value})}
+                        filters={filters}
+                        appliedFilters={appliedFilters}
+                        mode={mode}
+                        setMode={setMode}
+                        queryValue={queryValue}
+                        queryPlaceholder="Search by name, title, body, product, or date"
+                        onQueryChange={(value) => setReviewsState({...reviewsState, queryValue: value})}
+                        onQueryClear={() => setReviewsState({...reviewsState, queryValue: ''})}
+                        onClearAll={() => setReviewsState({...reviewsState, selectedProducts: [], selectedRatings: []})}
+                        cancelAction={{onAction: () => updateViewState(selected)}}
+                        primaryAction={primaryAction}
+                        tabs={tabs}
+                        onCreateNewView={createNewView}
+                        onSelect={(index: number) => updateViewState(index)}
+                        selected={selected}
+                        />
+                        <IndexTable
+                        headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}]}
+                        itemCount={filteredReviews.length}
+                        onSelectionChange={handleSelectionChange}
+                        selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
+                        >
+                            {indexTableMarkup}
+                        </IndexTable>
+                    </Card>
+                </>
+                }
+            </BlockStack>
+            {
+                reviews.length > 0 &&
                 <PageActions 
+                primaryAction={{content: 'Publish', disabled: selectedResources.length === 0, onAction: publishSelectedReviews}}
                 secondaryActions={[
                     {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews}
                 ]}
                 />
-            </>
             }
         </Page>
     )

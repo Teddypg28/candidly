@@ -72,6 +72,7 @@ model ProductReview {
   media                 String
   date                  DateTime
   customQuestionAnswers CustomQuestionAnswer[]
+  isPublished           Boolean
 }
 
 model ReviewFormQuestion {
@@ -84,7 +85,7 @@ model ReviewFormQuestion {
   displayAnswer        Boolean
   answerChoices        ReviewFormAnswerChoice[]
   allowMultipleAnswers Boolean
-  isMandatory          Boolean
+  isRequired           Boolean
 }
 
 model ReviewFormAnswerChoice {

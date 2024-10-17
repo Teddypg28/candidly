@@ -166,7 +166,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                     numOfAnswerChoices: result.answerChoices.length === 0 ? 1 : result.answerChoices.length,
                     answerType: result.answerChoices.length > 0 ? ['radioBtns'] : ['textField'],
                     allowMultipleAnswers: result.allowMultipleAnswers,
-                    isMandatory: result.isMandatory,
+                    isRequired: result.isRequired,
                     answerChoices: getAnswerChoices()
                 }    
 
@@ -211,11 +211,11 @@ export default function Question() {
 
         setCleanState(state)
 
-        const { title, label, answerType, productId, answerChoices, id, displayAnswer, answerLabel, allowMultipleAnswers, isMandatory } = state
+        const { title, label, answerType, productId, answerChoices, id, displayAnswer, answerLabel, allowMultipleAnswers, isRequired } = state
 
         const slicedProductId = productId.includes('Product/') ? productId.split('Product/')[1] : null
 
-        const data: any = {id, productId: slicedProductId ? parseInt(slicedProductId) : productId, title, label, displayAnswer, answerLabel, isMandatory}
+        const data: any = {id, productId: slicedProductId ? parseInt(slicedProductId) : productId, title, label, displayAnswer, answerLabel, isRequired}
 
         answerType[0] === 'radioBtns' && delete data['label']
 
@@ -468,7 +468,7 @@ export default function Question() {
                                 selected={state.answerType} 
                                 onChange={value =>  { dispatch({type: 'setAnswerType', payload: value}); setErrors({}) }}
                                 title='Answer Type' 
-                                choices={[{label: 'Text Field', value: 'textField'}, {label: 'Radio Buttons', value: 'radioBtns'}]} 
+                                choices={[{label: 'Text Field', value: 'textField'}, {label: 'Multiple Choice', value: 'radioBtns'}]} 
                                 />
 
                                 {state.answerType[0] === 'radioBtns' &&
@@ -485,8 +485,8 @@ export default function Question() {
                                 {errors['answerType'] && <InlineError message='Answer type required' fieldID='' /> }
 
                                 <ChoiceList 
-                                selected={[state.isMandatory.toString()]} 
-                                onChange={value => dispatch({type: 'setIsAnswerMandatory', payload: value})}
+                                selected={[state.isRequired.toString()]} 
+                                onChange={value => dispatch({type: 'setIsRequired', payload: value})}
                                 title='Answer Mandatory' 
                                 choices={[{label: 'True', value: 'true'}, {label: 'False', value: 'false'}]} 
                                 />

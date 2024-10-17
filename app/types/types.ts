@@ -21,7 +21,7 @@ export interface CustomReviewFormQuestionState {
     numOfAnswerChoices: number,
     answerType: string[],
     allowMultipleAnswers: boolean,
-    isMandatory: boolean,
+    isRequired: boolean,
     answerChoices: CustomReviewFormAnswerOption
 }
 

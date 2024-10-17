@@ -12,7 +12,7 @@ export const initialState: CustomReviewFormQuestionState = {
     numOfAnswerChoices: 1,
     answerType: [''],
     allowMultipleAnswers: false,
-    isMandatory: false,
+    isRequired: false,
     answerChoices: {[`choiceField-1`]: ''}
 }
 
@@ -89,13 +89,13 @@ export const reducer: Reducer<CustomReviewFormQuestionState, ReducerAction> = (s
 
             return {...state, errors: {...payload}}
         
-        case 'setIsAnswerMandatory':
+        case 'setIsRequired':
 
-            return {...state, isAnswerMandatory: payload.toString() === 'true'}
+            return {...state, isRequired: payload.toString() === 'true'}
 
         case 'setAllowMultipleAnswers':
 
-            return {...state, allowMultipleAnswers: payload.toString() === true}
+            return {...state, allowMultipleAnswers: payload.toString() === 'true'}
 
         case 'revertState':
 

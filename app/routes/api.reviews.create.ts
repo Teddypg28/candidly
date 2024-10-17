@@ -5,7 +5,7 @@ import db from '../db.server'
 import verifyReview from "~/helpers/verifyReview"
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields"
 
-export async function action({request, params} : ActionFunctionArgs) {
+export async function action({ request } : ActionFunctionArgs) {
 
     const { session, admin } = await authenticate.public.appProxy(request)
 
@@ -48,7 +48,7 @@ export async function action({request, params} : ActionFunctionArgs) {
 
         // const reviewValid = await verifyReview(admin.graphql, data.email, data.productId)
 
-        await db.productReview.create({data: {...data, store: session.shop, date: new Date(), customQuestionAnswers: {create: customQuestionAnswerData}}})
+        await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false, customQuestionAnswers: {create: customQuestionAnswerData}}})
 
         await updateProductRatingMetafields(data.productId, data.rating, admin, session)
 

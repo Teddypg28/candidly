@@ -4,6 +4,7 @@ import { authenticate } from "~/shopify.server";
 import deleteReviews from "~/reviewsActionFunctions/deleteReviews";
 import importCsvFile from "~/reviewsActionFunctions/importCsvFile";
 import scraperRouter from "~/scrapers/scraperRouter";
+import publishReviews from "~/reviewsActionFunctions/publishReviews";
 
 export const action = async ({ request, params } : ActionFunctionArgs)  => {
 
@@ -34,6 +35,14 @@ export const action = async ({ request, params } : ActionFunctionArgs)  => {
                 return json({success: result.success}, {status: result.success ? 200 : 400})
 
             }
+
+            if (params.action === 'publish') {
+
+                const result = await publishReviews(session, data.ids)
+
+                return json({success: result.success}, {status: result.success ? 200 : 400})
+
+            }     
 
         }
 
