@@ -92,8 +92,6 @@ const CustomQuestions = () => {
         selectedProducts: null as string[] | null
     })
 
-    const [cleanState, setCleanState] = useState(currentState)
-
     const { queryValue, selectedTab, sortSelected, selectedQuestionTypes, selectedProducts } = currentState
 
     const clearAll = () => {
@@ -405,9 +403,13 @@ const CustomQuestions = () => {
                 </IndexTable>
             </Card>
             }
+        {questions.length > 0 &&
+    
         <PageActions 
         secondaryActions={[{content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedQuestions}]}
         />
+
+        }
         </Page>
   )
 }

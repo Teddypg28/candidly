@@ -15,7 +15,13 @@ export default async function deleteReviews(session: SessionData, admin: AdminAp
     
         }))
     
-        deletedReviews.forEach(review => productIds.push(review.productId))
+        deletedReviews.forEach(review => {
+            
+            if (review.isPublished) {
+                productIds.push(review.productId)
+            }
+
+        }) 
     
         const updateMetafield = async (productId: any) => {
     
@@ -26,7 +32,7 @@ export default async function deleteReviews(session: SessionData, admin: AdminAp
     
             if (ratingScoreMetafield && ratingCountMetafield) {
     
-                const totalReviews = await db.productReview.findMany({where: {productId: {equals: productId}, AND: {store: {equals: session.shop}}}})
+                const totalReviews = await db.productReview.findMany({where: {productId: {equals: productId}, AND: {store: {equals: session.shop}, AND: {isPublished: {equals: true}}}}})
     
                 let totalReviewsScore = 0
     

@@ -38,7 +38,7 @@ export const action = async ({ request, params } : ActionFunctionArgs)  => {
 
             if (params.action === 'publish') {
 
-                const result = await publishReviews(session, data.ids)
+                const result = await publishReviews(session, admin, data.ids)
 
                 return json({success: result.success}, {status: result.success ? 200 : 400})
 

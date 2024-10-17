@@ -6,15 +6,15 @@ import db from '../db.server'
 export default async function updateProductRatingMetafields(productId: number, rating: number, admin: AdminApiContext, session: SessionData) {
 
     const metafields = await admin.rest.resources.Metafield.all({product_id: productId, session});
-            
+    
+    const totalReviews = await db.productReview.findMany({where: {productId: {equals: productId}, AND: {store: {equals: session.shop}, AND: {isPublished: {equals: true}}}}})
+    
     const ratingMetafieldExists = metafields.data.find((metafield: any) => metafield.owner_id === productId && metafield.key === 'rating')
 
         if (ratingMetafieldExists) {
     
             const ratingCountMetafield = metafields.data.find((metafield: any) => metafield.owner_id === productId && metafield.key === 'rating_count')
-    
-            const totalReviews = await db.productReview.findMany({where: {productId: {equals: productId}, AND: {store: {equals: session.shop}}}})
-    
+        
             let totalReviewsScore = 0
     
             totalReviews.forEach(review => {
@@ -67,7 +67,7 @@ export default async function updateProductRatingMetafields(productId: number, r
             newRatingCountMetafield.product_id = productId;
             newRatingCountMetafield.namespace = "reviews";
             newRatingCountMetafield.key = "rating_count";
-            newRatingCountMetafield.value = 1;
+            newRatingCountMetafield.value = totalReviews.length;
             newRatingCountMetafield.type = "number_integer";
             await newRatingCountMetafield.save({
                 update: true,

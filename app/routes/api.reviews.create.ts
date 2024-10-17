@@ -50,8 +50,6 @@ export async function action({ request } : ActionFunctionArgs) {
 
         await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false, customQuestionAnswers: {create: customQuestionAnswerData}}})
 
-        await updateProductRatingMetafields(data.productId, data.rating, admin, session)
-
         return json({status: 'success'}, {status: 200})
 
         // return new Response(JSON.stringify({status: 'review verification failed'}), {status: 400})

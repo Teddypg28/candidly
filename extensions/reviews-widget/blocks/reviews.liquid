@@ -287,7 +287,14 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings', {headers: new
                             return `<div> <strong>${review.label}:</strong> ${review.value}</div>`
                         })
 
-                        return answers
+                        if (window.screen.width <= 400) {
+
+                            return answers.join('')
+
+                        }
+
+                        return answers.join('|')
+
                     }
 
                     return ''
