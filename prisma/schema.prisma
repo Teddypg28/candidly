@@ -114,3 +114,11 @@ model savedCustomQuestionsTableView {
   selectedProducts      String?
   selectedQuestionTypes String?
 }
+
+model AppSettings {
+  id                   Int     @id @default(autoincrement())
+  store                String
+  autoPublish          Boolean
+  minRating            Int
+  requiresVerification Boolean
+}

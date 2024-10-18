@@ -1,209 +1,109 @@
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { Banner, BlockStack, Box, Card, Checkbox, ChoiceList, InlineGrid, InlineStack, Label, Page, RangeSlider, Text } from "@shopify/polaris";
+import { RangeSliderValue } from "@shopify/polaris/build/ts/src/components/RangeSlider/types";
 import { useState } from "react";
-
-import { BlockStack, Layout, Page, ColorPicker, Text, TextField, Button, hexToRgb, rgbToHsb, hsbToHex, InlineStack } from "@shopify/polaris";
-import { Modal, SaveBar } from "@shopify/app-bridge-react";
-import { ViewIcon, CheckCircleIcon } from '@shopify/polaris-icons';
-
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
-import { json } from "@remix-run/node";
+
 import db from '../db.server'
+import { useLoaderData } from "@remix-run/react";
 
-import { useLoaderData, useSubmit } from "@remix-run/react";
-import ReviewFormPreview from "~/components/ReviewFormPreview";
-import isBlockDisabled from "~/helpers/isBlockDisabled";
-import filterSettingsBeforeDbUpdate from "~/helpers/filterSettingsBeforeDbUpdate";
-
-export const loader = async ({request} : LoaderFunctionArgs) => {
+export async function loader({request} : LoaderFunctionArgs) {
 
     const { session } = await authenticate.admin(request)
 
-    const reviewSettings = await db.reviewSettings.findFirst({where: {store: {equals: session.shop}}})
+    const storeExists = await db.appSettings.findFirst({where: {store: {equals: session.shop}}, omit: {id: true, store: true}})
 
-    const isReviewsWidgetDisabled = await isBlockDisabled(request, 'reviews', 'appBlock')
+    if (storeExists) {
 
-    const store = session.shop
-
-    if (!reviewSettings) {
-
-        const reviewFormData = { 
-
-            store,
-            formHeading: 'Tell Us What You Think',
-            formSubheading: 'Rate it out of 5 stars:',
-            primaryColor: JSON.stringify( { hue: 900, brightness: 1, saturation: 1 } ),
-            backgroundColor: JSON.stringify( { hue: 0, saturation: 0, brightness: 0.9647, alpha: 1 })
-            
-        }
-
-        const reviewResult = await db.reviewSettings.create({data: reviewFormData})
-        
-        return json({ reviewSettings : {...reviewResult, isReviewsWidgetDisabled}, store})
+        return storeExists
 
     } 
 
-    return json({ reviewSettings : {...reviewSettings, isReviewsWidgetDisabled}, store})
+    const newStoreAppSettings = {
 
-}
-
-export const action = async ({ request } : ActionFunctionArgs) => {
-
-    const { session } = await authenticate.admin(request)
-
-    const data = await request.json()
-
-    const currentReviewSettings = await db.reviewSettings.findFirst({where: {store: {equals: session.shop}}})
-
-    const isReviewSettingsClean = JSON.stringify(currentReviewSettings) === JSON.stringify(data.reviewSettings)
-
-    if (!isReviewSettingsClean) {
-
-        const dataToUpdate = filterSettingsBeforeDbUpdate(data.reviewSettings)
-
-        await db.reviewSettings.updateMany({where: {store: { equals: session.shop }, }, data: {...dataToUpdate} })
+        autoPublish: false,
+        minRating: 4, 
+        requiresVerification: true,
+        store: session.shop
 
     }
 
-    return true
+    return await db.appSettings.create({data: newStoreAppSettings, omit: {store: true, id: true}})
 
 }
 
 export default function Settings() {
 
-    const data = useLoaderData<typeof loader>()
+    const settings = useLoaderData<typeof loader>()
 
-    const submit = useSubmit()
-
-    const [cleanSettings, setCleanSettings] = useState(data)
-    const [settingsState, setSettingsState] = useState(data)
-    const isFormClean = JSON.stringify(cleanSettings) === JSON.stringify(settingsState)
-    
-    const { reviewSettings, store } = settingsState
-    const { formHeading, formSubheading, primaryColor, backgroundColor, isReviewsWidgetDisabled } = reviewSettings
-
-    const [isReviewPreviewShowing, setIsReviewPreviewShowing] = useState(false)
-    
-    const [reviewFormHexColor, setReviewFormHexColor] = useState(hsbToHex(JSON.parse(cleanSettings.reviewSettings.primaryColor)))
-    const [backgroundHexColor, setBackgroundHexColor] = useState(hsbToHex(JSON.parse(cleanSettings.reviewSettings.backgroundColor)))
-
-    const reviewsDeepLink = `https://${store}/admin/themes/current/editor?template=product&addAppBlockId=71f5b7e8-355e-4ae5-9482-6637e5f48118/reviews&target=newAppsSection`
-
-    const handleSave = () => {
-
-        setCleanSettings({...settingsState})
-        submit(settingsState, {method: 'POST', encType: 'application/json'})
-        
-    }
-
-    const convertToHsb = (hexValue: string, type: string) => {
-
-        const rgb = hexToRgb(hexValue)
-        const hsb = rgbToHsb(rgb)
-
-        if (type === 'reviewPrimary') {
-            setReviewFormHexColor(hexValue)
-            return setSettingsState({...settingsState, reviewSettings: {...reviewSettings, primaryColor: JSON.stringify(hsb)}})
-        }
-
-        if (type === 'reviewBackground') {
-            setBackgroundHexColor(hexValue)
-            return setSettingsState({...settingsState, reviewSettings: {...reviewSettings, backgroundColor: JSON.stringify(hsb)}})
-        }
-
-    }
-
-    const handleColorPickerChange = (hsbValue: string, type: string) => {
-
-        if (type === 'reviewPrimary') {
-            setSettingsState({...settingsState, reviewSettings: {...reviewSettings, primaryColor: hsbValue}})
-            return setReviewFormHexColor(hsbToHex(JSON.parse(hsbValue)))
-        }
-
-        if (type === 'reviewBackground') {
-            setSettingsState({...settingsState, reviewSettings: {...reviewSettings, backgroundColor: hsbValue}})
-            return setBackgroundHexColor(hsbToHex(JSON.parse(hsbValue)))
-        }
-
-    }
-
-    const forgetChanges= () => {
-
-        setSettingsState(cleanSettings)
-        setReviewFormHexColor(hsbToHex(JSON.parse(cleanSettings.reviewSettings.primaryColor)))
-        setBackgroundHexColor(hsbToHex(JSON.parse(cleanSettings.reviewSettings.backgroundColor)))
-
-    }
+    const [publishImmediately, setPublishImmediately] = useState([settings.autoPublish.toString()])
+    const [minRating, setMinRating] = useState<RangeSliderValue>(settings.minRating)
+    const [isVerificationRequired, setIsVerificationRequired] = useState(settings.requiresVerification)
 
     return (
-        <Page
+
+        <Page 
         title="App Settings"
-        subtitle="Customize the form to fit your own branding and messaging"
         >
-            <SaveBar open={!isFormClean}>
-                <button variant='primary' onClick={handleSave}></button>
-                <button onClick={forgetChanges}></button>
-            </SaveBar>
-            <Modal 
-            open={isReviewPreviewShowing}
-            onHide={() => setIsReviewPreviewShowing(false)}
-            >
-                <ReviewFormPreview 
-                formHeading={formHeading}
-                formSubheading={formSubheading}
-                primaryColor={reviewFormHexColor}
-                />
-            </Modal>
-            <Layout>
-                <Layout.Section>
-                    <BlockStack gap='500'>
-                        <InlineStack gap='100'>
-                            <Button variant="primary" icon={ViewIcon} onClick={() => setIsReviewPreviewShowing(true)}>Preview</Button>
-                            <Button target="_blank" url={reviewsDeepLink} disabled={!isReviewsWidgetDisabled} icon={isReviewsWidgetDisabled ? undefined : CheckCircleIcon} variant="primary" tone="critical">
-                                {isReviewsWidgetDisabled ? 'Enable' : 'Enabled'}
-                            </Button>
-                        </InlineStack>
-                
-                        <BlockStack gap='500'>
-                            <BlockStack gap='200'>
-                                <BlockStack gap='200'>
-                                    <TextField 
-                                    value={formHeading} 
-                                    onChange={(value) => setSettingsState({...settingsState, reviewSettings: {...reviewSettings, formHeading: value}})} 
-                                    label='Review Form Heading' 
-                                    autoComplete="off" />
-                                    <TextField 
-                                    value={formSubheading} 
-                                    onChange={(value) => setSettingsState({...settingsState,  reviewSettings: {...reviewSettings, formSubheading: value}})} 
-                                    label='Review Form Subheading' 
-                                    autoComplete="off" />
-                                </BlockStack>
-                                <InlineStack gap='1000'>
-                                    <BlockStack gap='200'>
-                                        <BlockStack gap='100'>
-                                            <Text as="h1">Primary Brand Color</Text>
-                                            <ColorPicker color={JSON.parse(primaryColor)} onChange={(value) => handleColorPickerChange(JSON.stringify(value), 'reviewPrimary')} />
-                                        </BlockStack>
-                                        <InlineStack blockAlign="end" gap='200'>
-                                            <TextField value={reviewFormHexColor} onChange={(value) => convertToHsb(value, 'reviewPrimary')} label="Primary Brand Color" placeholder="Enter color code here" autoComplete="off" />
-                                            <div style={{backgroundColor: reviewFormHexColor, height: '32px', width: '32px', borderRadius: '5px'}}></div>
-                                        </InlineStack>
-                                    </BlockStack>
-                                    <BlockStack gap='200'>
-                                        <BlockStack gap='100'>
-                                            <Text as="h1">Widget Background Color</Text>
-                                            <ColorPicker color={JSON.parse(backgroundColor)} onChange={(value) => handleColorPickerChange(JSON.stringify(value), 'reviewBackground')} />
-                                        </BlockStack>
-                                        <InlineStack blockAlign="end" gap='200'>
-                                            <TextField value={backgroundHexColor} onChange={(value) => convertToHsb(value, 'reviewBackground')} label="Widget Background Color" placeholder="Enter color code here" autoComplete="off" />
-                                            <div style={{backgroundColor: backgroundHexColor, height: '32px', width: '32px', borderRadius: '5px', border: '2px solid white'}}></div>
-                                        </InlineStack>
-                                    </BlockStack>
-                                </InlineStack>
-                            </BlockStack>
+            <BlockStack>
+                <InlineGrid alignItems="start" columns={{ xs: "1fr", md: "4fr 6fr" }}>
+                    <Box>
+                        <BlockStack gap='150'>
+                            <Text as="h1" variant="headingMd">Review Publishing</Text>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                                Choose when to publish reviews and whether or not to include customer verification
+                            </Text>
                         </BlockStack>
-                    </BlockStack>
-                </Layout.Section>
-            </Layout>
+                    </Box>
+                    <Card>
+                        <BlockStack gap='400'>
+                            <Banner tone="info">
+                                All unpublished reviews with verified email addresses will be published after 14 days, unless rejected.
+                            </Banner>
+                            <BlockStack>
+                                <ChoiceList 
+                                title=''
+                                titleHidden
+                                onChange={setPublishImmediately}
+                                selected={publishImmediately}
+                                choices={[
+                                    {label: 'Do not automatically publish all new reviews', value: 'false'},
+                                    {label: 'Automatically publish all new reviews, as long as certain criteria is met', value: 'true'}
+                                ]}
+                                />
+                            </BlockStack>
+                            {publishImmediately[0] === 'true' &&
+                             <BlockStack gap='300'>
+                                <Text as="h1" variant="bodyLg" fontWeight="bold">Criteria</Text>
+                                <BlockStack gap='100'>
+                                    <Label id="ratingSlider">Minimum Rating</Label>
+                                    <InlineStack gap='200'>
+                                        <div style={{flex: 1}}>
+                                            <RangeSlider 
+                                            id="ratingSlider"
+                                            min={1} 
+                                            max={5} 
+                                            label='' 
+                                            labelHidden
+                                            onChange={setMinRating} 
+                                            value={minRating}
+                                            />
+                                        </div>
+                                        <Text as="p" variant="bodySm">{minRating} {minRating === 1 ? 'star' : 'stars'}</Text>
+                                    </InlineStack>
+                                </BlockStack>
+                                <Checkbox 
+                                onChange={() => setIsVerificationRequired(!isVerificationRequired)} 
+                                checked={isVerificationRequired} 
+                                label='Reviewer name/email must be verified' 
+                                />
+                            </BlockStack>}
+                        </BlockStack>
+                    </Card>
+                </InlineGrid>
+            </BlockStack>
         </Page>
+
     )
+
 }
