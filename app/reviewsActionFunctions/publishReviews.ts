@@ -6,54 +6,44 @@ import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafiel
 
 export default async function publishReviews(session: SessionData, admin: AdminApiContext, reviewIds: any[]) {
 
-    try {
+    const result = await Promise.all(reviewIds.map(async (id) => {
 
-        const result = await Promise.all(reviewIds.map(async (id) => {
+        return await db.productReview.update({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}, data: {isPublished: true}})
 
-            return await db.productReview.update({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}, data: {isPublished: true}})
-    
-        }))
+    }))
 
 
-        // Grab all the product ids of the reviews you just published
-        const productIds = result.map(publishedReview => publishedReview.productId)
-        const filteredProductIds = productIds.filter((productId, index) => {
+    // Grab all the product ids of the reviews you just published
+    const productIds = result.map(publishedReview => publishedReview.productId)
+    const filteredProductIds = productIds.filter((productId, index) => {
 
-            if (productIds.indexOf(productId) === index) {
-                return productId
+        if (productIds.indexOf(productId) === index) {
+            return productId
+        }
+
+    })
+
+    // Using each product id, loop through the published reviews, find reviews with matching product id
+    // Compute the total, rounded avg rating -- push total avg rating at once without having to push each individual rating
+
+    await Promise.all(filteredProductIds.map(async (productId) => {
+
+        let totalRatingScore = 0
+        let reviewCount = 0
+
+        result.forEach(publishedReview => {
+            if (publishedReview.productId === productId) {
+                totalRatingScore += publishedReview.rating
+                reviewCount += 1
             }
-
         })
 
-        // Using each product id, loop through the published reviews, find reviews with matching product id
-        // Compute the total, rounded avg rating -- push total avg rating at once without having to push each individual rating
+        const avgProductRating = Math.round((totalRatingScore / reviewCount) * 2) / 2
 
-        await Promise.all(filteredProductIds.map(async (productId) => {
+        const serializedProductId = parseInt(productId.toString())
 
-            let totalRatingScore = 0
-            let reviewCount = 0
+        return await updateProductRatingMetafields(serializedProductId, avgProductRating, admin, session)
 
-            result.forEach(publishedReview => {
-                if (publishedReview.productId === productId) {
-                    totalRatingScore += publishedReview.rating
-                    reviewCount += 1
-                }
-            })
-
-            const avgProductRating = Math.round((totalRatingScore / reviewCount) * 2) / 2
-
-            const serializedProductId = parseInt(productId.toString())
-
-            return await updateProductRatingMetafields(serializedProductId, avgProductRating, admin, session)
-
-        }))
-
-        return {success: true}
-        
-    } catch (error) {
-        
-        return {success: false}
-        
-    }
-
+    }))
+    
 }

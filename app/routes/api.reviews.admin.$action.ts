@@ -20,9 +20,9 @@ export const action = async ({ request, params } : ActionFunctionArgs)  => {
 
             if (params.action === 'delete') {
     
-                const result = await deleteReviews(session, admin, data.ids)
+                await deleteReviews(session, admin, data.ids)
     
-                return json({success: result.success}, {status: result.success ? 200 : 400})
+                return json({success: true}, {status: 200})
     
             }
 
@@ -32,15 +32,15 @@ export const action = async ({ request, params } : ActionFunctionArgs)  => {
 
                 console.log(result.reviews)
 
-                return json({success: result.success}, {status: result.success ? 200 : 400})
+                return json({success: true}, {status: 200})
 
             }
 
             if (params.action === 'publish') {
 
-                const result = await publishReviews(session, admin, data.ids)
+                await publishReviews(session, admin, data.ids)
 
-                return json({success: result.success}, {status: result.success ? 200 : 400})
+                return json({success: true}, {status: 200})
 
             }     
 
@@ -48,11 +48,13 @@ export const action = async ({ request, params } : ActionFunctionArgs)  => {
 
         const data = await request.formData()
 
-        const result = await importCsvFile(session, data)
+        await importCsvFile(session, data)
 
-        return json({success: result.success}, {status: result.success ? 200 : 400})
+        return json({success: true}, {status: 200})
         
     } catch (error) {
+
+        console.log(error)
 
         return json({success: false}, {status: 400})
         
