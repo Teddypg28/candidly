@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, TextField, Button, BlockStack, InlineStack, RangeSlider, Form, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge } from "@shopify/polaris";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge } from "@shopify/polaris";
 
 import db from '../db.server'
 
@@ -119,9 +119,7 @@ export default function Reviews() {
     const [importReviewsFormState, setImportReviewsFormState] = useState<Import3rdPartyReviewsFormState>(initial3rdPartyImportState)
 
     const { errors, fileUploaded, isImportingFileReviews, selectedProductDataFile, heading } = fileImportState
-    const { isImporting3rdPartyReviews, numberOfReviews, selectedImportRatings, productLink, selectedProductData3rdParty, importFormErrors } = importReviewsFormState
 
-    const [is3rdPartyReviewFormSubmitting, setIs3rdPartyReviewFormSubmitting] = useState(false)
     const [isFileReviewFormSubmitting, setIsFileReviewFormSubmitting] = useState(false)
 
     const [downloadHrefValue, setDownloadHrefValue] = useState('')
@@ -493,109 +491,12 @@ export default function Reviews() {
             type: 'save',
             onAction: () => editAndSaveView()
         }
-    
-        const ratingChoices = ['1', '2', '3', '4', '5'].map(rating => {
-            return {label: `${rating} ${rating === '1' ? 'star' : 'stars'}`, value: rating}
-        })
-
-        const import3rdPartyReviews = useCallback(() => {
-
-            setImportReviewsFormState({...importReviewsFormState, isImporting3rdPartyReviews: true})
-
-        }, [])
 
         const importFileReviews = useCallback(() => {
 
             setFileImportState({...fileImportState, isImportingFileReviews: true})
 
         }, [])
-
-        const isFormErrors = useCallback(() => {
-
-            const acceptedDomains = ['amazon.com', 'aliexpress.us', 'walmart.com']
-
-            const errors: any = {}
-
-            if (!selectedProductData3rdParty) {
-                errors.selectProduct3rdParty = true
-            }
-
-            if (productLink.trim() === '') {
-                errors.productLink = 'Product link is required'
-            } 
-
-            if (productLink.trim() !== '') {
-
-                errors.productLink = 'Amazon, AliExpress, and Walmart are the only supported sites'
-
-                for (let i = 0; i<acceptedDomains.length; i++) {
-
-                    if (productLink.includes(acceptedDomains[i])) {
-                        delete errors['productLink']
-                        break
-                    }
-                }
-            }
-
-            if (selectedImportRatings.length === 0) {
-                errors.ratings = true
-            }
-
-            setImportReviewsFormState({...importReviewsFormState, importFormErrors: errors})
-
-            return Object.keys(errors).length > 0
-
-        }, [importReviewsFormState])
-
-        const verifyReadyToImport = useCallback(async () => {
-
-            const errors = isFormErrors()
-
-            if (!errors) {
-
-                setIs3rdPartyReviewFormSubmitting(true)
-
-                const id = selectedProductData3rdParty?.id.split('/Product/')[1]
-
-                const payload = { productLink, selectedImportRatings, numberOfReviews, id }
-
-                const response = await fetch('/api/reviews/admin/import', {method: 'POST', body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'}})
-
-                setIs3rdPartyReviewFormSubmitting(false)
-
-                if (!response.ok) {
-
-                    return shopify.toast.show('Error importing reviews', {duration: 3000})
-
-                }
-
-                setImportReviewsFormState(initial3rdPartyImportState)
-
-                return shopify.toast.show('Import Successful!', {duration: 3000})
-                
-            } 
-
-        }, [isFormErrors])
-
-        const selectProduct3rdParty = async () => {
-            const selectedProduct = await window.shopify.resourcePicker({
-                type: 'product',
-                action: 'select',
-                multiple: false
-            })
-
-            if (selectedProduct) {
-
-                setImportReviewsFormState(
-                    {
-                    ...importReviewsFormState, 
-                    selectedProductData3rdParty: {
-                        id: selectedProduct[0].id, 
-                        image: selectedProduct[0].images[0].originalSrc,
-                        title: selectedProduct[0].title
-                    }})
-            }
-        }
 
         const selectProductFile = async () => {
 
@@ -711,10 +612,9 @@ export default function Reviews() {
     return (
         <Page
         title="All Product Reviews"
-        primaryAction={{content: 'Scrape Reviews', onAction: import3rdPartyReviews}}
+        primaryAction={{content: 'Import CSV', onAction: importFileReviews}}
         secondaryActions={[
             {content: 'Export as CSV', disabled: filteredReviews.length === 0, onAction: exportAsCsv, id: 'exportCsvBtn'},
-            {content: 'Import CSV', onAction: importFileReviews}
         ]}
         >
             <BlockStack gap='100'>
@@ -757,44 +657,6 @@ export default function Reviews() {
                             </div>
                         </BlockStack>
                     </div>
-                </Modal>
-                <Modal title='Import Reviews' onClose={() => setImportReviewsFormState(initial3rdPartyImportState)} open={isImporting3rdPartyReviews}>
-                    <Card>
-                        <BlockStack gap='500'>
-                            <BlockStack gap='300'>
-                                <Text as="h1" variant="headingMd">3rd Party Website</Text>
-                                <BlockStack gap='300'>
-                                    { selectedProductData3rdParty ? 
-
-                                    <InlineStack align="space-between">
-                                        <InlineStack blockAlign="center" gap="150">
-                                            <Thumbnail source={selectedProductData3rdParty.image} alt="product image thumbnail" /> 
-                                            <Text as="h1" variant="bodyMd">{selectedProductData3rdParty.title}</Text>
-                                        </InlineStack>
-                                        <Button variant="plain" onClick={selectProduct3rdParty}>Change Product</Button>
-                                    </InlineStack>
-
-                                    :
-
-                                    <InlineStack>
-                                        <Button onClick={selectProduct3rdParty}>Select Product</Button>
-                                    </InlineStack>
-
-                                    }
-                                    {importFormErrors.selectProduct3rdParty && <Text as="p" tone="critical">You must specify a product</Text>}
-                                    <TextField value={productLink} onChange={(value: string) => setImportReviewsFormState({...importReviewsFormState, productLink: value})} autoComplete="off" label='Product Link' placeholder="Enter URL of product here" />
-                                    <Text as="p" variant="bodyXs">Currently supports Amazon, AliExpress, and Walmart</Text>
-                                    {importFormErrors.productLink && <Text as="p" tone="critical">{importFormErrors.productLink}</Text>}
-                                    <RangeSlider output label='Number of Reviews (Default: 10)' value={numberOfReviews} onChange={handleNumOfReviewsChange} min={1} max={25} />
-                                    <ChoiceList title='Ratings' onChange={(value: string[]) => setImportReviewsFormState({...importReviewsFormState, selectedImportRatings: value})} selected={selectedImportRatings} allowMultiple choices={ratingChoices} />
-                                    {importFormErrors.ratings && <Text as="p" tone="critical">Ratings are required</Text>}
-                                    <InlineStack>
-                                        <Button onClick={verifyReadyToImport} variant="primary" loading={is3rdPartyReviewFormSubmitting}>Import Reviews</Button>
-                                    </InlineStack>
-                                </BlockStack>
-                            </BlockStack>
-                        </BlockStack>
-                    </Card>
                 </Modal>
 
                 {reviews.length === 0 ?

@@ -10,8 +10,8 @@ generator client {
 // enough when changing adapters.
 // See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Session {
@@ -121,4 +121,16 @@ model AppSettings {
   autoPublish          Boolean
   minRating            Int
   requiresVerification Boolean
+}
+
+model ReviewRequest {
+  id              Int      @id @default(autoincrement())
+  store           String
+  orderID         BigInt
+  name            String
+  productID       BigInt[]
+  requestDate     DateTime
+  requestNumber   Int
+  daysAfterFirst  Int
+  daysAfterSecond Int
 }

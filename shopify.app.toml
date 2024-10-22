@@ -3,7 +3,7 @@
 client_id = "011abb4e5c3f2d0b5b73856e094f727e"
 name = "reviews-app"
 handle = "reviews-app-46"
-application_url = "https://6f0a-76-39-73-28.ngrok-free.app"
+application_url = "https://bb94-76-39-73-28.ngrok-free.app"
 embedded = true
 
 [build]
@@ -17,16 +17,21 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products"
 
 [auth]
 redirect_urls = [
-  "https://6f0a-76-39-73-28.ngrok-free.app/auth/callback",
-  "https://6f0a-76-39-73-28.ngrok-free.app/auth/shopify/callback",
-  "https://6f0a-76-39-73-28.ngrok-free.app/api/auth/callback"
+  "https://bb94-76-39-73-28.ngrok-free.app/auth/callback",
+  "https://bb94-76-39-73-28.ngrok-free.app/auth/shopify/callback",
+  "https://bb94-76-39-73-28.ngrok-free.app/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-07"
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
+  topics = [
+  "app/uninstalled",
+  "orders/cancelled",
+  "orders/create",
+  "orders/edited"
+]
   uri = "/webhooks"
 
 [pos]
