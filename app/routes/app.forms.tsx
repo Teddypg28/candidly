@@ -86,7 +86,7 @@ export default function Settings() {
     const [reviewFormHexColor, setReviewFormHexColor] = useState(hsbToHex(JSON.parse(cleanSettings.reviewSettings.primaryColor)))
     const [backgroundHexColor, setBackgroundHexColor] = useState(hsbToHex(JSON.parse(cleanSettings.reviewSettings.backgroundColor)))
 
-    const reviewsDeepLink = `https://${store}/admin/themes/current/editor?template=product&addAppBlockId=71f5b7e8-355e-4ae5-9482-6637e5f48118/reviews&target=newAppsSection`
+    const reviewsDeepLink = `https://${store}/admin/themes/current/editor?template=product&addAppBlockId=8b35b197-36bb-478f-afcc-71832c3159d6/reviews&target=newAppsSection`
 
     const handleSave = () => {
 

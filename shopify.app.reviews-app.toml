@@ -1,0 +1,49 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "8000cf7a96c4069469b9760940699882"
+name = "reviews-app"
+handle = "reviews-app-48"
+application_url = "https://surf-ty-canadian-airport.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "blizzardbites.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_orders,read_products,read_themes,write_products"
+
+[auth]
+redirect_urls = [
+  "https://links-do-ancient-materials.trycloudflare.com/auth/callback",
+  "https://links-do-ancient-materials.trycloudflare.com/auth/shopify/callback",
+  "https://links-do-ancient-materials.trycloudflare.com/api/auth/callback",
+  "https://ha-specifies-judicial-carpet.trycloudflare.com/auth/callback",
+  "https://ha-specifies-judicial-carpet.trycloudflare.com/auth/shopify/callback",
+  "https://ha-specifies-judicial-carpet.trycloudflare.com/api/auth/callback",
+  "https://indiana-intense-camping-island.trycloudflare.com/auth/callback",
+  "https://indiana-intense-camping-island.trycloudflare.com/auth/shopify/callback",
+  "https://indiana-intense-camping-island.trycloudflare.com/api/auth/callback",
+  "https://mlb-fact-useful-physical.trycloudflare.com/auth/callback",
+  "https://mlb-fact-useful-physical.trycloudflare.com/auth/shopify/callback",
+  "https://mlb-fact-useful-physical.trycloudflare.com/api/auth/callback",
+  "https://biological-track-bandwidth-forest.trycloudflare.com/auth/callback",
+  "https://biological-track-bandwidth-forest.trycloudflare.com/auth/shopify/callback",
+  "https://biological-track-bandwidth-forest.trycloudflare.com/api/auth/callback",
+  "https://surf-ty-canadian-airport.trycloudflare.com/auth/callback",
+  "https://surf-ty-canadian-airport.trycloudflare.com/auth/shopify/callback",
+  "https://surf-ty-canadian-airport.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[app_proxy]
+url = "https://surf-ty-canadian-airport.trycloudflare.com/api"
+subpath = "reviews"
+prefix = "apps"
+
+[pos]
+embedded = false

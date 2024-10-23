@@ -23,12 +23,14 @@ export async function loader({request} : LoaderFunctionArgs) {
 
         } else {
 
-            return new Response(JSON.stringify({error: 'Requested resource not found'}), {status: 400})
+            return new Response(JSON.stringify({error: 'settings not yet configured'}), {status: 400})
 
         }
 
         
     } catch (error) {
+
+        console.log(error)
 
         return new Response(JSON.stringify({error}), {status: 500})
 

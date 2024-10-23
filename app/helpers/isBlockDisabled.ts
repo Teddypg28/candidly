@@ -38,6 +38,7 @@ export default async function isBlockDisabled(request: Request, blockFileName: s
                         let isBlockDisabled = true
     
                         for (let i = 0; i<sections.length; i++) {
+
                             if (sections[i].type === 'apps' && sections[i].hasOwnProperty('blocks')) {
                                 const blockProperties: any = Object.values(Object.values(sections[i].blocks))
 

@@ -32,16 +32,6 @@ model Session {
   emailVerified Boolean?  @default(false)
 }
 
-model RestockFormSettings {
-  id                       Int    @id @default(autoincrement())
-  store                    String
-  heading                  String
-  subheading               String
-  buttonText               String
-  buttonColor              String
-  minimumInventoryForAlert Int
-}
-
 model ReviewSettings {
   id              Int    @id @default(autoincrement())
   store           String
@@ -121,16 +111,18 @@ model AppSettings {
   autoPublish          Boolean
   minRating            Int
   requiresVerification Boolean
+  firstEmail           Int
+  secondEmail          Int
+  thirdEmail           Int
 }
 
 model ReviewRequest {
-  id              Int      @id @default(autoincrement())
-  store           String
-  orderID         BigInt
-  name            String
-  productID       BigInt[]
-  requestDate     DateTime
-  requestNumber   Int
-  daysAfterFirst  Int
-  daysAfterSecond Int
+  id            Int      @id @default(autoincrement())
+  store         String
+  orderId       BigInt
+  lineItemId    BigInt
+  productId     BigInt
+  variantId     BigInt
+  requestDate   DateTime
+  requestNumber Int
 }

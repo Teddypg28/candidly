@@ -24,6 +24,9 @@ export async function loader({request} : LoaderFunctionArgs) {
         autoPublish: false,
         minRating: 4, 
         requiresVerification: true,
+        firstEmail: 10,
+        secondEmail: 5,
+        thirdEmail: 3,
         store: session.shop
 
     }
@@ -38,14 +41,16 @@ export default function Settings() {
 
     const [publishImmediately, setPublishImmediately] = useState([settings.autoPublish.toString()])
     const [minRating, setMinRating] = useState<RangeSliderValue>(settings.minRating)
-    const [isVerificationRequired, setIsVerificationRequired] = useState(settings.requiresVerification)
+    const [firstEmail, setFirstEmail] = useState<RangeSliderValue>(settings.firstEmail)
+    const [secondEmail, setSecondEmail] = useState<RangeSliderValue>(settings.secondEmail)
+    const [thirdEmail, setThirdEmail] = useState<RangeSliderValue>(settings.thirdEmail)
 
     return (
 
         <Page 
         title="App Settings"
         >
-            <BlockStack>
+            <BlockStack gap='200'>
                 <InlineGrid alignItems="start" columns={{ xs: "1fr", md: "4fr 6fr" }}>
                     <Box>
                         <BlockStack gap='150'>
@@ -57,7 +62,7 @@ export default function Settings() {
                     </Box>
                     <Card>
                         <BlockStack gap='400'>
-                            <Banner tone="info">
+                            <Banner tone="warning">
                                 All unpublished reviews with verified email addresses will be published after 14 days, unless rejected.
                             </Banner>
                             <BlockStack>
@@ -92,13 +97,85 @@ export default function Settings() {
                                         <Text as="p" variant="bodySm">{minRating} {minRating === 1 ? 'star' : 'stars'}</Text>
                                     </InlineStack>
                                 </BlockStack>
-                                <Checkbox 
-                                onChange={() => setIsVerificationRequired(!isVerificationRequired)} 
-                                checked={isVerificationRequired} 
-                                label='Reviewer name/email must be verified' 
-                                />
                             </BlockStack>}
                         </BlockStack>
+                    </Card>
+                </InlineGrid>
+                <InlineGrid alignItems="start" columns={{ xs: "1fr", md: "4fr 6fr" }}>
+                    <Box>
+                        <BlockStack gap='150'>
+                            <Text as="h1" variant="headingMd">Review Request Emails</Text>
+                            <Text as="p" variant="bodySm" tone="subdued">
+                                Customize when you want your review request emails to be sent
+                            </Text>
+                        </BlockStack>
+                    </Box>
+                    <Card>
+                        <BlockStack gap='500'>
+                            <BlockStack gap='100'>
+                                <Label id="firstEmailSlider">First Review Request Email</Label>
+                                <InlineStack blockAlign="center" gap='200'>
+                                    <div style={{flex: 1}}>
+                                        <RangeSlider 
+                                        id="firstEmailSlider"
+                                        min={5} 
+                                        max={30}
+                                        step={5} 
+                                        label='' 
+                                        labelHidden
+                                        onChange={setFirstEmail} 
+                                        value={firstEmail}
+                                        />
+                                    </div>
+                                    <Text as="p">{firstEmail} days</Text>
+                                </InlineStack>
+                                <Banner tone="critical">
+                                    Make sure to incoporate your average delivery time so that the first email isn't sent before the product is delivered
+                                </Banner>
+                            </BlockStack>
+                            <BlockStack gap='100'>
+                                <Label id="secondEmailSlider">Second Review Request Email</Label>
+                                <InlineStack blockAlign="center" gap='200'>
+                                    <div style={{flex: 1}}>
+                                        <RangeSlider 
+                                        id="secondEmailSlider"
+                                        min={2} 
+                                        max={10}
+                                        step={2} 
+                                        label='' 
+                                        labelHidden
+                                        onChange={setSecondEmail} 
+                                        value={secondEmail}
+                                        />
+                                    </div>
+                                    <Text as="p">{secondEmail} days</Text>
+                                </InlineStack>
+                                <Banner tone="info">
+                                    This will be sent {secondEmail} days after the first email if no review has been given
+                                </Banner>
+                            </BlockStack>
+                            <BlockStack gap='100'>
+                                <Label id="thirdEmailSlider">Third Review Request Email</Label>
+                                <InlineStack blockAlign="center" gap='200'>
+                                    <div style={{flex: 1}}>
+                                        <RangeSlider 
+                                        id="thirdEmailSlider"
+                                        min={1} 
+                                        max={5}
+                                        label='' 
+                                        labelHidden
+                                        onChange={setThirdEmail} 
+                                        value={thirdEmail}
+                                        />
+                                    </div>
+                                    <Text as="p">{thirdEmail} {thirdEmail === 1 ? 'day' : 'days'}</Text>
+                                </InlineStack>
+                                <Banner tone="info">
+                                    This will be sent {thirdEmail} {thirdEmail === 1 ? 'day' : 'days'} after the second email if a review still hasn't been given
+                                </Banner>
+                            </BlockStack>
+                        </BlockStack>
+                        
                     </Card>
                 </InlineGrid>
             </BlockStack>
