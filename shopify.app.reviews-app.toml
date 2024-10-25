@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "reviews-app"
 handle = "reviews-app-48"
-application_url = "https://russell-orchestra-diagram-binding.trycloudflare.com"
+application_url = "https://said-cave-peers-applications.trycloudflare.com"
 embedded = true
 
 [build]
@@ -37,14 +37,38 @@ redirect_urls = [
   "https://duplicate-dumb-again-near.trycloudflare.com/api/auth/callback",
   "https://russell-orchestra-diagram-binding.trycloudflare.com/auth/callback",
   "https://russell-orchestra-diagram-binding.trycloudflare.com/auth/shopify/callback",
-  "https://russell-orchestra-diagram-binding.trycloudflare.com/api/auth/callback"
+  "https://russell-orchestra-diagram-binding.trycloudflare.com/api/auth/callback",
+  "https://controversial-cord-hartford-danger.trycloudflare.com/auth/callback",
+  "https://controversial-cord-hartford-danger.trycloudflare.com/auth/shopify/callback",
+  "https://controversial-cord-hartford-danger.trycloudflare.com/api/auth/callback",
+  "https://kernel-remedy-fatty-nottingham.trycloudflare.com/auth/callback",
+  "https://kernel-remedy-fatty-nottingham.trycloudflare.com/auth/shopify/callback",
+  "https://kernel-remedy-fatty-nottingham.trycloudflare.com/api/auth/callback",
+  "https://hepatitis-rfc-kruger-recreational.trycloudflare.com/auth/callback",
+  "https://hepatitis-rfc-kruger-recreational.trycloudflare.com/auth/shopify/callback",
+  "https://hepatitis-rfc-kruger-recreational.trycloudflare.com/api/auth/callback",
+  "https://sympathy-quiet-cpu-determination.trycloudflare.com/auth/callback",
+  "https://sympathy-quiet-cpu-determination.trycloudflare.com/auth/shopify/callback",
+  "https://sympathy-quiet-cpu-determination.trycloudflare.com/api/auth/callback",
+  "https://implied-reasonable-jerusalem-annex.trycloudflare.com/auth/callback",
+  "https://implied-reasonable-jerusalem-annex.trycloudflare.com/auth/shopify/callback",
+  "https://implied-reasonable-jerusalem-annex.trycloudflare.com/api/auth/callback",
+  "https://aa-august-promise-coupled.trycloudflare.com/auth/callback",
+  "https://aa-august-promise-coupled.trycloudflare.com/auth/shopify/callback",
+  "https://aa-august-promise-coupled.trycloudflare.com/api/auth/callback",
+  "https://see-shareware-collections-transmitted.trycloudflare.com/auth/callback",
+  "https://see-shareware-collections-transmitted.trycloudflare.com/auth/shopify/callback",
+  "https://see-shareware-collections-transmitted.trycloudflare.com/api/auth/callback",
+  "https://said-cave-peers-applications.trycloudflare.com/auth/callback",
+  "https://said-cave-peers-applications.trycloudflare.com/auth/shopify/callback",
+  "https://said-cave-peers-applications.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://russell-orchestra-diagram-binding.trycloudflare.com/api"
+url = "https://said-cave-peers-applications.trycloudflare.com/api"
 subpath = "reviews"
 prefix = "apps"
 

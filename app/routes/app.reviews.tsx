@@ -344,7 +344,8 @@ export default function Reviews() {
                 titleHidden 
                 onChange={(chosenRatings) => setReviewsState({...reviewsState, selectedRatings: chosenRatings})}
                 choices={ratingsChoices} 
-                selected={selectedRatings || []}  />
+                selected={selectedRatings || []} 
+                />
             )
         }
     ]

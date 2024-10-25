@@ -95,7 +95,7 @@ model SavedReviewsTableViews {
   selectedRatings  String?
 }
 
-model savedCustomQuestionsTableView {
+model SavedCustomQuestionsTableView {
   id                    Int     @id @default(autoincrement())
   store                 String
   name                  String
@@ -118,6 +118,8 @@ model AppSettings {
 
 model ReviewRequest {
   id                Int       @id @default(autoincrement())
+  date              DateTime
+  orderNumber       Int
   orderId           BigInt
   store             String
   email             String
@@ -125,4 +127,14 @@ model ReviewRequest {
   reviewStatus      String    @default("waiting")
   requestDate       DateTime?
   emailsSent        Int       @default(0)
+}
+
+model SavedReviewRequestTableView {
+  id                         Int      @id @default(autoincrement())
+  store                      String
+  name                       String
+  queryValue                 String
+  selectedProductFilters     String[]
+  selectedFulfillmentFilters String[]
+  sortSelected               String[]
 }

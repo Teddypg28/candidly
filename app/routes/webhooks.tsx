@@ -26,6 +26,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session) {
 
           const data = {
+            date: new Date(payload.created_at),
+            orderNumber: payload.order_number,
             orderId: payload.id,
             store: session.shop,
             email: payload.customer.email,

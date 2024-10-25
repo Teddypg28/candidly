@@ -1,110 +1,106 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { Badge, Card, ChoiceList, EmptySearchResult, EmptyState, IndexFilters, IndexFiltersMode, IndexFiltersProps, IndexTable, Page, Text, useSetIndexFiltersMode } from "@shopify/polaris";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
+import { Badge, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode } from "@shopify/polaris";
 
 import db from '../db.server'
 
 import { authenticate } from "~/shopify.server";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
+import { ReviewRequestData, ReviewRequestIndexTableState } from "~/types/types";
+import { createEachProductReviewRequest } from "~/helpers/createEachProductReviewRequest";
 
 export async function loader({ request } : LoaderFunctionArgs) {
 
     const { session, admin } = await authenticate.admin(request)
 
-    const reviewRequests = await db.reviewRequest.findMany({where: {store: {equals: session.shop}}})
+    // Retrieve review request data
 
-    const createEachProductRequest = async (request: any) => {
+    const reviewRequestData = await db.reviewRequest.findMany({where: {store: {equals: session.shop}}})
 
-        const query = `
-        {
-            order(id: "gid://shopify/Order/${request.orderId}") {
-              lineItems(first: 100, reverse: true) {
-                edges {
-                  node {
-                    currentQuantity
-                    product {
-                      title
-                    }  
-                  }
-                }
-              }
-            }
-          }`
+    const results = await Promise.all(reviewRequestData.map(async (request) => {
 
-        const res = await admin.graphql(query)
-        const data = await res.json()
-
-        const stillInOrderTitles = data.data.order.lineItems.edges.filter((edge: any) => {
-
-            if (edge.node.currentQuantity > 0) {
-                return edge
-            }
-
-        }).map((item: any) => {
-
-            return item.node.product.title
-
-        })
-
-        const reviewRequests = stillInOrderTitles.filter((title: any, index: number) => {
-
-            return stillInOrderTitles.indexOf(title) === index
-
-        }).map((itemName: string) => {
-            
-            return {
-
-                email: request.email,
-                fulfillmentStatus: request.fulfillmentStatus,
-                reviewStatus: request.reviewStatus,
-                emailsSent: request.emailsSent,
-                product: itemName
-                
-            }
-
-        })
-
-        return reviewRequests
-
-    }
-
-    const results = await Promise.all(reviewRequests.map(async (request) => {
-
-        return createEachProductRequest(request)
+        return createEachProductReviewRequest(request, admin)
 
     }))
 
-    const data: {email: string, fulfillmentStatus: string | null, reviewStatus: string, emailsSent: number, product: string}[] = []
+    const reviewRequests: ReviewRequestData[] = []
 
     results.forEach(result => {
         result.forEach((requestObject: any) => {
-            data.push(requestObject)
+            reviewRequests.push(requestObject)
         })
     })
 
-    return data
+
+    // Retrieve saved table view data
+
+    const savedTableViews = await db.savedReviewRequestTableView.findMany({where: {store: {equals: session.shop}}, omit: {id: true, store: true}})
+
+    // Serve both
+
+    return json({savedTableViews, reviewRequests})
+
+}
+
+export async function action({ request } : ActionFunctionArgs) {
+
+    const { session } = await authenticate.admin(request)
+
+    const data = await request.json()
+    const { state, action } = data
+    
+    delete state['selectedTab']
+
+    if (action === 'create') {
+
+        await db.savedReviewRequestTableView.create({ data: { ...state, store: session.shop } })
+
+    } else {
+
+        await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}}, data : { ...state, store: session.shop } })
+
+    }
+
+    return true
+
+}
+
+const defaultState = {
+    queryValue: '',
+    selectedProductFilters: [],
+    selectedFulfillmentFilters: [],
+    selectedTab: 0,
+    sortSelected: ['date desc']
 }
 
 export default function ReviewRequests() {
 
-    const reviewRequests = useLoaderData<typeof loader>()
+    const data = useLoaderData<typeof loader>()
+    const { reviewRequests, savedTableViews } = data
 
     // STATE HANDLING
 
-    const [emailQueryValue, setEmailQueryValue] = useState('')
+    const [indexTableState, setIndexTableState]= useState<ReviewRequestIndexTableState>(defaultState)
 
     const reviewRequestsAfterFiltering = reviewRequests.filter(request => {
 
-        return request.email.includes(emailQueryValue.trim())
+        return request.email.includes(indexTableState.queryValue.trim()) || request.orderNumber.toString().includes(indexTableState.queryValue.trim())
 
     })
 
     const IndexTableMarkup = reviewRequestsAfterFiltering.map((reviewRequest, index) => {
 
+        const storeName = reviewRequest.store.split('.myshopify')[0]
+        const orderUrl = `https://admin.shopify.com/store/${storeName}/orders/${reviewRequest.orderId}`
+
         return (
 
             <IndexTable.Row key={index} position={index} id={index.toString()}>
                 <IndexTable.Cell>{reviewRequest.product}</IndexTable.Cell>
+                <IndexTable.Cell>{new Date(reviewRequest.date).toLocaleDateString()}</IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Link target="_blank" url={orderUrl}>#{reviewRequest.orderNumber}</Link>
+                </IndexTable.Cell>
                 <IndexTable.Cell>{reviewRequest.email}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <Badge tone={reviewRequest.fulfillmentStatus === null ? "attention" : "success" }>
@@ -124,6 +120,7 @@ export default function ReviewRequests() {
     })
 
     const {mode, setMode} = useSetIndexFiltersMode();
+    const submit = useSubmit()
 
     const productNames = reviewRequests.map(request => request.product)
     const filteredProductNames = productNames.filter((name, index) => productNames.indexOf(name) === index).map(
@@ -137,14 +134,92 @@ export default function ReviewRequests() {
                 <ChoiceList 
                 title=''
                 titleHidden
+                allowMultiple
                 choices={filteredProductNames}
-                selected={[]}
+                onChange={(selected, name) => setIndexTableState({...indexTableState, selectedProductFilters: selected})}
+                selected={indexTableState.selectedProductFilters}
+                />
+            ),
+            
+        },
+        {
+            key: 'fulfillmentStatus',
+            label: 'Fulfillment Status',
+            filter: (
+                <ChoiceList
+                title=''
+                titleHidden
+                allowMultiple
+                choices={[{label: 'Pending', value: 'pending'}, {label: 'Fulfilled', value: 'fulfilled'}]}
+                onChange={(selected, name) => setIndexTableState({...indexTableState, selectedFulfillmentFilters: selected})}
+                selected={indexTableState.selectedFulfillmentFilters}
                 />
             )
         }
     ]
 
-    console.log(IndexTableMarkup)
+    const appliedFilters: IndexFiltersProps['appliedFilters'] = []
+    if (indexTableState.selectedProductFilters.length > 0) {
+
+        appliedFilters.push({
+            key: 'product',
+            label: joinFilters(indexTableState.selectedProductFilters),
+            onRemove: () => setIndexTableState({...indexTableState, selectedProductFilters: []})
+        })
+        
+    }
+
+    const tabs: IndexFiltersProps['tabs'] = ['All Review Requests', ...savedTableViews.map(view => view.name)].map((tabName, index) => {
+
+        return {content: tabName, id: `${tabName}-${index}`}
+
+    })
+
+    const changeTabs = (index: number) => {
+
+        if (index > 0) {
+            setIndexTableState({...savedTableViews[index-1], selectedTab: index})
+        } else {
+            setIndexTableState({...defaultState})
+        }
+
+    }
+
+    const sortOptions: IndexFiltersProps['sortOptions'] = [
+        {label: 'Number of Emails Sent', value: 'numEmails asc', directionLabel: 'Least to Most'},
+        {label: 'Number of Emails Sent', value: 'numEmails desc', directionLabel: 'Most to Least'},
+        {label: 'Order Date', value: 'date asc', directionLabel: 'Oldest to Newest'},
+        {label: 'Order Date', value: 'date desc', directionLabel: 'Newest to Oldest'}
+    ]
+
+    const createNewView = async (name: string) => {
+        submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
+        return true
+    }
+
+    const saveView = async () => {
+        submit(JSON.stringify({state: { ...indexTableState }, action: 'update'}), {method: 'POST', encType: 'application/json'})
+        return true
+    }
+
+    const primaryAction: IndexFiltersProps['primaryAction'] = {
+        type: indexTableState.selectedTab === 0 ? "save-as" : "save",
+        onAction: indexTableState.selectedTab === 0 ? createNewView : saveView
+    }
+
+    const cancelFilterChanges = () => {
+
+        if (indexTableState.selectedTab > 0) {
+
+            setIndexTableState({...savedTableViews[indexTableState.selectedTab - 1], selectedTab: indexTableState.selectedTab})
+
+        } else {
+
+            setIndexTableState(defaultState)
+
+        }
+
+    }
 
     return (
 
@@ -165,22 +240,28 @@ export default function ReviewRequests() {
 
             <Card>
                 <IndexFilters
-                tabs={[{content: 'All Review Requests', id: '0', isLocked: true, selected: true}]}
+                sortOptions={sortOptions}
+                sortSelected={indexTableState.sortSelected}
+                onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
+                tabs={tabs}
                 mode={mode}
                 setMode={setMode}
                 filters={filters}
-                onSelect={() => {}}
+                appliedFilters={appliedFilters}
                 onClearAll={() => {}}
-                queryValue={emailQueryValue}
-                onQueryChange={setEmailQueryValue}
-                onQueryClear={() => setEmailQueryValue('')}
-                cancelAction={{onAction: () => {}}}
-                queryPlaceholder="Search by email"
-                selected={0}
+                primaryAction={primaryAction}
+                queryValue={indexTableState.queryValue}
+                onQueryChange={(value) => setIndexTableState({...indexTableState, queryValue: value})}
+                onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
+                cancelAction={{onAction: cancelFilterChanges}}
+                onCreateNewView={createNewView}
+                queryPlaceholder="Search by email or order number"
+                onSelect={changeTabs}
+                selected={indexTableState.selectedTab}
                 />
                 <IndexTable 
                 selectable={false}
-                headings={[{title: 'Product'}, {title: 'Email'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
+                headings={[{title: 'Product'}, {title: 'Date Ordered'}, {title: 'Order Number'}, {title: 'Email'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
                 itemCount={reviewRequestsAfterFiltering.length}
                 >
                     {IndexTableMarkup}
@@ -191,5 +272,11 @@ export default function ReviewRequests() {
         </Page>
 
     )
+
+}
+
+const joinFilters = (filters: string[]) => {
+
+    return filters.join(', ')
 
 }

@@ -38,6 +38,14 @@ export interface ReviewsTableFilterState {
     selected: number
 }
 
+export interface ReviewRequestIndexTableState {
+    queryValue: string,
+    selectedProductFilters: string[],
+    selectedFulfillmentFilters: string[],
+    selectedTab: number,
+    sortSelected: IndexFiltersProps['sortSelected']
+}
+
 export interface Review {
     store: string;
     title: string;
@@ -82,4 +90,16 @@ export interface SavedView {
     sortSelected: IndexFiltersProps['sortSelected'], 
     selectedProducts: string[],
     selectedRatings: string[]
+}
+
+export interface ReviewRequestData {
+    store: string, 
+    email: string, 
+    date: Date, 
+    fulfillmentStatus: string | null, 
+    reviewStatus: string, 
+    emailsSent: number, 
+    product: string, 
+    orderId: number, 
+    orderNumber: number
 }
