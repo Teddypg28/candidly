@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "reviews-app"
 handle = "reviews-app-48"
-application_url = "https://said-cave-peers-applications.trycloudflare.com"
+application_url = "https://sponsorship-detailed-worn-memory.trycloudflare.com"
 embedded = true
 
 [build]
@@ -61,14 +61,17 @@ redirect_urls = [
   "https://see-shareware-collections-transmitted.trycloudflare.com/api/auth/callback",
   "https://said-cave-peers-applications.trycloudflare.com/auth/callback",
   "https://said-cave-peers-applications.trycloudflare.com/auth/shopify/callback",
-  "https://said-cave-peers-applications.trycloudflare.com/api/auth/callback"
+  "https://said-cave-peers-applications.trycloudflare.com/api/auth/callback",
+  "https://sponsorship-detailed-worn-memory.trycloudflare.com/auth/callback",
+  "https://sponsorship-detailed-worn-memory.trycloudflare.com/auth/shopify/callback",
+  "https://sponsorship-detailed-worn-memory.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://said-cave-peers-applications.trycloudflare.com/api"
+url = "https://sponsorship-detailed-worn-memory.trycloudflare.com/api"
 subpath = "reviews"
 prefix = "apps"
 

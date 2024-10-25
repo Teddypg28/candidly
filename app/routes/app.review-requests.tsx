@@ -34,7 +34,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     // Retrieve saved table view data
 
-    const savedTableViews = await db.savedReviewRequestTableView.findMany({where: {store: {equals: session.shop}}, omit: {id: true, store: true}})
+    const savedTableViews = await db.savedReviewRequestTableView.findMany({where: {store: {equals: session.shop}}, omit: {id: true, store: true}, orderBy: {id: "asc"}})
 
     // Serve both
 
@@ -47,17 +47,31 @@ export async function action({ request } : ActionFunctionArgs) {
     const { session } = await authenticate.admin(request)
 
     const data = await request.json()
-    const { state, action } = data
+    const { state, action, nameToUpdate, nameToDelete } = data
     
-    delete state['selectedTab']
+    if (state) {
+        delete state['selectedTab']
+    }
 
     if (action === 'create') {
 
         await db.savedReviewRequestTableView.create({ data: { ...state, store: session.shop } })
 
+    } else if (action === 'update') {
+
+        if (nameToUpdate) {
+
+            await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: nameToUpdate}}}, data : { ...state, store: session.shop } })
+
+        } else {
+
+            await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: state.name}}}, data : { ...state, store: session.shop } })
+
+        }
+
     } else {
 
-        await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}}, data : { ...state, store: session.shop } })
+        await db.savedReviewRequestTableView.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: nameToDelete}}}})
 
     }
 
@@ -169,9 +183,40 @@ export default function ReviewRequests() {
         
     }
 
+    const createNewView = async (name: string) => {
+        submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
+        setIndexTableState({...indexTableState, selectedTab: savedTableViews.length + 1})                    
+        return true
+    }
+
+    const saveView = async () => {
+        submit(JSON.stringify({state: { ...indexTableState }, action: 'update'}), {method: 'POST', encType: 'application/json'})
+        return true
+    }
+
+    const renameView = (newName: string, currentName: string) => {
+        submit(JSON.stringify({state: { ...indexTableState, name: newName }, action: 'update', nameToUpdate: currentName}), {method: 'POST', encType: 'application/json'})
+    }
+
+    const deleteView = (viewNameToDelete: string) => {
+        submit(JSON.stringify({nameToDelete: viewNameToDelete, action: 'delete'}), {method: 'POST', encType: 'application/json'})
+        setTimeout(() => {
+            setIndexTableState({...indexTableState, selectedTab: 0})
+        }, 500);
+    }
+    
     const tabs: IndexFiltersProps['tabs'] = ['All Review Requests', ...savedTableViews.map(view => view.name)].map((tabName, index) => {
 
-        return {content: tabName, id: `${tabName}-${index}`}
+        return {
+            content: tabName, 
+            id: `${tabName}-${index}`,
+            actions: index === 0 ? [] :
+            [
+                {type: 'rename', onPrimaryAction: (newName: string) => renameView(newName, tabName)},
+                {type: 'duplicate', onPrimaryAction: createNewView},
+                {type: 'delete', onPrimaryAction: deleteView}
+            ]
+        }
 
     })
 
@@ -191,16 +236,6 @@ export default function ReviewRequests() {
         {label: 'Order Date', value: 'date asc', directionLabel: 'Oldest to Newest'},
         {label: 'Order Date', value: 'date desc', directionLabel: 'Newest to Oldest'}
     ]
-
-    const createNewView = async (name: string) => {
-        submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
-        return true
-    }
-
-    const saveView = async () => {
-        submit(JSON.stringify({state: { ...indexTableState }, action: 'update'}), {method: 'POST', encType: 'application/json'})
-        return true
-    }
 
     const primaryAction: IndexFiltersProps['primaryAction'] = {
         type: indexTableState.selectedTab === 0 ? "save-as" : "save",
