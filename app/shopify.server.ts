@@ -24,11 +24,7 @@ const shopify = shopifyApp({
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: '/webhooks'
     },
-    ORDERS_UPDATED: {
-      deliveryMethod: DeliveryMethod.Http,
-      callbackUrl: '/webhooks'
-    },
-    ORDERS_EDITED: {
+    ORDERS_FULFILLED: {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: '/webhooks'
     },

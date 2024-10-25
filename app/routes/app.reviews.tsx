@@ -245,10 +245,6 @@ export default function Reviews() {
 
     const { handleSelectionChange, allResourcesSelected, selectedResources, removeSelectedResources } = useIndexResourceState(filteredReviews)
 
-    const handleNumOfReviewsChange = (value: number) => {
-        setImportReviewsFormState({...importReviewsFormState, numberOfReviews: value})
-    }
-
     const updateViewState = (index: number) => {
 
         const viewName = itemStrings[index]

@@ -117,12 +117,12 @@ model AppSettings {
 }
 
 model ReviewRequest {
-  id            Int      @id @default(autoincrement())
-  store         String
-  orderId       BigInt
-  lineItemId    BigInt
-  productId     BigInt
-  variantId     BigInt
-  requestDate   DateTime
-  requestNumber Int
+  id                Int       @id @default(autoincrement())
+  orderId           BigInt
+  store             String
+  email             String
+  fulfillmentStatus String?
+  reviewStatus      String    @default("waiting")
+  requestDate       DateTime?
+  emailsSent        Int       @default(0)
 }
