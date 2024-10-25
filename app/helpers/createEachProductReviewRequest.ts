@@ -4,19 +4,22 @@ export const createEachProductReviewRequest = async (request: any, admin: AdminA
 
     const query = `
     {
-        order(id: "gid://shopify/Order/${request.orderId}") {
-          lineItems(first: 100, reverse: true) {
-            edges {
-              node {
-                currentQuantity
-                product {
-                  title
-                }  
-              }
+      order(id: "gid://shopify/Order/${request.orderId}") {
+        fulfillments{
+          status
+        }
+        lineItems(first: 100, reverse: true) {
+          edges {
+            node {
+              currentQuantity
+              product {
+                title
+              }  
             }
           }
         }
-      }`
+      }
+    }`
 
     const res = await admin.graphql(query)
     const data = await res.json()
@@ -43,8 +46,7 @@ export const createEachProductReviewRequest = async (request: any, admin: AdminA
 
             ...request,
             orderId: parseInt(request.orderId.toString()),
-            product: itemName
-            
+            product: itemName            
         }
 
     })

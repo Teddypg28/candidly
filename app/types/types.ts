@@ -101,5 +101,5 @@ export interface ReviewRequestData {
     emailsSent: number, 
     product: string, 
     orderId: number, 
-    orderNumber: number
+    orderName: string
 }

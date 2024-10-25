@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
           const data = {
             date: new Date(payload.created_at),
-            orderNumber: payload.order_number,
+            orderName: payload.name,
             orderId: payload.id,
             store: session.shop,
             email: payload.customer.email,

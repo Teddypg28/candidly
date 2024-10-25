@@ -119,7 +119,7 @@ model AppSettings {
 model ReviewRequest {
   id                Int       @id @default(autoincrement())
   date              DateTime
-  orderNumber       Int
+  orderName         String
   orderId           BigInt
   store             String
   email             String
@@ -127,6 +127,12 @@ model ReviewRequest {
   reviewStatus      String    @default("waiting")
   requestDate       DateTime?
   emailsSent        Int       @default(0)
+}
+
+model CurrentOrdersStatus {
+  id      Int     @id @default(autoincrement())
+  store   String
+  handled Boolean @default(false)
 }
 
 model SavedReviewRequestTableView {

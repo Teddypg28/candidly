@@ -1,4 +1,8 @@
+import { LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, CalloutCard, Card, Layout, Text } from "@shopify/polaris";
+import { authenticate } from "~/shopify.server";
+
+import db from '../db.server'
 
 export default function Index() {
 

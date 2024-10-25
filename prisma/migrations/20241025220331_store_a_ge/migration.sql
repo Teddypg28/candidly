@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "StoreAge" ALTER COLUMN "store" SET DATA TYPE TEXT;

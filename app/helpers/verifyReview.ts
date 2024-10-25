@@ -69,7 +69,7 @@ export default async function verifyReview(graphql: any, reviewerEmail: string, 
 
             const query = `query customerOrders {
  
-                orders(first: 250, last: ${queryResult.data.orders.pageInfo.endCursor}) {
+                orders(first: 250, after: ${queryResult.data.orders.pageInfo.endCursor}) {
                   nodes {
                     email
                     lineItems(first:150) {

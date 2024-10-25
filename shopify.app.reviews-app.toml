@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "reviews-app"
 handle = "reviews-app-48"
-application_url = "https://sponsorship-detailed-worn-memory.trycloudflare.com"
+application_url = "https://ads-humor-algorithm-ship.trycloudflare.com"
 embedded = true
 
 [build]
@@ -64,14 +64,29 @@ redirect_urls = [
   "https://said-cave-peers-applications.trycloudflare.com/api/auth/callback",
   "https://sponsorship-detailed-worn-memory.trycloudflare.com/auth/callback",
   "https://sponsorship-detailed-worn-memory.trycloudflare.com/auth/shopify/callback",
-  "https://sponsorship-detailed-worn-memory.trycloudflare.com/api/auth/callback"
+  "https://sponsorship-detailed-worn-memory.trycloudflare.com/api/auth/callback",
+  "https://incidence-ide-dan-kingdom.trycloudflare.com/auth/callback",
+  "https://incidence-ide-dan-kingdom.trycloudflare.com/auth/shopify/callback",
+  "https://incidence-ide-dan-kingdom.trycloudflare.com/api/auth/callback",
+  "https://tonight-eco-manhattan-challenges.trycloudflare.com/auth/callback",
+  "https://tonight-eco-manhattan-challenges.trycloudflare.com/auth/shopify/callback",
+  "https://tonight-eco-manhattan-challenges.trycloudflare.com/api/auth/callback",
+  "https://rubber-cycling-nicaragua-horizontal.trycloudflare.com/auth/callback",
+  "https://rubber-cycling-nicaragua-horizontal.trycloudflare.com/auth/shopify/callback",
+  "https://rubber-cycling-nicaragua-horizontal.trycloudflare.com/api/auth/callback",
+  "https://let-expertise-blast-ill.trycloudflare.com/auth/callback",
+  "https://let-expertise-blast-ill.trycloudflare.com/auth/shopify/callback",
+  "https://let-expertise-blast-ill.trycloudflare.com/api/auth/callback",
+  "https://ads-humor-algorithm-ship.trycloudflare.com/auth/callback",
+  "https://ads-humor-algorithm-ship.trycloudflare.com/auth/shopify/callback",
+  "https://ads-humor-algorithm-ship.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://sponsorship-detailed-worn-memory.trycloudflare.com/api"
+url = "https://ads-humor-algorithm-ship.trycloudflare.com/api"
 subpath = "reviews"
 prefix = "apps"
 

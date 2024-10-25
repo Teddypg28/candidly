@@ -13,6 +13,98 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     const { session, admin } = await authenticate.admin(request)
 
+    const visitedBefore = await db.currentOrdersStatus.findFirst({where: {store: {equals: session.shop}}})
+    if (!visitedBefore) {
+        await db.currentOrdersStatus.create({data: {store: session.shop}})
+    }
+
+    const currentOrdersStatus = await db.currentOrdersStatus.findFirst({where: {store: {equals: session.shop}}})
+
+    // Retrieve all current orders
+
+    if (!currentOrdersStatus?.handled) {
+
+        const reviewRequestObjects: any = []
+
+        const query = `{
+            orders(first: 100) {
+              nodes {
+                displayFulfillmentStatus
+                id
+                name
+                createdAt
+                cancelledAt
+                email
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }`
+
+        const retrieveCurrentOrders = async (query: string) => {
+
+            const queryResult = await admin.graphql(query)
+            const queryResultData = await queryResult.json()
+
+            queryResultData.data.orders.nodes.forEach((node: any) => {
+                if (node.cancelledAt === null) {
+                    reviewRequestObjects.push({
+                        store: session.shop,
+                        date: node.createdAt,
+                        orderId: node.id.split('Order/')[1],
+                        orderName: node.name,
+                        email: node.email,
+                        fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending'
+                    })
+
+                }
+            })
+
+            if (queryResultData.data.orders.pageInfo.hasNextPage) {
+
+                const nextQuery = `
+                {
+                    orders(first: 100, after: ${queryResultData.data.orders.pageInfo.endCursor}) {
+                      nodes {
+                        displayFulfillmentStatus
+                        id
+                        name
+                        createdAt
+                        cancelledAt
+                        email
+                      }
+                      pageInfo {
+                        hasNextPage
+                        endCursor
+                      }
+                    }
+                  }    
+                `
+
+                retrieveCurrentOrders(nextQuery)
+
+            } else {
+
+                return reviewRequestObjects
+
+            }
+
+        } 
+
+        const currentOrderObjects = await retrieveCurrentOrders(query)
+        
+        await Promise.all(currentOrderObjects.map(async (orderObject: any) => {
+
+            return db.reviewRequest.create({data: orderObject})
+
+        }))
+
+        await db.currentOrdersStatus.updateMany({where: {store: {equals: session.shop}}, data: {handled: true}})
+
+    }
+
     // Retrieve review request data
 
     const reviewRequestData = await db.reviewRequest.findMany({where: {store: {equals: session.shop}}})
@@ -87,6 +179,12 @@ const defaultState = {
     sortSelected: ['date desc']
 }
 
+const joinFilters = (filters: string[]) => {
+
+    return filters.join(', ')
+
+}
+
 export default function ReviewRequests() {
 
     const data = useLoaderData<typeof loader>()
@@ -98,7 +196,7 @@ export default function ReviewRequests() {
 
     const reviewRequestsAfterFiltering = reviewRequests.filter(request => {
 
-        return request.email.includes(indexTableState.queryValue.trim()) || request.orderNumber.toString().includes(indexTableState.queryValue.trim())
+        return request.email.includes(indexTableState.queryValue.trim()) || request.orderName.includes(indexTableState.queryValue.trim())
 
     })
 
@@ -113,11 +211,11 @@ export default function ReviewRequests() {
                 <IndexTable.Cell>{reviewRequest.product}</IndexTable.Cell>
                 <IndexTable.Cell>{new Date(reviewRequest.date).toLocaleDateString()}</IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Link target="_blank" url={orderUrl}>#{reviewRequest.orderNumber}</Link>
+                    <Link target="_blank" url={orderUrl}>{reviewRequest.orderName}</Link>
                 </IndexTable.Cell>
                 <IndexTable.Cell>{reviewRequest.email}</IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Badge tone={reviewRequest.fulfillmentStatus === null ? "attention" : "success" }>
+                    <Badge tone={reviewRequest.fulfillmentStatus === "fulfilled" ? "success" : "attention" }>
                         {reviewRequest.fulfillmentStatus === null ? "pending" : reviewRequest.fulfillmentStatus}
                     </Badge>
                 </IndexTable.Cell>
@@ -307,11 +405,5 @@ export default function ReviewRequests() {
         </Page>
 
     )
-
-}
-
-const joinFilters = (filters: string[]) => {
-
-    return filters.join(', ')
 
 }
