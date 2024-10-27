@@ -42,6 +42,7 @@ export interface ReviewRequestIndexTableState {
     queryValue: string,
     selectedProductFilters: string[],
     selectedFulfillmentFilters: string[],
+    selectedReviewStatusFilters: string[],
     selectedTab: number,
     sortSelected: IndexFiltersProps['sortSelected']
 }

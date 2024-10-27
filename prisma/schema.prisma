@@ -136,11 +136,12 @@ model CurrentOrdersStatus {
 }
 
 model SavedReviewRequestTableView {
-  id                         Int      @id @default(autoincrement())
-  store                      String
-  name                       String
-  queryValue                 String
-  selectedProductFilters     String[]
-  selectedFulfillmentFilters String[]
-  sortSelected               String[]
+  id                          Int      @id @default(autoincrement())
+  store                       String
+  name                        String
+  queryValue                  String
+  selectedProductFilters      String[]
+  selectedFulfillmentFilters  String[]
+  selectedReviewStatusFilters String[]
+  sortSelected                String[]
 }

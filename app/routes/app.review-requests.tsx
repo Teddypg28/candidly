@@ -175,6 +175,7 @@ const defaultState = {
     queryValue: '',
     selectedProductFilters: [],
     selectedFulfillmentFilters: [],
+    selectedReviewStatusFilters: [],
     selectedTab: 0,
     sortSelected: ['date desc']
 }
@@ -194,11 +195,67 @@ export default function ReviewRequests() {
 
     const [indexTableState, setIndexTableState]= useState<ReviewRequestIndexTableState>(defaultState)
 
+    // Filter reviews based on selected filters
     const reviewRequestsAfterFiltering = reviewRequests.filter(request => {
 
-        return request.email.includes(indexTableState.queryValue.trim()) || request.orderName.includes(indexTableState.queryValue.trim())
+        return request.email.includes(indexTableState.queryValue.trim()) || 
+               request.orderName.includes(indexTableState.queryValue.trim()) || 
+               new Date(request.date).toLocaleDateString().includes(indexTableState.queryValue.trim())
+
+    }).filter(request => {
+
+        if (indexTableState.selectedProductFilters.length > 0) {
+
+            return indexTableState.selectedProductFilters.includes(request.product)
+
+        }
+
+        return request
+
+    }).filter(request => {
+
+        if (indexTableState.selectedFulfillmentFilters.length > 0) {
+
+            return indexTableState.selectedFulfillmentFilters.includes(request.fulfillmentStatus || 'pending')
+
+        }
+
+        return request
+
+    }).filter(request => {
+
+        if (indexTableState.selectedReviewStatusFilters.length > 0) {
+
+            return indexTableState.selectedReviewStatusFilters.includes(request.reviewStatus)
+
+        }
+
+        return request
+
+    }).sort((a, b) => {
+
+        if (indexTableState.sortSelected) {
+
+            const sortValue = indexTableState.sortSelected[0]
+
+            switch(sortValue) {
+                case 'date asc':
+                    return new Date(a.date).getTime() - new Date(b.date).getTime()
+                case 'date desc':
+                    return new Date(b.date).getTime() - new Date(a.date).getTime()
+                case 'numEmails asc':
+                    return a.emailsSent - b.emailsSent
+                case 'numEmails desc':
+                    return b.emailsSent - a.emailsSent
+            }
+
+        }
+
+        return 0
 
     })
+
+    // APPLY OTHER FILTERS
 
     const IndexTableMarkup = reviewRequestsAfterFiltering.map((reviewRequest, index) => {
 
@@ -220,7 +277,7 @@ export default function ReviewRequests() {
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Badge tone={reviewRequest.reviewStatus === "waiting" ? "attention" : "success" }>
+                    <Badge tone={reviewRequest.reviewStatus === "waiting" ? "enabled" : "success" }>
                         {reviewRequest.reviewStatus}
                     </Badge>
                 </IndexTable.Cell>
@@ -267,18 +324,45 @@ export default function ReviewRequests() {
                 selected={indexTableState.selectedFulfillmentFilters}
                 />
             )
+        },
+        {
+            key: 'reviewStatus',
+            label: 'Review Status',
+            filter: (
+                <ChoiceList
+                title=''
+                titleHidden
+                allowMultiple
+                choices={[{label: 'Waiting', value: 'waiting'}, {label: 'Submitted', value: 'submitted'}]}
+                onChange={(selected, name) => setIndexTableState({...indexTableState, selectedReviewStatusFilters: selected})}
+                selected={indexTableState.selectedReviewStatusFilters}
+                />
+            )
         }
     ]
 
+    // Applied Filters
     const appliedFilters: IndexFiltersProps['appliedFilters'] = []
     if (indexTableState.selectedProductFilters.length > 0) {
-
         appliedFilters.push({
             key: 'product',
             label: joinFilters(indexTableState.selectedProductFilters),
             onRemove: () => setIndexTableState({...indexTableState, selectedProductFilters: []})
         })
-        
+    }
+    if (indexTableState.selectedFulfillmentFilters.length > 0) {
+        appliedFilters.push({
+            key: 'fulfillmentStatus',
+            label: joinFilters(indexTableState.selectedFulfillmentFilters),
+            onRemove: () => setIndexTableState({...indexTableState, selectedFulfillmentFilters: []})
+        })
+    }
+    if (indexTableState.selectedReviewStatusFilters.length > 0) {
+        appliedFilters.push({
+            key: 'reviewStatus',
+            label: joinFilters(indexTableState.selectedReviewStatusFilters),
+            onRemove: () => setIndexTableState({...indexTableState, selectedReviewStatusFilters: []})
+        })
     }
 
     const createNewView = async (name: string) => {
@@ -354,6 +438,10 @@ export default function ReviewRequests() {
 
     }
 
+    const clearAllFilters = () => {
+        setIndexTableState({...indexTableState, selectedFulfillmentFilters: [], selectedProductFilters: [], selectedReviewStatusFilters: []})
+    }
+
     return (
 
         <Page
@@ -381,14 +469,14 @@ export default function ReviewRequests() {
                 setMode={setMode}
                 filters={filters}
                 appliedFilters={appliedFilters}
-                onClearAll={() => {}}
+                onClearAll={clearAllFilters}
                 primaryAction={primaryAction}
                 queryValue={indexTableState.queryValue}
                 onQueryChange={(value) => setIndexTableState({...indexTableState, queryValue: value})}
                 onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
                 cancelAction={{onAction: cancelFilterChanges}}
                 onCreateNewView={createNewView}
-                queryPlaceholder="Search by email or order number"
+                queryPlaceholder="Search by email, date, or order number"
                 onSelect={changeTabs}
                 selected={indexTableState.selectedTab}
                 />
