@@ -19,12 +19,13 @@ export async function loader({ request } : LoaderFunctionArgs) {
     }
 
     const currentOrdersStatus = await db.currentOrdersStatus.findFirst({where: {store: {equals: session.shop}}})
+    const storeSettingsSet = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
-    // Retrieve all current orders
-
-    if (!currentOrdersStatus?.handled) {
+    // Retrieve all current orders if current orders aren't handled and store settings are set
+    if (!currentOrdersStatus?.handled && storeSettingsSet) {
 
         const reviewRequestObjects: any = []
+        const emailSendingSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
         const query = `{
             orders(first: 100) {
@@ -49,12 +50,28 @@ export async function loader({ request } : LoaderFunctionArgs) {
             const queryResultData = await queryResult.json()
 
             queryResultData.data.orders.nodes.forEach((node: any) => {
+    
                 if (node.cancelledAt === null) {
+
+                    const numOfDaysSince = Math.round((new Date().valueOf() - new Date(node.createdAt).valueOf()) / (1000 * 60 * 60 * 24))
+                    let requestDate
+        
+                    if (emailSendingSettings && node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
+                        if (numOfDaysSince >= emailSendingSettings.firstEmail) {
+                            requestDate = new Date()
+                            requestDate.setDate(requestDate.getDate() + 1) 
+                        } else {
+                            requestDate = new Date(node.createdAt)
+                            requestDate.setDate(requestDate.getDate() + emailSendingSettings.firstEmail)
+                        }
+                    }
+                    
                     reviewRequestObjects.push({
                         store: session.shop,
                         date: node.createdAt,
                         orderId: node.id.split('Order/')[1],
                         orderName: node.name,
+                        requestDate,
                         email: node.email,
                         fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending'
                     })
