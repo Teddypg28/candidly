@@ -1,4 +1,5 @@
 import { IndexFiltersProps } from "@shopify/polaris"
+import { SetStateAction } from "react"
 
 export interface CustomReviewFormAnswerOption {
     [key: string]: any
@@ -103,4 +104,16 @@ export interface ReviewRequestData {
     product: string, 
     orderId: number, 
     orderName: string
+}
+
+export interface AppSettings {
+    firstEmailTime: number,
+    secondEmailTime: number,
+    publishImmediately: string[], 
+    minRating: number
+}
+
+export interface SettingsPageProps {
+    state: AppSettings,
+    setState: (value: AppSettings) => void
 }

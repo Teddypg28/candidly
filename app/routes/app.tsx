@@ -29,7 +29,7 @@ export default function App() {
         <Link to="/app/review-requests">Review Requests</Link>
         <Link to="/app/custom-questions">Custom Questions</Link>
         <Link to="/app/forms">Forms</Link>
-        <Link to="/app/settings">Settings</Link>
+        <Link to="/app/settings/general">Settings</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
