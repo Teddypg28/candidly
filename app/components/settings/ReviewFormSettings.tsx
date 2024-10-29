@@ -1,8 +1,14 @@
 import { Card, BlockStack, TextField, InlineStack, Text, ColorPicker,  } from "@shopify/polaris";
 
 import { SettingsPageProps } from "~/types/types";
+import ReviewFormPreview from "../ReviewFormPreview";
 
-export default function ReviewFormSettings({state, setState}: SettingsPageProps) {
+export default function ReviewFormSettings({state, setState}: any) {
+
+    // formHeading: 'Tell Us What You Think',
+    //     formSubheading: 'Rate it out of 5 stars:',
+    //     primaryFormColor: JSON.stringify({hue: 900, brightness: 1, saturation: 1}),
+    //     formBackgroundColor: JSON.stringify({hue: 0, saturation: 0, brightness: 0.9647, alpha: 1})
 
     return (
 
@@ -44,6 +50,11 @@ export default function ReviewFormSettings({state, setState}: SettingsPageProps)
                         </BlockStack>
                     </InlineStack>
                 </BlockStack>
+                <ReviewFormPreview 
+                formHeading={state.formHeading}
+                formSubheading={state.formSubheading}
+                primaryColor={state.primaryFormColor}
+                />
             </BlockStack>
         </Card>
 

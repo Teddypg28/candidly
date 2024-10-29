@@ -10,7 +10,6 @@ import { useState } from "react";
 import db from '../db.server'
 
 import SettingsTabs from "~/components/SettingsTabs";
-import ReviewFormSettings from "~/components/settings/ReviewFormSettings";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
 import ReviewRequestEmailSettings from "~/components/settings/ReviewRequestEmailSettings";
 
@@ -28,11 +27,7 @@ export async function loader({request, params} : LoaderFunctionArgs) {
         autoPublishReviews: ['false'],
         minReviewRating: 4, 
         firstReviewRequest: 10,
-        secondReviewRequest: 5,
-        formHeading: 'Tell Us What You Think',
-        formSubheading: 'Rate it out of 5 stars:',
-        primaryFormColor: JSON.stringify({hue: 900, brightness: 1, saturation: 1}),
-        formBackgroundColor: JSON.stringify({hue: 0, saturation: 0, brightness: 0.9647, alpha: 1})
+        secondReviewRequest: 5
 
     }
 
@@ -43,6 +38,8 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 }
 
 export async function action({ request } : ActionFunctionArgs) {
+
+    const { session } = await authenticate.admin(request)
 
     console.log('RUN')
 
@@ -69,10 +66,7 @@ export default function Settings() {
     let SettingsComponent
 
     switch(settingsPath) {
-        case "billing":
-            break
-        case "review-form":
-            SettingsComponent = <ReviewFormSettings state={settingsState} setState={setSettingsState} />
+        case "general":
             break
         case "review-request-emails":
             SettingsComponent = <ReviewRequestEmailSettings state={settingsState} setState={setSettingsState} />

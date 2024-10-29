@@ -103,6 +103,11 @@ model AppSettings {
   minReviewRating     Int
   firstReviewRequest  Int
   secondReviewRequest Int
+}
+
+model ReviewWidgetSettings {
+  id                  Int    @id @default(autoincrement())
+  store               String
   formHeading         String
   formSubheading      String
   primaryFormColor    String

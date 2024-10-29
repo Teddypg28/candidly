@@ -28,6 +28,7 @@ export default function App() {
         <Link to="/app/reviews">Reviews</Link>
         <Link to="/app/review-requests">Review Requests</Link>
         <Link to="/app/custom-questions">Custom Questions</Link>
+        <Link to="/app/reviews-widget">Reviews Widget</Link>
         <Link to="/app/settings/billing">Settings</Link>
       </NavMenu>
       <Outlet />

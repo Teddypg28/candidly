@@ -106,19 +106,15 @@ export interface ReviewRequestData {
     orderName: string
 }
 
-export interface AllAppSettings {
+export interface AppSettings {
     store: string,
     autoPublishReviews: string[],
     minReviewRating: number, 
     firstReviewRequest: number,
-    secondReviewRequest: number,
-    formHeading: string,
-    formSubheading: string,
-    primaryFormColor: string,
-    formBackgroundColor: string
+    secondReviewRequest: number
 }
 
 export interface SettingsPageProps {
-    state: AllAppSettings,
-    setState: (value: AllAppSettings) => void
+    state: AppSettings,
+    setState: (value: AppSettings) => void
 }

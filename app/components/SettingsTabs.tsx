@@ -21,10 +21,9 @@ export default function SettingsTabs({store, path}: Props) {
     const nav = useNavigate()
 
     const settingTabs = [
-        {name: 'Billing', path: 'billing', icon: <SettingsIcon height={20} width={20} />}, 
+        {name: 'General', path: 'general', icon: <SettingsIcon height={20} width={20} />}, 
         {name: 'Review Request Emails', path: 'review-request-emails', icon: <EmailIcon height={20} width={20} />},
         {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />},
-        {name: 'Review Form', path: 'review-form', icon: <ListNumberedIcon height={20} width={20} /> },
         {name: 'Review Rewards', path: 'rewards', icon: <DiscountIcon height={20} width={20} />}
     ]
 
