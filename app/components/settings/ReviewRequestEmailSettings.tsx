@@ -8,14 +8,12 @@ const isValueInvalid = (value: number) => {
 
 }
 
-export default function ReviewRequestSettings({state, setState}: SettingsPageProps) {
+export default function ReviewRequestEmailSettings({state, setState}: SettingsPageProps) {
 
-    const firstEmailErrorFieldId = 'firstEmail';
-    const isFirstEmailInvalid = isValueInvalid(state.firstEmailTime);
+    const isFirstEmailInvalid = isValueInvalid(state.firstReviewRequest);
     const firstEmailErrorMessage = isFirstEmailInvalid ? 'Please enter a value greater than zero' : ''
 
-    const secondEmailErrorFieldId = 'secondEmail';
-    const isSecondEmailInvalid = isValueInvalid(state.secondEmailTime);
+    const isSecondEmailInvalid = isValueInvalid(state.secondReviewRequest);
     const secondEmailErrorMessage = isSecondEmailInvalid ? 'Please enter a value greater than zero' : ''
 
     return (
@@ -26,29 +24,31 @@ export default function ReviewRequestSettings({state, setState}: SettingsPagePro
                 <Text as="h1" variant="headingSm">Review Request Emails</Text>
                 <BlockStack gap={'100'}>
                     <TextField 
-                    value={state.firstEmailTime.toString()} 
+                    id="firstEmail"
+                    value={state.firstReviewRequest.toString()} 
                     type="number" 
                     min={1}
-                    onChange={(val) => setState({...state, firstEmailTime: parseInt(val)})} 
+                    onChange={(val) => setState({...state, firstReviewRequest: parseInt(val)})} 
                     error={isFirstEmailInvalid}
                     autoComplete="off" 
                     label="First Review Request"
                     suffix="days after the order is fulfilled"
                     />
-                    <InlineError message={firstEmailErrorMessage} fieldID={firstEmailErrorFieldId} />
+                    <InlineError message={firstEmailErrorMessage} fieldID="firstEmail" />
                 </BlockStack>
                 <BlockStack gap={'100'}>
                     <TextField 
-                    value={state.secondEmailTime.toString()} 
+                    id="secondEmail"
+                    value={state.secondReviewRequest.toString()} 
                     type="number" 
                     min={1}
                     error={isSecondEmailInvalid}
-                    onChange={(val) => setState({...state, secondEmailTime: parseInt(val)})} 
+                    onChange={(val) => setState({...state, secondReviewRequest: parseInt(val)})} 
                     autoComplete="off" 
                     label="Second Review Request"
                     suffix="days after the first review request"
                     />
-                    <InlineError message={secondEmailErrorMessage} fieldID={secondEmailErrorFieldId} />
+                    <InlineError message={secondEmailErrorMessage} fieldID="secondEmail" />
                 </BlockStack>
             </BlockStack>
         </Card>

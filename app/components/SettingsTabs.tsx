@@ -3,15 +3,30 @@ import { Card, InlineStack, Text } from "@shopify/polaris"
 import styles from '../styles/Settings.module.css'
 import { useNavigate } from "@remix-run/react"
 
+import {
+    SettingsIcon,
+    EmailIcon,
+    ShieldCheckMarkIcon,
+    ListNumberedIcon,
+    DiscountIcon
+  } from '@shopify/polaris-icons';
+
 interface Props {
     store: string,
-    tabs: {name: string, path: string, icon: React.ReactNode}[],
-    selectedTabPath: string
+    path: string
 }
 
-export default function SettingsTabs({store, tabs, selectedTabPath}: Props) {
+export default function SettingsTabs({store, path}: Props) {
 
     const nav = useNavigate()
+
+    const settingTabs = [
+        {name: 'Billing', path: 'billing', icon: <SettingsIcon height={20} width={20} />}, 
+        {name: 'Review Request Emails', path: 'review-request-emails', icon: <EmailIcon height={20} width={20} />},
+        {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />},
+        {name: 'Review Form', path: 'review-form', icon: <ListNumberedIcon height={20} width={20} /> },
+        {name: 'Review Rewards', path: 'rewards', icon: <DiscountIcon height={20} width={20} />}
+    ]
 
     return (
 
@@ -22,11 +37,11 @@ export default function SettingsTabs({store, tabs, selectedTabPath}: Props) {
                     <Text as="p">{store}</Text>
                 </div>
                 <div style={{padding: '10px', display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                    { tabs.map((tab: any) => {
+                    { settingTabs.map((tab: any) => {
                         return (
                             <div 
                             onClick={() => { nav(`/app/settings/${tab.path}`)}} 
-                            style={{backgroundColor: selectedTabPath === tab.path.toLowerCase() ? 'rgb(230, 230, 230)' : 'white'}} 
+                            style={{backgroundColor: path === tab.path.toLowerCase() ? 'rgb(230, 230, 230)' : 'white'}} 
                             className={styles.tabContainer}
                             >
                                 <InlineStack gap='100'>

@@ -57,12 +57,12 @@ export async function loader({ request } : LoaderFunctionArgs) {
                     let requestDate
         
                     if (emailSendingSettings && node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
-                        if (numOfDaysSince >= emailSendingSettings.firstEmail) {
+                        if (numOfDaysSince >= emailSendingSettings.firstReviewRequest) {
                             requestDate = new Date()
                             requestDate.setDate(requestDate.getDate() + 1) 
                         } else {
                             requestDate = new Date(node.createdAt)
-                            requestDate.setDate(requestDate.getDate() + emailSendingSettings.firstEmail)
+                            requestDate.setDate(requestDate.getDate() + emailSendingSettings.firstReviewRequest)
                         }
                     }
                     

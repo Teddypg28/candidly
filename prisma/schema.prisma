@@ -32,15 +32,6 @@ model Session {
   emailVerified Boolean?  @default(false)
 }
 
-model ReviewSettings {
-  id              Int    @id @default(autoincrement())
-  store           String
-  formHeading     String
-  formSubheading  String
-  primaryColor    String
-  backgroundColor String
-}
-
 model CustomQuestionAnswer {
   id       Int           @id @default(autoincrement())
   value    String
@@ -106,14 +97,16 @@ model SavedCustomQuestionsTableView {
 }
 
 model AppSettings {
-  id                   Int     @id @default(autoincrement())
-  store                String
-  autoPublish          Boolean
-  minRating            Int
-  requiresVerification Boolean
-  firstEmail           Int
-  secondEmail          Int
-  thirdEmail           Int
+  id                  Int      @id @default(autoincrement())
+  store               String
+  autoPublishReviews  String[]
+  minReviewRating     Int
+  firstReviewRequest  Int
+  secondReviewRequest Int
+  formHeading         String
+  formSubheading      String
+  primaryFormColor    String
+  formBackgroundColor String
 }
 
 model ReviewRequest {
