@@ -7,7 +7,6 @@ import {
     SettingsIcon,
     EmailIcon,
     ShieldCheckMarkIcon,
-    ListNumberedIcon,
     DiscountIcon
   } from '@shopify/polaris-icons';
 

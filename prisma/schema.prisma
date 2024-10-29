@@ -105,13 +105,14 @@ model AppSettings {
   secondReviewRequest Int
 }
 
-model ReviewWidgetSettings {
+model ReviewFormSettings {
   id                  Int    @id @default(autoincrement())
   store               String
-  formHeading         String
-  formSubheading      String
+  heading             String
+  subheading          String
+  headlinePlaceholder String
+  reviewPlaceholder   String
   primaryFormColor    String
-  formBackgroundColor String
 }
 
 model ReviewRequest {
