@@ -5,29 +5,27 @@ div, h1, h2, h3, h4, p, input, textarea, button {
 input, textarea {
     border: 1px solid lightgray;
     border-radius: 5px;
+    font-size: 12px;
 }
 
 .reviewForm {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;
     background-color: white
 }
 
-.reviewBodyCharacterCount {
+.characterCountContainer {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    font-size: 12px;
+    font-size: 10px;
     color: white;
     font-weight: bold;
-    padding: 2px 5px;
+    padding: 2px 10px;
     border-radius: 10px;
     cursor: pointer;
-}
-
-.reviewForm > .reviewFieldWrapper > input, textarea, .reviewForm > .reviewNameEmailWrapper > .reviewNameEmailContainer > input {
-    font-size: 14px;
 }
 
 .reviewFormStar {
@@ -40,17 +38,18 @@ input, textarea {
     display: flex;
     width: fit-content;
     margin: auto;
-    margin-top: 25px;
+    margin-top: 5px;
 }
 
 .reviewFieldWrapper > label, .reviewNameEmailContainer > label {
     font-weight: bold;
 }
 
-.reviewFieldWrapper > input, .reviewNameEmailContainer > input, .reviewNameEmailWrapper > input {
+.reviewFieldWrapper > div > input, .reviewNameEmailContainer > input, .reviewNameEmailWrapper > input {
     font-size: 12px;
     padding: 8px;
     height: 45px;
+    width: 100%
 }
 
 .reviewNameEmailContainer > input {
@@ -62,11 +61,14 @@ input, textarea {
     margin: auto;
     text-align: center;
     margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .reviewFormHeadingContainer > h1 {
     font-weight: bold;
-    font-size: 30px;
+    font-size: 25px;
 }
 
 .reviewFormHeadingContainer > h3 {
@@ -113,6 +115,7 @@ input, textarea {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .uploadMediaContainer > label {
