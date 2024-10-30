@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Card, Label, Layout, Page, TextField } from "@shopify/polaris";
+import { BlockStack, Button, Card, InlineStack, Label, Layout, Page, TextField } from "@shopify/polaris";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
 
 import { authenticate } from "~/shopify.server";
@@ -25,7 +25,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
             subheading: 'Rate it out of 5 stars:',
             headlinePlaceholder: 'Sum up your experience in a few short words',
             reviewPlaceholder: 'What did you like or not like?',
-            primaryFormColor: '#fafafa',
+            primaryFormColor: 'black',
         }
 
         return await db.reviewFormSettings.create({data: defaultSettings})

@@ -10,16 +10,13 @@ export async function loader({request} : LoaderFunctionArgs) {
 
     try {
 
-        const result = await db.reviewSettings.findFirst({where: {store: {equals: session?.shop}}})
+        const result = await db.reviewFormSettings.findFirst({where: {store: {equals: session?.shop}}})
 
         if (result) {
             
-            const { formHeading, formSubheading, primaryColor, backgroundColor } = result
+            const { primaryFormColor, heading, subheading } = result
 
-            const hexPrimaryColorCode = hsbToHex(JSON.parse(primaryColor))
-            const hexBackgroundColorCode = hsbToHex(JSON.parse(backgroundColor))
-
-            return new Response(JSON.stringify({ formHeading, formSubheading, primaryColor: hexPrimaryColorCode, backgroundColor: hexBackgroundColorCode }), {status: 200})
+            return new Response(JSON.stringify({ formHeading: heading, formSubheading: subheading, primaryColor: primaryFormColor, backgroundColor: 'white' }), {status: 200})
 
         } else {
 
