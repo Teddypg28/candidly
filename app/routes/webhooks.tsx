@@ -48,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   
         if (storeSettings) {
   
-          const daysAfterOrder = storeSettings.firstEmail
+          const daysAfterOrder = storeSettings.firstReviewRequest
           const requestDate = new Date(payload.created_at)
           requestDate.setDate(requestDate.getDate() + daysAfterOrder)
 

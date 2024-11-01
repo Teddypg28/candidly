@@ -18,6 +18,7 @@ export default function ReviewVerificationSettings({state, setState}: SettingsPa
         <>
             <Card>
                 <BlockStack gap='400'>
+                    <Text as="h1" variant="headingSm">Review Verification</Text>
                     <Banner tone="warning">
                         All unpublished reviews will be published after 14 days, unless rejected
                     </Banner>

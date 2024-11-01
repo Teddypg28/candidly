@@ -1,5 +1,5 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Button, Card, InlineStack, Label, Layout, Page, TextField } from "@shopify/polaris";
+import { BlockStack, Card, Label, Layout, Page, TextField } from "@shopify/polaris";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
 
 import { authenticate } from "~/shopify.server";

@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "reviews-app"
 handle = "reviews-app-48"
-application_url = "https://mf-subsequent-ssl-pharmacies.trycloudflare.com"
+application_url = "https://approval-levy-nearest-teaches.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products"
 
 [auth]
 redirect_urls = [
-  "https://mf-subsequent-ssl-pharmacies.trycloudflare.com/auth/callback",
-  "https://mf-subsequent-ssl-pharmacies.trycloudflare.com/auth/shopify/callback",
-  "https://mf-subsequent-ssl-pharmacies.trycloudflare.com/api/auth/callback"
+  "https://approval-levy-nearest-teaches.trycloudflare.com/auth/callback",
+  "https://approval-levy-nearest-teaches.trycloudflare.com/auth/shopify/callback",
+  "https://approval-levy-nearest-teaches.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://mf-subsequent-ssl-pharmacies.trycloudflare.com/api"
+url = "https://approval-levy-nearest-teaches.trycloudflare.com/api"
 subpath = "reviews"
 prefix = "apps"
 

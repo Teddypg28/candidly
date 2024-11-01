@@ -27,6 +27,7 @@ export default function App() {
         </Link>
         <Link to="/app/reviews">Reviews</Link>
         <Link to="/app/review-requests">Review Requests</Link>
+        <Link to="/app/rewards">Review Rewards</Link>
         <Link to="/app/custom-questions">Custom Questions</Link>
         <Link to="/app/review-form">Review Form Design</Link>
         <Link to="/app/settings/billing">Settings</Link>

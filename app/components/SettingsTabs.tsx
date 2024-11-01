@@ -22,8 +22,7 @@ export default function SettingsTabs({store, path}: Props) {
     const settingTabs = [
         {name: 'General', path: 'general', icon: <SettingsIcon height={20} width={20} />}, 
         {name: 'Review Request Emails', path: 'review-request-emails', icon: <EmailIcon height={20} width={20} />},
-        {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />},
-        {name: 'Review Rewards', path: 'rewards', icon: <DiscountIcon height={20} width={20} />}
+        {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />}
     ]
 
     return (
