@@ -1,33 +1,59 @@
-import { Banner, BlockStack, Card, Layout, List, Page, Select, Text, TextField } from "@shopify/polaris";
+import { BlockStack, Card, Layout, Page, Text } from "@shopify/polaris";
 import { useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
+import { Reward as RewardStateReward, RewardState } from "~/types/types";
 
 export default function Reward() {
 
     const [currentTab, setCurrentTab] = useState('subpar')
 
-    const [rewardState, setRewardState] = useState({
+    const [rewardState, setRewardState] = useState<RewardState>({
         subpar: {
             selectedRewardType: 'none',
-            dollarAmount: 1,
+            fixedAmount: 1,
             percentageAmount: 1,
-            purchaseAmount: 1,
-            freeAmount: 1,
+            bogoRewardType: 'free',
+            bogoPurchaseAmount: 1,
+            bogoReceiveAmount: 1,
+            bogoDiscountAmount: 1,
+            minPurchaseRequirements: {
+                type: 'none'
+            }
         },
         good: {
-            selectedRewardType: 'dollar',
-            dollarAmount: 10,
+            selectedRewardType: 'fixed',
+            fixedAmount: 10,
             percentageAmount: 5,
-            purchaseAmount: 1,
-            freeAmount: 1,
+            bogoRewardType: 'free',
+            bogoPurchaseAmount: 1,
+            bogoReceiveAmount: 1,
+            bogoDiscountAmount: 1,
+            minPurchaseRequirements: {
+                type: 'none'
+            }
         },
         perfect: {
             selectedRewardType: 'bogo',
-            dollarAmount: 20,
+            fixedAmount: 20,
             percentageAmount: 10,
-            purchaseAmount: 1,
-            freeAmount: 2,
+            bogoRewardType: 'free',
+            bogoPurchaseAmount: 1,
+            bogoReceiveAmount: 1,
+            bogoDiscountAmount: 1,
+            minPurchaseRequirements: {
+                type: 'none'
+            }
         }
+    })
+
+    const NaNDetected = Object.keys(rewardState[currentTab as keyof RewardState]).find(key => {
+
+        const keys = ['fixedAmount', 'percentageAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount', 'bogoDiscountAmount']
+
+        if (keys.includes(key) && isNaN(rewardState[currentTab as keyof RewardState][key as keyof RewardStateReward] as number)) {
+            return key
+        }
+
     })
 
     return (
@@ -42,24 +68,27 @@ export default function Reward() {
                     <Card>
                         <BlockStack gap={'200'}>
                             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                <div 
-                                style={{backgroundColor: currentTab === 'subpar' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '3px 6px'}}
+                                <button 
+                                disabled={NaNDetected !== undefined}
+                                style={{border: 'none', backgroundColor: currentTab === 'subpar' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '4px 6px'}}
                                 onClick={() => setCurrentTab('subpar')}
                                 >
                                     Subpar Review
-                                </div>
-                                <div 
-                                style={{backgroundColor: currentTab === 'good' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '3px 6px'}}
+                                </button>
+                                <button 
+                                disabled={NaNDetected !== undefined}
+                                style={{border: 'none', backgroundColor: currentTab === 'good' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '4px 6px'}}
                                 onClick={() => setCurrentTab('good')}
                                 >
                                     Good Review
-                                </div>
-                                <div 
-                                style={{backgroundColor: currentTab === 'perfect' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '3px 6px'}}
+                                </button>
+                                <button 
+                                disabled={NaNDetected !== undefined}
+                                style={{border: 'none', backgroundColor: currentTab === 'perfect' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '4px 6px'}}
                                 onClick={() => setCurrentTab('perfect')}
                                 >
                                     Perfect Review
-                                </div>
+                                </button>
                             </div>
                             <RewardChoice type={currentTab} state={rewardState} setState={setRewardState} />
                         </BlockStack>

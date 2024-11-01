@@ -82,7 +82,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
   if (uploadedMediaRef.current.length === 0) {
     uploadedMediaTier = 1
     uploadedMediaStatusColor = '#ee9595'
-    uploadedMediaTierMessage = 'Okay'
+    uploadedMediaTierMessage = 'Subpar'
     uploadedMediaMaxMedia = 0
   } else if (uploadedMediaRef.current.length > 0 && uploadedMediaRef.current.length <= 1) {
     uploadedMediaTier = 2

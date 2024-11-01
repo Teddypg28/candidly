@@ -118,3 +118,25 @@ export interface SettingsPageProps {
     state: AppSettings,
     setState: (value: AppSettings) => void
 }
+
+export interface Reward {
+    selectedRewardType: string,
+    fixedAmount: number,
+    percentageAmount: number,
+    bogoRewardType: 'free' | 'fixed' | 'percent',
+    bogoPurchaseAmount: number,
+    bogoReceiveAmount: number,
+    bogoDiscountAmount: number,
+    minPurchaseRequirements: MinimumPurchaseRequirement
+}
+
+export interface MinimumPurchaseRequirement {
+    type: 'none' | 'quantity' | 'dollars',
+    value?: number
+}
+
+export interface RewardState {
+    subpar: Reward,
+    good: Reward,
+    perfect: Reward
+}
