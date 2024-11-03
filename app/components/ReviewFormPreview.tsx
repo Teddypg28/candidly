@@ -28,76 +28,60 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
 
   let reviewBodyTier
   let reviewBodyStatusColor
-  let reviewBodyTierMessage
 
   if (reviewBodyWordList.length <= 14) {
 
     reviewBodyTier = 1,
     reviewBodyStatusColor = '#ee9595'
-    reviewBodyTierMessage = 'Subpar'
 
   } else if (reviewBodyWordList.length > 14 && reviewBodyWordList.length <= 39) {
 
     reviewBodyTier = 2
-    reviewBodyStatusColor = '#96a8b6'
-    reviewBodyTierMessage = 'Good'
+    reviewBodyStatusColor = '#e7e253'
 
   } else {
 
     reviewBodyTier = 3
     reviewBodyStatusColor = '#67af98'
-    reviewBodyTierMessage = 'Perfect!'
 
   }
 
   let reviewHeadlineTier
   let reviewHeadlineStatusColor
-  let reviewHeadlineTierMessage
 
   if (reviewHeadlineWordList.length <= 3) {
 
     reviewHeadlineTier = 1
-    reviewHeadlineTierMessage = 'Subpar'
     reviewHeadlineStatusColor = '#ee9595'
 
   } else if (reviewHeadlineWordList.length > 3 && reviewHeadlineWordList.length <= 9) {
 
     reviewHeadlineTier = 2
-    reviewHeadlineTierMessage = 'Good'
-    reviewHeadlineStatusColor = '#96a8b6'
+    reviewHeadlineStatusColor = '#e7e253'
 
   } else {
 
     reviewHeadlineTier = 3
-    reviewHeadlineTierMessage = 'Perfect!'
     reviewHeadlineStatusColor = '#67af98'
 
   }
 
   let uploadedMediaTier
   let uploadedMediaStatusColor
-  let uploadedMediaTierMessage
-  let uploadedMediaMaxMedia
 
   if (uploadedMediaRef.current.length === 0) {
     uploadedMediaTier = 1
     uploadedMediaStatusColor = '#ee9595'
-    uploadedMediaTierMessage = 'Subpar'
-    uploadedMediaMaxMedia = 0
   } else if (uploadedMediaRef.current.length > 0 && uploadedMediaRef.current.length <= 1) {
     uploadedMediaTier = 2
-    uploadedMediaStatusColor = '#96a8b6'
-    uploadedMediaTierMessage = 'Good'
-    uploadedMediaMaxMedia = 1
+    uploadedMediaStatusColor = '#e7e253'
   } else {
     uploadedMediaTier = 3
     uploadedMediaStatusColor = '#67af98'
-    uploadedMediaTierMessage = 'Perfect!'
-    uploadedMediaMaxMedia = null
   }
 
   const reviewScoreTier = Math.floor((reviewHeadlineTier + reviewBodyTier + uploadedMediaTier) / 3)
-  const rewards = ['10% off coupon', '40% off coupon', 'Buy 1 get 2 free coupon']
+  const rewards = ['No rewards', '40% off coupon', 'Buy 1 get 2 free coupon']
 
   useEffect(() => {
 
@@ -292,7 +276,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                                 <input value={reviewHeadline} onChange={(e) => setReviewHeadline(e.target.value)} name='title' placeholder={headlinePlaceholder} />
                                 <div className={styles.characterCountContainer} style={{backgroundColor: reviewHeadlineStatusColor}}>
                                     <span>
-                                        {reviewHeadlineWordList[0] === '' ? 0 : reviewHeadlineTier !== 3 && reviewHeadlineWordList.length} {reviewHeadlineTier === 3 ? '' : reviewHeadlineWordList[0] === '' ? 'words' : reviewHeadlineWordList.length === 1 ? 'word' : 'words'} {reviewHeadlineTier === 3 ? reviewHeadlineTierMessage : `- ${reviewHeadlineTierMessage}`}
+                                        {reviewHeadlineWordList[0] === '' ? 0 : reviewHeadlineTier !== 3 && reviewHeadlineWordList.length} {reviewHeadlineTier === 3 ? '' : reviewHeadlineWordList[0] === '' ? 'words' : reviewHeadlineWordList.length === 1 ? 'word' : 'words'} {reviewHeadlineTier === 3 && 'Perfect!'}
                                     </span>
                                 </div>
                             </div>
@@ -303,7 +287,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                                 <textarea value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} name='body' className={styles.reviewTextArea} placeholder={reviewPlaceholder} />
                                 <div className={styles.characterCountContainer} style={{backgroundColor: reviewBodyStatusColor}}>
                                     <span>
-                                    {reviewBodyWordList[0] === '' ? 0 : reviewBodyTier !== 3 && reviewBodyWordList.length} {reviewBodyTier === 3 ? '' : reviewBodyWordList[0] === '' ? 'words' : reviewBodyWordList.length === 1 ? 'word' : 'words'} {reviewBodyTier === 3 ? reviewBodyTierMessage : `- ${reviewBodyTierMessage}`}
+                                    {reviewBodyWordList[0] === '' ? 0 : reviewBodyTier !== 3 && reviewBodyWordList.length} {reviewBodyTier === 3 ? '' : reviewBodyWordList[0] === '' ? 'words' : reviewBodyWordList.length === 1 ? 'word' : 'words'} {reviewBodyTier === 3 && 'Perfect!'}
                                     </span>
                                 </div>
                             </div>
@@ -326,7 +310,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                             <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
                             <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
                             <div className={styles.characterCountContainer} style={{backgroundColor: uploadedMediaStatusColor, bottom: '5px'}}>
-                            {uploadedMediaTier !== 3 ? `${uploadedMediaRef.current.length} Media - ${uploadedMediaTierMessage}` : uploadedMediaTierMessage}
+                            {uploadedMediaTier !== 3 ? `${uploadedMediaRef.current.length} Uploaded Media` : 'Perfect!'}
                             </div>
                         </div>
                         {uploadMediaError && <p style={{color: 'darkred'}}>{uploadMediaError}</p>}

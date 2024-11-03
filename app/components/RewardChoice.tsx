@@ -1,16 +1,26 @@
-import { BlockStack, Text, Select, TextField, Banner, ChoiceList, Card, InlineStack } from "@shopify/polaris"
+import { BlockStack, Text, Select, TextField, Banner, ChoiceList, InlineStack, Label } from "@shopify/polaris"
 import { RewardState } from "~/types/types"
 import { Reward } from "~/types/types"
 
 interface Props {
-
     type: string,
     state: RewardState,
     setState: (state: RewardState) => void
-
 }
 
 export default function RewardChoice({type, state, setState} : Props) {
+
+    const handleDollarAmountBlur = () => {
+
+        if (isNaN(parseInt(state[type as keyof RewardState].minPurchaseRequirements.dollarValue))) {
+
+            setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState]['minPurchaseRequirements'], dollarValue: (0).toFixed(2)}}})
+
+        } else {
+
+            setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState]['minPurchaseRequirements'], dollarValue: Math.abs(parseFloat(state[type as keyof RewardState].minPurchaseRequirements.dollarValue)).toFixed(2)}}})
+        }
+    }
 
     const isNumberRestricted = (value: number) => {
         return value <= 0 || isNaN(value)
@@ -19,8 +29,8 @@ export default function RewardChoice({type, state, setState} : Props) {
     const errors: any = {}
     let isError = false
     Object.keys(state[type as keyof RewardState]).forEach((key) => {
-        const integerKeys = ['fixedAmount', 'percentageAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount', 'bogoDiscountAmount']
-        if (integerKeys.includes(key)) {
+        const numberKeys = ['fixedAmount', 'percentageAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount', 'bogoDiscountAmount']
+        if (numberKeys.includes(key)) {
             if (isNumberRestricted(state[type as keyof RewardState][key as keyof Reward] as number)) {
                 errors[key] = true
                 isError = true
@@ -56,7 +66,7 @@ export default function RewardChoice({type, state, setState} : Props) {
             {state[type as keyof RewardState].selectedRewardType === 'dollar' && 
             <>
                 <TextField 
-                type="integer" 
+                type="number" 
                 autoComplete="off"
                 label="Amount"
                 suffix={state[type as keyof RewardState].fixedAmount === 1 ? "dollar" : "dollars"}
@@ -72,7 +82,7 @@ export default function RewardChoice({type, state, setState} : Props) {
             {state[type as keyof RewardState].selectedRewardType === 'percent' && 
             <>
                 <TextField 
-                type="integer" 
+                type="number" 
                 autoComplete="off"
                 suffix="percent"
                 label="Amount"
@@ -87,7 +97,7 @@ export default function RewardChoice({type, state, setState} : Props) {
             {state[type as keyof RewardState].selectedRewardType === 'bogo' && 
             <>
                 <TextField 
-                type="integer" 
+                type="number" 
                 autoComplete="off"
                 label="Customer Buys"
                 error={errors['bogoPurchaseAmount']}
@@ -98,7 +108,7 @@ export default function RewardChoice({type, state, setState} : Props) {
                 />
                 {errors['bogoPurchaseAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
                 <TextField 
-                type="integer" 
+                type="number" 
                 autoComplete="off"
                 label="Customer Gets"
                 disabled={isError && !errors['bogoReceiveAmount']}
@@ -117,7 +127,7 @@ export default function RewardChoice({type, state, setState} : Props) {
                 />
                 {state[type as keyof RewardState].bogoRewardType === 'percent' ? 
                 <TextField 
-                type="integer" 
+                type="number" 
                 autoComplete="off"
                 suffix={'percent off'}
                 label="Amount"
@@ -131,7 +141,7 @@ export default function RewardChoice({type, state, setState} : Props) {
                 : state[type as keyof RewardState].bogoRewardType === 'fixed' &&
     
                 <TextField 
-                type="integer" 
+                type="number" 
                 autoComplete="off"
                 suffix={state[type as keyof RewardState].fixedAmount > 1 ? 'dollars off' : 'dollar off'}
                 label="Amount"
@@ -147,19 +157,40 @@ export default function RewardChoice({type, state, setState} : Props) {
         </BlockStack>
         {state[type as keyof RewardState].selectedRewardType !== 'none' &&
             <BlockStack>
-                <Text fontWeight="bold" as="h3">Minimum Purchase Requirements</Text>
-                <ChoiceList 
+                <ChoiceList
+                disabled={isError}
                 selected={[state[type as keyof RewardState].minPurchaseRequirements.type]}
                 onChange={(selected) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState]['minPurchaseRequirements'], type: selected.toString()}}})}
-                title=''
+                title='Minimum Purchase Requirements'
                 choices={[
                     { label: 'No minimum purchase requirements', value: 'none' },
                     { label: 'Minimum purchase amount ($)', value: 'dollars', renderChildren(isSelected) {
-                        return isSelected ? <TextField type="text" prefix='$' autoComplete="off" label='' /> : null
+                        return isSelected ? 
+                        <TextField 
+                        type="text" 
+                        placeholder="0.00"
+                        onBlur={handleDollarAmountBlur} 
+                        value={state[type as keyof RewardState].minPurchaseRequirements.dollarValue} 
+                        onChange={(value: string) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState].minPurchaseRequirements, dollarValue: value}}})} 
+                        prefix='$' 
+                        autoComplete="off" 
+                        label='' 
+                        /> 
+                        : null
                     }, }, 
                     { label: 'Minimum quantity', value: 'quantity', renderChildren(isSelected) {
-                        return isSelected ? <InlineStack> <TextField type="integer" autoComplete="off" label='' /> </InlineStack> : null
-                    }, }
+                        return isSelected ? 
+                        <InlineStack> 
+                            <TextField 
+                            type="number" 
+                            value={state[type as keyof RewardState].minPurchaseRequirements.quantityValue.toString()} 
+                            min={0} 
+                            onChange={(value: string) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState].minPurchaseRequirements, quantityValue: parseInt(value)}}})} 
+                            autoComplete="off" 
+                            label='' /> 
+                        </InlineStack> 
+                        : null
+                    }}
             ]}
                 />
             </BlockStack>

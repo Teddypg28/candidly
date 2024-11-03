@@ -132,7 +132,8 @@ export interface Reward {
 
 export interface MinimumPurchaseRequirement {
     type: 'none' | 'quantity' | 'dollars',
-    value?: number
+    dollarValue: string,
+    quantityValue: number
 }
 
 export interface RewardState {
