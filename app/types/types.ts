@@ -123,17 +123,13 @@ export interface Reward {
     selectedRewardType: string,
     fixedAmount: number,
     percentageAmount: number,
-    bogoRewardType: 'free' | 'fixed' | 'percent',
+    bogoRewardType: string,
     bogoPurchaseAmount: number,
     bogoReceiveAmount: number,
     bogoDiscountAmount: number,
-    minPurchaseRequirements: MinimumPurchaseRequirement
-}
-
-export interface MinimumPurchaseRequirement {
-    type: 'none' | 'quantity' | 'dollars',
-    dollarValue: string,
-    quantityValue: number
+    minPurchaseType: string,
+    minPurchaseDollarValue: number,
+    minPurchaseQuantityValue: number
 }
 
 export interface RewardState {

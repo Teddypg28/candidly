@@ -1,4 +1,4 @@
-import { Banner, Card } from "@shopify/polaris"
+import { Banner, BlockStack, Card, InlineStack, ProgressBar, Text, Tooltip } from "@shopify/polaris"
 
 import styles from '../styles/ReviewPreview.module.css'
 import { IColor } from "react-color-palette"
@@ -23,21 +23,19 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
 
   const [uploadMediaError, setUploadMediaError] = useState('')
 
-  const reviewHeadlineWordList = reviewHeadline.trim().split(/\s+/)
-  const reviewBodyWordList = reviewBody.trim().split(/\s+/)
+  const reviewHeadlineWordList = reviewHeadline.trim().split(/\s+/).filter(word => word !== "")
+  const reviewBodyWordList = reviewBody.trim().split(/\s+/).filter(word => word !== "")
 
   let reviewBodyTier
-  let reviewBodyStatusColor
+  let reviewBodyStatusColor = primaryColor.hex
 
   if (reviewBodyWordList.length <= 14) {
 
-    reviewBodyTier = 1,
-    reviewBodyStatusColor = '#ee9595'
+    reviewBodyTier = 1
 
   } else if (reviewBodyWordList.length > 14 && reviewBodyWordList.length <= 39) {
 
     reviewBodyTier = 2
-    reviewBodyStatusColor = '#e7e253'
 
   } else {
 
@@ -52,32 +50,27 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
   if (reviewHeadlineWordList.length <= 3) {
 
     reviewHeadlineTier = 1
-    reviewHeadlineStatusColor = '#ee9595'
 
   } else if (reviewHeadlineWordList.length > 3 && reviewHeadlineWordList.length <= 9) {
 
     reviewHeadlineTier = 2
-    reviewHeadlineStatusColor = '#e7e253'
 
   } else {
 
     reviewHeadlineTier = 3
-    reviewHeadlineStatusColor = '#67af98'
-
+    reviewHeadlineStatusColor = "#67af98"
   }
 
   let uploadedMediaTier
-  let uploadedMediaStatusColor
+  let uploadedMediaStatusColor = primaryColor.hex
 
   if (uploadedMediaRef.current.length === 0) {
     uploadedMediaTier = 1
-    uploadedMediaStatusColor = '#ee9595'
   } else if (uploadedMediaRef.current.length > 0 && uploadedMediaRef.current.length <= 1) {
     uploadedMediaTier = 2
-    uploadedMediaStatusColor = '#e7e253'
   } else {
     uploadedMediaTier = 3
-    uploadedMediaStatusColor = '#67af98'
+    uploadedMediaStatusColor = "#67af98"
   }
 
   const reviewScoreTier = Math.floor((reviewHeadlineTier + reviewBodyTier + uploadedMediaTier) / 3)
@@ -274,24 +267,30 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                             <label> Give it a Headline * </label>
                             <div style={{position: 'relative'}}>
                                 <input value={reviewHeadline} onChange={(e) => setReviewHeadline(e.target.value)} name='title' placeholder={headlinePlaceholder} />
+                                {reviewHeadlineTier === 3 && 
                                 <div className={styles.characterCountContainer} style={{backgroundColor: reviewHeadlineStatusColor}}>
-                                    <span>
-                                        {reviewHeadlineWordList[0] === '' ? 0 : reviewHeadlineTier !== 3 && reviewHeadlineWordList.length} {reviewHeadlineTier === 3 ? '' : reviewHeadlineWordList[0] === '' ? 'words' : reviewHeadlineWordList.length === 1 ? 'word' : 'words'} {reviewHeadlineTier === 3 && 'Perfect!'}
-                                    </span>
-                                </div>
+                                    <span>Perfect!</span>
+                                </div>}
                             </div>
                         </div>
+                        <BlockStack gap={'100'}>
+                            <ProgressBar tone={reviewHeadlineTier === 3 ? "success" : "primary"} progress={Math.round(reviewHeadlineWordList.length / 10 * 100)} />
+                            <Text as="p" tone="success" variant="bodySm">You wrote a perfect headline!</Text>
+                        </BlockStack>
                         <div className={styles.reviewFieldWrapper}>
                             <label>Review *</label>
                             <div style={{position: 'relative'}}>
                                 <textarea value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} name='body' className={styles.reviewTextArea} placeholder={reviewPlaceholder} />
+                                {reviewBodyTier === 3 && 
                                 <div className={styles.characterCountContainer} style={{backgroundColor: reviewBodyStatusColor}}>
-                                    <span>
-                                    {reviewBodyWordList[0] === '' ? 0 : reviewBodyTier !== 3 && reviewBodyWordList.length} {reviewBodyTier === 3 ? '' : reviewBodyWordList[0] === '' ? 'words' : reviewBodyWordList.length === 1 ? 'word' : 'words'} {reviewBodyTier === 3 && 'Perfect!'}
-                                    </span>
-                                </div>
+                                    <span>Perfect!</span>
+                                </div>}
                             </div>
                         </div>
+                        <BlockStack gap={'100'}>
+                            <ProgressBar tone={reviewBodyTier === 3 ? "success" : "primary"} progress={Math.round(reviewBodyWordList.length / 40 * 100)} />
+                            <Text as="p" tone={reviewBodyTier === 3 ? "success" : "base"} variant="bodySm">{reviewBodyTier !== 3 ? `You are ${Math.round(reviewBodyWordList.length / 40 * 100)}% of the way to maximizing your reward` : "You wrote the perfect body!"}</Text>
+                        </BlockStack>
                         <div className={styles.reviewNameEmailWrapper}>
                             <div className={styles.reviewNameEmailContainer}>
                                 <label>Your First Name *</label>
@@ -309,14 +308,19 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                             </label>
                             <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
                             <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
+                            {uploadedMediaTier === 3 && 
                             <div className={styles.characterCountContainer} style={{backgroundColor: uploadedMediaStatusColor, bottom: '5px'}}>
-                            {uploadedMediaTier !== 3 ? `${uploadedMediaRef.current.length} Uploaded Media` : 'Perfect!'}
-                            </div>
+                                <span>Perfect!</span>
+                            </div>}
                         </div>
+                        <BlockStack gap={'100'}>
+                            <ProgressBar tone={uploadedMediaTier === 3 ? "success" : "primary"} progress={Math.round(uploadedMediaRef.current.length / 2 * 100)} />
+                            <Text as="p" tone="success" variant="bodySm">You uploaded the perfect amount of images/videos!</Text>
+                        </BlockStack>
                         {uploadMediaError && <p style={{color: 'darkred'}}>{uploadMediaError}</p>}
                         <div>
                             <p>Current Review Reward: <strong>{rewards[reviewScoreTier-1]}</strong></p>
-                            {reviewScoreTier === 3 ? <p>Congrats! You just wrote a perfect review!</p> : <p>Spice it up a bit more to achieve a: <strong>{rewards[reviewScoreTier]}</strong></p>}
+                            {reviewScoreTier === 3 ? <Text as="p" tone="success">Congrats! You just wrote a perfect review!</Text> : <p>Spice it up a bit more to achieve a: <strong>{rewards[reviewScoreTier]}</strong></p>}
                         </div>
                         <button className={styles.submitReviewBtn} style={{backgroundColor: primaryColor.hex}}>Submit Review</button>
                     </div>

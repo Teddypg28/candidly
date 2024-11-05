@@ -1,58 +1,39 @@
-import { Badge, Banner, BlockStack, Button, Card, InlineStack, Layout, Page, Select, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, InlineStack, Layout, Page, Select, Text, Thumbnail } from "@shopify/polaris";
 import { ImageIcon } from "@shopify/polaris-icons";
 
 import { useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
 import { Reward as RewardStateReward, RewardState } from "~/types/types";
 
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { authenticate } from "~/shopify.server";
+import { useLoaderData } from "@remix-run/react";
+import { SaveBar } from "@shopify/app-bridge-react";
+
+export const loader = async ({ request, params } : LoaderFunctionArgs) => {
+
+    const {session} = await authenticate.admin(request)
+
+    if (params.id === "new") {
+
+        const perfect = {selectedRewardType: 'none', fixedAmount: 10, percentageAmount: 10, bogoRewardType: "free", bogoPurchaseAmount: 1, bogoReceiveAmount: 1, bogoDiscountAmount: 1, minPurchaseType: 'none', minPurchaseDollarValue: 1, minPurchaseQuantityValue: 1}
+        const good = {selectedRewardType: 'none', fixedAmount: 10, percentageAmount: 10, bogoRewardType: "free", bogoPurchaseAmount: 1, bogoReceiveAmount: 1, bogoDiscountAmount: 1, minPurchaseType: 'none', minPurchaseDollarValue: 1, minPurchaseQuantityValue: 1}
+        const subpar = {selectedRewardType: 'none', fixedAmount: 10, percentageAmount: 10, bogoRewardType: "free", bogoPurchaseAmount: 1, bogoReceiveAmount: 1, bogoDiscountAmount: 1, minPurchaseType: 'none', minPurchaseDollarValue: 1, minPurchaseQuantityValue: 1}
+
+        return {subpar: {...subpar}, good: {...good}, perfect: {...perfect}}
+
+    }
+
+}
+
 export default function Reward() {
+
+    const data = useLoaderData<typeof loader>()
 
     const [currentTab, setCurrentTab] = useState('subpar')
 
-    const [rewardState, setRewardState] = useState<RewardState>({
-        subpar: {
-            selectedRewardType: 'none',
-            fixedAmount: 1,
-            percentageAmount: 1,
-            bogoRewardType: 'free',
-            bogoPurchaseAmount: 1,
-            bogoReceiveAmount: 1,
-            bogoDiscountAmount: 1,
-            minPurchaseRequirements: {
-                type: 'none',
-                dollarValue: (0).toFixed(2),
-                quantityValue: 0
-            }
-        },
-        good: {
-            selectedRewardType: 'fixed',
-            fixedAmount: 10,
-            percentageAmount: 5,
-            bogoRewardType: 'free',
-            bogoPurchaseAmount: 1,
-            bogoReceiveAmount: 1,
-            bogoDiscountAmount: 1,
-            minPurchaseRequirements: {
-                type: 'none',
-                dollarValue: (0).toFixed(2),
-                quantityValue: 0
-            }
-        },
-        perfect: {
-            selectedRewardType: 'bogo',
-            fixedAmount: 20,
-            percentageAmount: 10,
-            bogoRewardType: 'free',
-            bogoPurchaseAmount: 1,
-            bogoReceiveAmount: 1,
-            bogoDiscountAmount: 1,
-            minPurchaseRequirements: {
-                type: 'none',
-                dollarValue: (0).toFixed(2),
-                quantityValue: 0
-            }
-        }
-    })
+    const [rewardState, setRewardState] = useState<RewardState>(data)
+    const [cleanRewardState, setCleanRewardState] = useState<RewardState>(data)
 
     const [selectedProducts, setSelectedProducts] = useState<{type: string, products: any}>({type: 'all', products: []})
 
@@ -76,8 +57,6 @@ export default function Reward() {
 
         if (products) {
 
-            console.log(products)
-
             setSelectedProducts({...selectedProducts, products})
 
         }
@@ -91,6 +70,12 @@ export default function Reward() {
         subtitle="Edit or delete this review reward"
         backAction={{url: '/app/rewards'}}
         >
+            <SaveBar 
+            open={cleanRewardState !== rewardState} 
+            >
+                <button variant={'primary'}>Save</button>
+                <button onClick={() => setRewardState(cleanRewardState)}>Discard</button>
+            </SaveBar>
             <Layout>
                 <Layout.Section variant="oneHalf">
                     <Card>
@@ -143,7 +128,7 @@ export default function Reward() {
                             }
                             {selectedProducts.type === 'specific' && 
                             <InlineStack>
-                                <Button variant={'plain'} onClick={selectProducts}>{selectedProducts.products.length > 0 ? 'Change Products' : 'Select Products'}</Button>
+                                <Button variant={'primary'} onClick={selectProducts}>{selectedProducts.products.length > 0 ? 'Change Products' : 'Select Products'}</Button>
                             </InlineStack>
                             }
                             {selectedProducts.products.length > 0 && selectedProducts.type === 'specific' && 

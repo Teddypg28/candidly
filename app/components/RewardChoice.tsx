@@ -1,4 +1,4 @@
-import { BlockStack, Text, Select, TextField, Banner, ChoiceList, InlineStack, Label } from "@shopify/polaris"
+import { BlockStack, Text, Select, TextField, Banner, ChoiceList, InlineStack } from "@shopify/polaris"
 import { RewardState } from "~/types/types"
 import { Reward } from "~/types/types"
 
@@ -12,13 +12,13 @@ export default function RewardChoice({type, state, setState} : Props) {
 
     const handleDollarAmountBlur = () => {
 
-        if (isNaN(parseInt(state[type as keyof RewardState].minPurchaseRequirements.dollarValue))) {
+        if (isNaN(state[type as keyof RewardState].minPurchaseDollarValue)) {
 
-            setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState]['minPurchaseRequirements'], dollarValue: (0).toFixed(2)}}})
+            setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState], minPurchaseDollarValue: (0).toFixed(2)}}})
 
         } else {
 
-            setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState]['minPurchaseRequirements'], dollarValue: Math.abs(parseFloat(state[type as keyof RewardState].minPurchaseRequirements.dollarValue)).toFixed(2)}}})
+            setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState], minPurchaseDollarValue: Math.abs(parseFloat(state[type as keyof RewardState].minPurchaseDollarValue.toFixed(2)))}}})
         }
     }
 
@@ -159,8 +159,8 @@ export default function RewardChoice({type, state, setState} : Props) {
             <BlockStack>
                 <ChoiceList
                 disabled={isError}
-                selected={[state[type as keyof RewardState].minPurchaseRequirements.type]}
-                onChange={(selected) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState]['minPurchaseRequirements'], type: selected.toString()}}})}
+                selected={[state[type as keyof RewardState].minPurchaseType]}
+                onChange={(selected) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseType: selected.toString()}})}
                 title='Minimum Purchase Requirements'
                 choices={[
                     { label: 'No minimum purchase requirements', value: 'none' },
@@ -170,8 +170,8 @@ export default function RewardChoice({type, state, setState} : Props) {
                         type="text" 
                         placeholder="0.00"
                         onBlur={handleDollarAmountBlur} 
-                        value={state[type as keyof RewardState].minPurchaseRequirements.dollarValue} 
-                        onChange={(value: string) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState].minPurchaseRequirements, dollarValue: value}}})} 
+                        value={state[type as keyof RewardState].minPurchaseDollarValue.toString()} 
+                        onChange={(value: string) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseDollarValue: value}})} 
                         prefix='$' 
                         autoComplete="off" 
                         label='' 
@@ -183,9 +183,10 @@ export default function RewardChoice({type, state, setState} : Props) {
                         <InlineStack> 
                             <TextField 
                             type="number" 
-                            value={state[type as keyof RewardState].minPurchaseRequirements.quantityValue.toString()} 
-                            min={0} 
-                            onChange={(value: string) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState].minPurchaseRequirements, quantityValue: parseInt(value)}}})} 
+                            onBlur={() => state[type as keyof RewardState].minPurchaseQuantityValue.toString() === '0' && setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseQuantityValue: 1}})}
+                            value={state[type as keyof RewardState].minPurchaseQuantityValue.toString()} 
+                            min={1} 
+                            onChange={(value: string) => setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseQuantityValue: parseInt(value)}})} 
                             autoComplete="off" 
                             label='' /> 
                         </InlineStack> 
