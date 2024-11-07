@@ -35,7 +35,6 @@ input, textarea {
 
 .characterCountContainer {
     position: absolute;
-    cursor: pointer;
     bottom: 10px;
     right: 10px;
     font-size: 10px;
@@ -74,7 +73,7 @@ input, textarea {
 }
 
 .reviewFormHeadingContainer {
-    width: fit-content;
+    width: 80%;
     margin: auto;
     text-align: center;
     margin-top: 15px;
@@ -110,6 +109,42 @@ input, textarea {
     outline: none;
     box-shadow: none;
     padding: 8px;
+}
+
+.rewardTiersContainer {
+    width: 400px;
+    height: 40px;
+    border-radius: 25px;
+    overflow: hidden;
+    display: flex;
+}
+
+.rewardTierOne {
+    width: 33%;
+    height: 100%;
+    border-right-color: white;
+    border-right-width: 2px;
+    border-right-style: solid;
+}
+
+.rewardTierTwo {
+    width: 33%;
+    height: 100%;
+    border-right-color: white;
+    border-right-width: 2px;
+    border-right-style: solid;
+}
+
+.rewardTierThree {
+    width: 34%;
+    height: 100%;
+}
+
+.rewardTierOne, .rewardTierTwo, .rewardTierThree {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
 }
 
 .submitReviewBtn {

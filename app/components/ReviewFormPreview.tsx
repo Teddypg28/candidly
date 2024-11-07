@@ -1,49 +1,28 @@
-import { Banner, BlockStack, Card, InlineStack, ProgressBar, Text, Tooltip } from "@shopify/polaris"
+import { Banner, BlockStack, Card, ProgressBar, Text } from "@shopify/polaris"
 
 import styles from '../styles/ReviewPreview.module.css'
-import { IColor } from "react-color-palette"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface Props {
     heading: string,
     subheading: string,
     headlinePlaceholder: string,
     reviewPlaceholder: string,
-    primaryColor: IColor
+    primaryColor: string
 }
 
 const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor } : Props ) => {
 
-  const [currentRating, setCurrentRating] = useState(5)
   const [reviewBody, setReviewBody] = useState('')
   const [reviewHeadline, setReviewHeadline] = useState('')
   const [uploadedMedia, setUploadedMedia] = useState<any>([])
 
+  const rating = useRef(5)
   const uploadedMediaRef = useRef<any>([])
 
   const [uploadMediaError, setUploadMediaError] = useState('')
 
   const reviewHeadlineWordList = reviewHeadline.trim().split(/\s+/).filter(word => word !== "")
-  const reviewBodyWordList = reviewBody.trim().split(/\s+/).filter(word => word !== "")
-
-  let reviewBodyTier
-  let reviewBodyStatusColor = primaryColor.hex
-
-  if (reviewBodyWordList.length <= 14) {
-
-    reviewBodyTier = 1
-
-  } else if (reviewBodyWordList.length > 14 && reviewBodyWordList.length <= 39) {
-
-    reviewBodyTier = 2
-
-  } else {
-
-    reviewBodyTier = 3
-    reviewBodyStatusColor = '#67af98'
-
-  }
-
   let reviewHeadlineTier
   let reviewHeadlineStatusColor
 
@@ -61,8 +40,28 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
     reviewHeadlineStatusColor = "#67af98"
   }
 
+  const reviewBodyWordList = reviewBody.trim().split(/\s+/).filter(word => word !== "")
+
+  let reviewBodyTier
+  let reviewBodyStatusColor = primaryColor
+
+  if (reviewBodyWordList.length <= 14) {
+
+    reviewBodyTier = 1
+
+  } else if (reviewBodyWordList.length > 14 && reviewBodyWordList.length <= 39) {
+
+    reviewBodyTier = 2
+
+  } else {
+
+    reviewBodyTier = 3
+    reviewBodyStatusColor = '#67af98'
+
+  }
+
   let uploadedMediaTier
-  let uploadedMediaStatusColor = primaryColor.hex
+  let uploadedMediaStatusColor = primaryColor
 
   if (uploadedMediaRef.current.length === 0) {
     uploadedMediaTier = 1
@@ -74,40 +73,54 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
   }
 
   const reviewScoreTier = Math.floor((reviewHeadlineTier + reviewBodyTier + uploadedMediaTier) / 3)
-  const rewards = ['No rewards', '40% off coupon', 'Buy 1 get 2 free coupon']
+  const rewards = ['No Reward', '40% Off', 'Buy 2, Get 1 Free!']
+
+  const renderStars = (rating: number) => {
+      for (let i = 1; i<=5; i++) {
+          if (i <= rating) {
+              (document.querySelector(`#star${i}`) as HTMLElement).style.fill = primaryColor
+          } else {
+              (document.querySelector(`#star${i}`) as HTMLElement).style.fill = '#e8e8e8'
+          }
+      }
+  }
 
   useEffect(() => {
 
+    const mouseoverFunction = (e: any) => {
+        const rating = parseInt(e.currentTarget.dataset.rating)
+        renderStars(rating)
+    }
+
+    const mouseleaveFunction = () => {
+        renderStars(rating.current)
+    }
+
+    const clickFunction = (e: any) => {
+        rating.current = parseInt(e.currentTarget.dataset.rating)
+        renderStars(rating.current)
+    }
+
     document.querySelectorAll('#reviewFormStar').forEach((star) => {
-
-        const renderStars = (rating: number) => {
-            for (let i = 1; i<=5; i++) {
-
-                if (i <= rating) {
-                    (document.querySelector(`#star${i}`) as HTMLElement).style.fill = primaryColor.hex
-                } else {
-                    (document.querySelector(`#star${i}`) as HTMLElement).style.fill = '#e8e8e8'
-                }
-
-            }
-        }
-
-        star.addEventListener('mouseover', (e: any) => {
-            const rating = parseInt(e.currentTarget.dataset.rating)
-            renderStars(rating)
-        })
-
-        star.addEventListener('mouseleave', () => {
-            renderStars(currentRating)
-        })
-
-        star.addEventListener('click', (e: any) => {
-            setCurrentRating(e.currentTarget.dataset.rating)
-        })
-
+        star.addEventListener('mouseover', mouseoverFunction)
+        star.addEventListener('mouseleave', mouseleaveFunction)
+        star.addEventListener('click', clickFunction)
     })
 
-  }, [currentRating])
+    return () => {
+
+        document.querySelectorAll('#reviewFormStar').forEach((star) => {
+            star.removeEventListener('mouseover', mouseoverFunction)
+            star.removeEventListener('mouseleave', mouseleaveFunction)
+            star.removeEventListener('click', clickFunction)
+        })
+    }
+
+  }, [primaryColor])
+
+  useEffect(() => {
+    renderStars(rating.current)
+  }, [primaryColor])
 
   useEffect(() => {
 
@@ -235,32 +248,32 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
         
     }
 
-  }, [uploadedMedia])
+  }, [])
 
   return (
             <Card>
                 <Banner>This preview displays example rewards</Banner>
                 <div style={{width: 'fit-content', margin: 'auto'}}>
-                    <div className={styles.reviewForm} style={{width: '500px'}}>
+                    <div className={styles.reviewForm} style={{width: 'fit-content', padding: '10px'}}>
                         <div className={styles.reviewFormHeadingContainer}>
                             <h1>{heading}</h1>
                             <p>{subheading}</p>
                         </div>
                         <div className={styles.reviewFormStarsContainer}>
                             <svg id="reviewFormStar" data-rating="1" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star1" fill={primaryColor.hex} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                <path id="star1" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                             </svg>
                             <svg id="reviewFormStar" data-rating="2" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star2" fill={primaryColor.hex} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                <path id="star2" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                             </svg>
                             <svg id="reviewFormStar" data-rating="3" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star3" fill={primaryColor.hex} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                <path id="star3" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                             </svg>
                             <svg id="reviewFormStar" data-rating="4" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star4" fill={primaryColor.hex} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                <path id="star4" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                             </svg>
                             <svg id="reviewFormStar" data-rating="5" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star5" fill={primaryColor.hex} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                <path id="star5" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                             </svg>
                         </div>
                         <div className={styles.reviewFieldWrapper}>
@@ -275,7 +288,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                         </div>
                         <BlockStack gap={'100'}>
                             <ProgressBar tone={reviewHeadlineTier === 3 ? "success" : "primary"} progress={Math.round(reviewHeadlineWordList.length / 10 * 100)} />
-                            <Text as="p" tone="success" variant="bodySm">You wrote a perfect headline!</Text>
+                            <Text as="p" tone={reviewHeadlineTier === 3 ? "success" : "base"} variant="bodySm">{reviewHeadlineTier === 3 ? "You wrote a perfect headline!" : `You are ${Math.round(reviewHeadlineWordList.length / 10 * 100)}% of the way to writing the perfect headline`}</Text>
                         </BlockStack>
                         <div className={styles.reviewFieldWrapper}>
                             <label>Review *</label>
@@ -289,7 +302,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                         </div>
                         <BlockStack gap={'100'}>
                             <ProgressBar tone={reviewBodyTier === 3 ? "success" : "primary"} progress={Math.round(reviewBodyWordList.length / 40 * 100)} />
-                            <Text as="p" tone={reviewBodyTier === 3 ? "success" : "base"} variant="bodySm">{reviewBodyTier !== 3 ? `You are ${Math.round(reviewBodyWordList.length / 40 * 100)}% of the way to maximizing your reward` : "You wrote the perfect body!"}</Text>
+                            <Text as="p" tone={reviewBodyTier === 3 ? "success" : "base"} variant="bodySm">{reviewBodyTier !== 3 ? `You are ${Math.round(reviewBodyWordList.length / 40 * 100)}% of the way to writing the perfect body` : "You wrote the perfect body!"}</Text>
                         </BlockStack>
                         <div className={styles.reviewNameEmailWrapper}>
                             <div className={styles.reviewNameEmailContainer}>
@@ -315,14 +328,28 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                         </div>
                         <BlockStack gap={'100'}>
                             <ProgressBar tone={uploadedMediaTier === 3 ? "success" : "primary"} progress={Math.round(uploadedMediaRef.current.length / 2 * 100)} />
-                            <Text as="p" tone="success" variant="bodySm">You uploaded the perfect amount of images/videos!</Text>
+                            <Text as="p" tone={uploadedMediaTier === 3 ? "success" : "base"} variant="bodySm">{uploadedMediaTier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</Text>
                         </BlockStack>
                         {uploadMediaError && <p style={{color: 'darkred'}}>{uploadMediaError}</p>}
+                        <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
+                        <BlockStack>
+                            <Text as="h3" fontWeight="bold">Reward Tiers</Text>
+                            <Text as="p" variant="bodySm">The better your review, the better your reward</Text>
+                        </BlockStack>
                         <div>
-                            <p>Current Review Reward: <strong>{rewards[reviewScoreTier-1]}</strong></p>
-                            {reviewScoreTier === 3 ? <Text as="p" tone="success">Congrats! You just wrote a perfect review!</Text> : <p>Spice it up a bit more to achieve a: <strong>{rewards[reviewScoreTier]}</strong></p>}
+                            <div className={styles.rewardTiersContainer}>
+                                <div className={styles.rewardTierOne} style={{backgroundColor: reviewScoreTier === 1 ? primaryColor : 'lightgray', filter: reviewScoreTier === 1 ? 'none' : "blur(1px)"}}>
+                                    <Text as="p" fontWeight="bold">{rewards[0]}</Text>
+                                </div>
+                                <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScoreTier === 2 ? primaryColor : 'lightgray', filter: reviewScoreTier === 2 ? 'none' : "blur(1px)"}}> 
+                                    <Text as="p" fontWeight="bold">{rewards[1]}</Text>
+                                </div>
+                                <div className={styles.rewardTierThree} style={{backgroundColor: reviewScoreTier === 3 ? primaryColor : 'lightgray', filter: reviewScoreTier === 3 ? 'none' : "blur(1px)"}}>
+                                    <Text as="p" fontWeight="bold">{rewards[2]}</Text>
+                                </div>
+                            </div>
                         </div>
-                        <button className={styles.submitReviewBtn} style={{backgroundColor: primaryColor.hex}}>Submit Review</button>
+                        <button className={styles.submitReviewBtn} style={{backgroundColor: primaryColor}}>Submit Review</button>
                     </div>
                 </div>
             </Card>

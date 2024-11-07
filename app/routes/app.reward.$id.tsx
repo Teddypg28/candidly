@@ -5,10 +5,30 @@ import { useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
 import { Reward as RewardStateReward, RewardState } from "~/types/types";
 
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { SaveBar } from "@shopify/app-bridge-react";
+
+import db from '../db.server'
+
+export const action = async ({ request, params } : ActionFunctionArgs) => {
+
+    const { session, redirect } = await authenticate.admin(request)
+
+    if (params.id === "new") {
+
+        const payload = await request.json()
+
+        const reward = await db.reward.create({data: {...payload}})
+
+        
+
+
+    }
+
+
+}
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
@@ -21,7 +41,6 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         const subpar = {selectedRewardType: 'none', fixedAmount: 10, percentageAmount: 10, bogoRewardType: "free", bogoPurchaseAmount: 1, bogoReceiveAmount: 1, bogoDiscountAmount: 1, minPurchaseType: 'none', minPurchaseDollarValue: 1, minPurchaseQuantityValue: 1}
 
         return {subpar: {...subpar}, good: {...good}, perfect: {...perfect}}
-
     }
 
 }
@@ -30,8 +49,9 @@ export default function Reward() {
 
     const data = useLoaderData<typeof loader>()
 
-    const [currentTab, setCurrentTab] = useState('subpar')
+    const submit = useSubmit()
 
+    const [currentTab, setCurrentTab] = useState('subpar')
     const [rewardState, setRewardState] = useState<RewardState>(data)
     const [cleanRewardState, setCleanRewardState] = useState<RewardState>(data)
 
@@ -63,6 +83,16 @@ export default function Reward() {
 
     }
 
+    const saveChanges = () => {
+
+        const productIds = selectedProducts.products.map((product: any) => product.id)
+
+        console.log(productIds)
+
+        // submit(JSON.stringify({...rewardState, }))
+
+    }
+
     return (
 
         <Page
@@ -73,8 +103,8 @@ export default function Reward() {
             <SaveBar 
             open={cleanRewardState !== rewardState} 
             >
-                <button variant={'primary'}>Save</button>
-                <button onClick={() => setRewardState(cleanRewardState)}>Discard</button>
+                <button variant={'primary'} onClick={saveChanges}></button>
+                <button onClick={() => setRewardState(cleanRewardState)}></button>
             </SaveBar>
             <Layout>
                 <Layout.Section variant="oneHalf">

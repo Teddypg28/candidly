@@ -1,5 +1,4 @@
 import { IndexFiltersProps } from "@shopify/polaris"
-import { SetStateAction } from "react"
 
 export interface CustomReviewFormAnswerOption {
     [key: string]: any

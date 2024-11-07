@@ -146,9 +146,9 @@ model SavedReviewRequestTableView {
 }
 
 model Reward {
-  id         Int      @id @default(autoincrement())
-  productIds BigInt[]
-  store      String
+  id                      Int               @id @default(autoincrement())
+  limitedEligibleProducts EligibleProduct[]
+  store                   String
 
   subparRewardId  Int @unique
   goodRewardId    Int @unique
@@ -157,6 +157,14 @@ model Reward {
   subpar  RewardSetting @relation("SubparReward", fields: [subparRewardId], references: [id])
   good    RewardSetting @relation("GoodReward", fields: [goodRewardId], references: [id])
   perfect RewardSetting @relation("PerfectReward", fields: [perfectRewardId], references: [id])
+}
+
+model EligibleProduct {
+  id         Int      @id @default(autoincrement())
+  productId  BigInt
+  variantIds BigInt[]
+  rewardId   Int
+  reward     Reward   @relation(fields: [rewardId], references: [id])
 }
 
 model RewardSetting {

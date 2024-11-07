@@ -7,7 +7,7 @@ import db from '../db.server'
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 
-import { ColorPicker, useColor } from 'react-color-palette'
+import { ColorPicker, IColor, useColor } from 'react-color-palette'
 import "react-color-palette/css"
 import { SaveBar } from "@shopify/app-bridge-react";
 
@@ -25,7 +25,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
             subheading: 'Rate it out of 5 stars:',
             headlinePlaceholder: 'Sum up your experience in a few short words',
             reviewPlaceholder: 'What did you like or not like?',
-            primaryFormColor: 'black',
+            primaryFormColor: '#000000'
         }
 
         return await db.reviewFormSettings.create({data: defaultSettings})
@@ -44,15 +44,16 @@ export default function ReviewForm() {
     const [cleanState, setCleanState] = useState(settingsState)
 
     const [color, setColor] = useColor(settingsState.primaryFormColor)
+    const [cleanColor, setCleanColor] = useState(color)
 
-    const isFormDirty = JSON.stringify(cleanState) !== JSON.stringify(settingsState) || cleanState.primaryFormColor !== color.hex
+    const isFormDirty = JSON.stringify(cleanState) !== JSON.stringify(settingsState)
 
     return (
 
         <Page>
             <SaveBar open={isFormDirty}>
                 <button variant={'primary'}></button>
-                <button></button>
+                <button onClick={() => { setSettingsState(cleanState); setColor(cleanColor) }}></button>
             </SaveBar>
             <Layout>
                 <Layout.Section variant="oneThird">
@@ -82,7 +83,7 @@ export default function ReviewForm() {
                             <ColorPicker
                             height={150}
                             color={color} 
-                            onChange={setColor} />
+                            onChange={(color: IColor) => { setSettingsState({...settingsState, primaryFormColor: color.hex}); setColor(color) }} />
                         </BlockStack>
                     </Card>
                 </Layout.Section>
@@ -92,7 +93,7 @@ export default function ReviewForm() {
                     subheading={settingsState.subheading}
                     headlinePlaceholder={settingsState.headlinePlaceholder}
                     reviewPlaceholder={settingsState.reviewPlaceholder}
-                    primaryColor={color}
+                    primaryColor={settingsState.primaryFormColor}
                     />
                 </Layout.Section>
             </Layout>
