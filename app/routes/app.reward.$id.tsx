@@ -1,7 +1,7 @@
-import { Banner, BlockStack, Button, Card, InlineStack, Layout, Page, Select, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, InlineStack, Layout, Page, PageActions, Select, Text, Thumbnail } from "@shopify/polaris";
 import { ImageIcon } from "@shopify/polaris-icons";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
 import { Reward as RewardStateReward, RewardState } from "~/types/types";
 
@@ -16,23 +16,34 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
     const { session, redirect } = await authenticate.admin(request)
 
+    const payload = await request.json()
+
     if (params.id === "new") {
 
-        const payload = await request.json()
+        const reward = await db.reward.create({data: 
+            {subpar: {create: {...payload.subpar}}, 
+            good: {create: {...payload.good}}, 
+            perfect: {create: {...payload.perfect}},
+            limitedEligibleProducts: {create: payload.limitedEligibleProducts},
+            store: session.shop
+        }})
 
-        const reward = await db.reward.create({data: {...payload}})
-
-        
-
+        return redirect(`/app/reward/${reward.id}`)
 
     }
 
+    if (payload.action === 'delete') {
 
+        if (params.id) {
+            await db.reward.delete({where: {id: parseInt(params.id)}})
+            return redirect('/app/rewards')
+        }
+    }
 }
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
-    const {session} = await authenticate.admin(request)
+    const { redirect } = await authenticate.admin(request)
 
     if (params.id === "new") {
 
@@ -43,6 +54,15 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         return {subpar: {...subpar}, good: {...good}, perfect: {...perfect}}
     }
 
+    if (params.id) {
+        const result = await db.reward.findFirst({where: {id: {equals: parseInt(params.id)}}, include: {subpar: true, good: true, perfect: true}})
+
+        if (result) {
+            return result
+        }
+
+        return redirect('/app/rewards')
+     }
 }
 
 export default function Reward() {
@@ -85,19 +105,27 @@ export default function Reward() {
 
     const saveChanges = () => {
 
-        const productIds = selectedProducts.products.map((product: any) => product.id)
+        const productData = selectedProducts.products.map((product: any) => {
+            return {productId: product.id, variantIds: product.variants.map((variant: any) => variant.id || '')}
+        })
 
-        console.log(productIds)
+        setCleanRewardState(rewardState)
 
-        // submit(JSON.stringify({...rewardState, }))
+        submit(JSON.stringify({...rewardState, limitedEligibleProducts: productData}), {method: 'POST', encType: 'application/json'})
 
     }
+
+    const deleteReward = useCallback(() => {
+        
+        submit(JSON.stringify({action: 'delete'}), {encType: 'application/json', method: 'POST'})
+
+    }, [])
 
     return (
 
         <Page
         title="Review Reward"
-        subtitle="Edit or delete this review reward"
+        subtitle={data.good.hasOwnProperty('id') ? "Edit or delete this review reward" : "Create a new reward"}
         backAction={{url: '/app/rewards'}}
         >
             <SaveBar 
@@ -149,7 +177,7 @@ export default function Reward() {
                                 {label: 'All Products', value: 'all'},
                                 {label: 'Specific Products', value: 'specific'}
                             ]}
-                             onChange={(value) => setSelectedProducts({...selectedProducts, type: value})}
+                            onChange={(value) => setSelectedProducts({...selectedProducts, type: value})}
                             />
                             {selectedProducts.type === 'all' &&
                             
@@ -190,6 +218,11 @@ export default function Reward() {
                 </Layout.Section>
             }
             </Layout>
+            {data.good.hasOwnProperty('id') &&
+            <PageActions
+            secondaryActions={[{content: 'Delete', destructive: true, onAction: deleteReward}]}
+            />
+            }
         </Page>
 
     )

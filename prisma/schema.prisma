@@ -154,31 +154,31 @@ model Reward {
   goodRewardId    Int @unique
   perfectRewardId Int @unique
 
-  subpar  RewardSetting @relation("SubparReward", fields: [subparRewardId], references: [id])
-  good    RewardSetting @relation("GoodReward", fields: [goodRewardId], references: [id])
-  perfect RewardSetting @relation("PerfectReward", fields: [perfectRewardId], references: [id])
+  subpar  RewardSetting @relation("SubparReward", fields: [subparRewardId], references: [id], onDelete: Cascade)
+  good    RewardSetting @relation("GoodReward", fields: [goodRewardId], references: [id], onDelete: Cascade)
+  perfect RewardSetting @relation("PerfectReward", fields: [perfectRewardId], references: [id], onDelete: Cascade)
 }
 
 model EligibleProduct {
   id         Int      @id @default(autoincrement())
-  productId  BigInt
-  variantIds BigInt[]
+  productId  String
+  variantIds String[]
   rewardId   Int
-  reward     Reward   @relation(fields: [rewardId], references: [id])
+  reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
 }
 
 model RewardSetting {
-  id                       Int     @id @default(autoincrement())
-  selectedRewardType       String  @default("percent")
-  fixedAmount              Int?    @default(10)
-  percentageAmount         Int?    @default(10)
-  bogoRewardType           String? @default("free")
-  bogoPurchaseAmount       Int?    @default(1)
-  bogoReceiveAmount        Int?    @default(1)
-  bogoDiscountAmount       Int?    @default(1)
-  minPurchaseType          String?
-  minPurchaseDollarValue   String?
-  minPurchaseQuantityValue String?
+  id                       Int    @id @default(autoincrement())
+  selectedRewardType       String
+  fixedAmount              Int
+  percentageAmount         Int
+  bogoRewardType           String
+  bogoPurchaseAmount       Int
+  bogoReceiveAmount        Int
+  bogoDiscountAmount       Int
+  minPurchaseType          String
+  minPurchaseDollarValue   Int
+  minPurchaseQuantityValue Int
 
   subparReward  Reward? @relation("SubparReward")
   goodReward    Reward? @relation("GoodReward")
