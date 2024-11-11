@@ -12,12 +12,13 @@ import db from '../db.server'
 import SettingsTabs from "~/components/SettingsTabs";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
 import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
+import ReviewEmailSettings from "~/components/settings/ReviewEmailSettings";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
 
     const { session } = await authenticate.admin(request)
 
-    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}, include: {displayProducts: true}})
 
     if (appSettings) return {...appSettings, path: params.path}
 
@@ -25,13 +26,14 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
         store: session.shop,
         autoPublishReviews: ['false'],
+        reviewRequestEmailProductDisplay: ['disabled'],
         minReviewRating: 4, 
         firstReviewRequest: 10,
         secondReviewRequest: 5
 
     }
 
-    const initializedSettings = await db.appSettings.create({data: defaultSettings, omit: {id: true}})
+    const initializedSettings = await db.appSettings.create({data: {...defaultSettings}, omit: {id: true}, include: {displayProducts: true}})
 
     return {...initializedSettings, path: params.path}
 
@@ -66,11 +68,12 @@ export default function Settings() {
     let SettingsComponent
 
     switch(settingsPath) {
-        case "general":
-            break
         case "review-request-timing":
             SettingsComponent = <ReviewRequestTimingSettings state={settingsState} setState={setSettingsState} />
             break
+        case "email":
+            SettingsComponent = <ReviewEmailSettings state={settingsState} setState={setSettingsState} />
+            break    
         case "verification":
             SettingsComponent = <ReviewVerificationSettings state={settingsState} setState={setSettingsState} />
             break

@@ -97,12 +97,24 @@ model SavedCustomQuestionsTableView {
 }
 
 model AppSettings {
-  id                  Int      @id @default(autoincrement())
-  store               String
-  autoPublishReviews  String[]
-  minReviewRating     Int
-  firstReviewRequest  Int
-  secondReviewRequest Int
+  id                               Int              @id @default(autoincrement())
+  store                            String
+  autoPublishReviews               String[]
+  reviewRequestEmailProductDisplay String[]
+  displayProducts                  DisplayProduct[]
+  minReviewRating                  Int
+  firstReviewRequest               Int
+  secondReviewRequest              Int
+}
+
+model DisplayProduct {
+  id            Int         @id @default(autoincrement())
+  store         String
+  productId     String
+  title         String
+  imageUrl      String?
+  appSettingsId Int
+  appSettings   AppSettings @relation(fields: [appSettingsId], references: [id], onDelete: Cascade)
 }
 
 model ReviewFormSettings {

@@ -104,8 +104,17 @@ export interface ReviewRequestData {
     orderName: string
 }
 
+// export interface DisplayProduct {
+//     store: string; 
+//     productId: string; 
+//     title: string; 
+//     imageUrl: string | null; 
+// }
+
 export interface AppSettings {
     store: string,
+    reviewRequestEmailProductDisplay: string[],
+    displayProducts: any[],
     autoPublishReviews: string[],
     minReviewRating: number, 
     firstReviewRequest: number,

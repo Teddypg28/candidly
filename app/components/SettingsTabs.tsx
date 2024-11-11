@@ -20,8 +20,8 @@ export default function SettingsTabs({store, path}: Props) {
     const nav = useNavigate()
 
     const settingTabs = [
-        {name: 'General', path: 'general', icon: <SettingsIcon height={20} width={20} />}, 
         {name: 'Review Request Timing', path: 'review-request-timing', icon: <ClockIcon height={20} width={20} />},
+        {name: 'Email', path: 'email', icon: <EmailIcon height={20} width={20} />},
         {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />}
     ]
 
