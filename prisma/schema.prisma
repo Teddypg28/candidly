@@ -117,14 +117,14 @@ model ReviewFormSettings {
 
 model ReviewRequest {
   id                Int       @id @default(autoincrement())
-  date              DateTime
+  store             String
   orderName         String
   orderId           BigInt
-  store             String
+  name              String
   email             String
   fulfillmentStatus String?
   reviewStatus      String    @default("waiting")
-  requestDate       DateTime?
+  requestSentDate   DateTime?
   emailsSent        Int       @default(0)
 }
 
@@ -145,26 +145,26 @@ model SavedReviewRequestTableView {
   sortSelected                String[]
 }
 
-model Reward {
-  id                      Int               @id @default(autoincrement())
-  limitedEligibleProducts EligibleProduct[]
-  store                   String
-
-  subparRewardId  Int @unique
-  goodRewardId    Int @unique
-  perfectRewardId Int @unique
-
-  subpar  RewardSetting @relation("SubparReward", fields: [subparRewardId], references: [id], onDelete: Cascade)
-  good    RewardSetting @relation("GoodReward", fields: [goodRewardId], references: [id], onDelete: Cascade)
-  perfect RewardSetting @relation("PerfectReward", fields: [perfectRewardId], references: [id], onDelete: Cascade)
-}
-
 model EligibleProduct {
   id         Int      @id @default(autoincrement())
   productId  String
   variantIds String[]
   rewardId   Int
   reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+}
+
+model Reward {
+  id                      Int               @id @default(autoincrement())
+  limitedEligibleProducts EligibleProduct[]
+  store                   String
+
+  subparId  Int @unique
+  goodId    Int @unique
+  perfectId Int @unique
+
+  subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id], onDelete: Cascade)
+  good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id], onDelete: Cascade)
+  perfect RewardSetting @relation("PerfectReward", fields: [perfectId], references: [id], onDelete: Cascade)
 }
 
 model RewardSetting {
@@ -183,4 +183,14 @@ model RewardSetting {
   subparReward  Reward? @relation("SubparReward")
   goodReward    Reward? @relation("GoodReward")
   perfectReward Reward? @relation("PerfectReward")
+}
+
+model ReviewFormPresetInfo {
+  id           Int    @id @default(autoincrement())
+  store        String
+  firstName    String
+  email        String
+  productTitle String
+  VariantTitle String
+  imageUrl     String
 }

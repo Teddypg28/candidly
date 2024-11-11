@@ -8,7 +8,7 @@ const isValueInvalid = (value: number) => {
 
 }
 
-export default function ReviewRequestEmailSettings({state, setState}: SettingsPageProps) {
+export default function ReviewRequestTimingSettings({state, setState}: SettingsPageProps) {
 
     const isFirstEmailInvalid = isValueInvalid(state.firstReviewRequest);
     const firstEmailErrorMessage = isFirstEmailInvalid ? 'Please enter a value greater than zero' : ''
@@ -21,7 +21,7 @@ export default function ReviewRequestEmailSettings({state, setState}: SettingsPa
     <BlockStack gap='200'>
         <Card>
             <BlockStack gap={'400'}>
-                <Text as="h1" variant="headingSm">Review Request Emails</Text>
+                <Text as="h1" variant="headingSm">Review Request Timing</Text>
                 <BlockStack gap={'100'}>
                     <TextField 
                     id="firstEmail"

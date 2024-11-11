@@ -5,9 +5,6 @@ export const createEachProductReviewRequest = async (request: any, admin: AdminA
     const query = `
     {
       order(id: "gid://shopify/Order/${request.orderId}") {
-        fulfillments{
-          status
-        }
         lineItems(first: 100, reverse: true) {
           edges {
             node {
@@ -46,7 +43,7 @@ export const createEachProductReviewRequest = async (request: any, admin: AdminA
 
             ...request,
             orderId: parseInt(request.orderId.toString()),
-            product: itemName            
+            product: itemName
         }
 
     })

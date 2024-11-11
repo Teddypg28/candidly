@@ -11,7 +11,7 @@ import db from '../db.server'
 
 import SettingsTabs from "~/components/SettingsTabs";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
-import ReviewRequestEmailSettings from "~/components/settings/ReviewRequestEmailSettings";
+import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
 
@@ -68,8 +68,8 @@ export default function Settings() {
     switch(settingsPath) {
         case "general":
             break
-        case "review-request-emails":
-            SettingsComponent = <ReviewRequestEmailSettings state={settingsState} setState={setSettingsState} />
+        case "review-request-timing":
+            SettingsComponent = <ReviewRequestTimingSettings state={settingsState} setState={setSettingsState} />
             break
         case "verification":
             SettingsComponent = <ReviewVerificationSettings state={settingsState} setState={setSettingsState} />

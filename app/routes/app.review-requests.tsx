@@ -35,6 +35,10 @@ export async function loader({ request } : LoaderFunctionArgs) {
                 name
                 createdAt
                 cancelledAt
+                customer {
+                    firstName,
+                    lastName
+                }
                 email
               }
               pageInfo {
@@ -57,22 +61,22 @@ export async function loader({ request } : LoaderFunctionArgs) {
                     let requestDate
         
                     if (emailSendingSettings && node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
-                        if (numOfDaysSince >= emailSendingSettings.firstReviewRequest) {
+                        if (numOfDaysSince >= emailSendingSettings.firstReviewRequest) {                            
                             requestDate = new Date()
                             requestDate.setDate(requestDate.getDate() + 1) 
                         } else {
                             requestDate = new Date(node.createdAt)
                             requestDate.setDate(requestDate.getDate() + emailSendingSettings.firstReviewRequest)
                         }
-                    }
-                    
+
+                    }      
+
                     reviewRequestObjects.push({
                         store: session.shop,
+                        orderName: node.name,
                         date: node.createdAt,
                         orderId: node.id.split('Order/')[1],
-                        orderName: node.name,
                         requestDate,
-                        email: node.email,
                         fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending'
                     })
 
@@ -90,7 +94,6 @@ export async function loader({ request } : LoaderFunctionArgs) {
                         name
                         createdAt
                         cancelledAt
-                        email
                       }
                       pageInfo {
                         hasNextPage
@@ -140,12 +143,13 @@ export async function loader({ request } : LoaderFunctionArgs) {
         })
     })
 
-
     // Retrieve saved table view data
 
     const savedTableViews = await db.savedReviewRequestTableView.findMany({where: {store: {equals: session.shop}}, omit: {id: true, store: true}, orderBy: {id: "asc"}})
 
     // Serve both
+
+    console.log(reviewRequests)
 
     return json({savedTableViews, reviewRequests})
 
@@ -215,8 +219,7 @@ export default function ReviewRequests() {
     // Filter reviews based on selected filters
     const reviewRequestsAfterFiltering = reviewRequests.filter(request => {
 
-        return request.email.includes(indexTableState.queryValue.trim()) || 
-               request.orderName.includes(indexTableState.queryValue.trim()) || 
+        return request.orderName.includes(indexTableState.queryValue.trim()) || 
                new Date(request.date).toLocaleDateString().includes(indexTableState.queryValue.trim())
 
     }).filter(request => {
@@ -287,7 +290,6 @@ export default function ReviewRequests() {
                 <IndexTable.Cell>
                     <Link target="_blank" url={orderUrl}>{reviewRequest.orderName}</Link>
                 </IndexTable.Cell>
-                <IndexTable.Cell>{reviewRequest.email}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <Badge tone={reviewRequest.fulfillmentStatus === "fulfilled" ? "success" : "attention" }>
                         {reviewRequest.fulfillmentStatus === null ? "pending" : reviewRequest.fulfillmentStatus}
@@ -499,7 +501,7 @@ export default function ReviewRequests() {
                 />
                 <IndexTable 
                 selectable={false}
-                headings={[{title: 'Product'}, {title: 'Date Ordered'}, {title: 'Order Number'}, {title: 'Email'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
+                headings={[{title: 'Customer Name'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Products(s) Purchased'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
                 itemCount={reviewRequestsAfterFiltering.length}
                 >
                     {IndexTableMarkup}

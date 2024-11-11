@@ -7,7 +7,7 @@ import {
     SettingsIcon,
     EmailIcon,
     ShieldCheckMarkIcon,
-    DiscountIcon
+    ClockIcon
   } from '@shopify/polaris-icons';
 
 interface Props {
@@ -21,7 +21,7 @@ export default function SettingsTabs({store, path}: Props) {
 
     const settingTabs = [
         {name: 'General', path: 'general', icon: <SettingsIcon height={20} width={20} />}, 
-        {name: 'Review Request Emails', path: 'review-request-emails', icon: <EmailIcon height={20} width={20} />},
+        {name: 'Review Request Timing', path: 'review-request-timing', icon: <ClockIcon height={20} width={20} />},
         {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />}
     ]
 

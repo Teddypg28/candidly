@@ -7,7 +7,7 @@ import { Reward as RewardStateReward, RewardState } from "~/types/types";
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { SaveBar } from "@shopify/app-bridge-react";
 
 import db from '../db.server'
@@ -21,12 +21,14 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     if (params.id === "new") {
 
         const reward = await db.reward.create({data: 
-            {subpar: {create: {...payload.subpar}}, 
-            good: {create: {...payload.good}}, 
-            perfect: {create: {...payload.perfect}},
-            limitedEligibleProducts: {create: payload.limitedEligibleProducts},
-            store: session.shop
-        }})
+            {
+                subpar: {create: {...payload.subpar}}, 
+                good: {create: {...payload.good}}, 
+                perfect: {create: {...payload.perfect}},
+                limitedEligibleProducts: {create: payload.limitedEligibleProducts},
+                store: session.shop
+            }
+    })
 
         return redirect(`/app/reward/${reward.id}`)
 
@@ -35,10 +37,16 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     if (payload.action === 'delete') {
 
         if (params.id) {
-            await db.reward.delete({where: {id: parseInt(params.id)}})
-            return redirect('/app/rewards')
+            const result = await db.reward.delete({where: {id: parseInt(params.id)}})
+            await db.rewardSetting.delete({where: {id: result.goodId}})
+            await db.rewardSetting.delete({where: {id: result.subparId}})
+            await db.rewardSetting.delete({where: {id: result.perfectId}})
         }
+
+        return redirect('/app/rewards')
+
     }
+
 }
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {

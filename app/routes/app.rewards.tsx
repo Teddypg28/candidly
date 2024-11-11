@@ -1,6 +1,6 @@
 import { ActionFunctionArgs } from "@remix-run/node"
 import { useLoaderData, useNavigate } from "@remix-run/react"
-import { Badge, Card, DataTable, EmptyState, IndexTable, Link, Page } from "@shopify/polaris"
+import { Badge, Card, EmptyState, IndexTable, Link, Page } from "@shopify/polaris"
 
 import db from '../db.server'
 import { authenticate } from "~/shopify.server"

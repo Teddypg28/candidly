@@ -95,7 +95,6 @@ export interface SavedView {
 
 export interface ReviewRequestData {
     store: string, 
-    email: string, 
     date: Date, 
     fulfillmentStatus: string | null, 
     reviewStatus: string, 
