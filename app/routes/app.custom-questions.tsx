@@ -29,9 +29,9 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
 
         const { session, admin } = await authenticate.admin(request)
 
-        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {answerChoices: true}, omit: {store: true}})
+        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, omit: {store: true}})
 
-        const updatedQuestions = await Promise.all(questions.map(async ({productId, ...rest}) => {
+        const updatedQuestions = await Promise.all(questions.map(async ({productIds, ...rest}) => {
 
             const query = `query getProductTitle($id: ID!) {
                 product(id: $id) {

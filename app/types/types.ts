@@ -1,28 +1,48 @@
 import { IndexFiltersProps } from "@shopify/polaris"
 
+export const initialQuestionState: CustomReviewFormQuestionState = {
+    productConfiguration: ['all'],
+    answerType: [],
+    productIds: [],
+    collectionIds: [],
+    radioAllowMultipleAnswers: ['false'],
+    radioAnswerChoices: ['', ''],
+    radioDisplayAnswer: ['false'],
+    title: '',
+    isRequired: ['false']
+}
+
+export interface CustomReviewFormQuestionState {
+    id?: number
+    answerType: string[]
+    productConfiguration: string[]
+    productIds: string[],
+    collectionIds: string[],
+    title: string
+    isRequired: string[]
+    radioAnswerChoices: string[]
+    radioAllowMultipleAnswers: string[]
+    radioDisplayAnswer: string[],
+    radioDisplayedAnswerLabel?: string
+}
+
+export interface SelectedCollection {
+    id: string,
+    title: string
+}
+
+export interface SelectedProduct {
+    id: string,
+    image: any,
+    title: string
+}
+
 export interface CustomReviewFormAnswerOption {
     [key: string]: any
 }
 
 export interface ProductVariant {
     title: string
-}
-
-export interface CustomReviewFormQuestionState {
-    id?: number,
-    productTitle: string,
-    productId: string,
-    productImage: string,
-    productVariants?: ProductVariant[],
-    title: string,
-    label?: string,
-    answerLabel?: string,
-    displayAnswer: boolean,
-    numOfAnswerChoices: number,
-    answerType: string[],
-    allowMultipleAnswers: boolean,
-    isRequired: boolean,
-    answerChoices: CustomReviewFormAnswerOption
 }
 
 export interface ReducerAction {
@@ -112,6 +132,7 @@ export interface ReviewRequestData {
 // }
 
 export interface AppSettings {
+    id: number,
     store: string,
     reviewRequestEmailProductDisplay: string[],
     displayProducts: any[],

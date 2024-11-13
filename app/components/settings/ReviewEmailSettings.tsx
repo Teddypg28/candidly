@@ -14,23 +14,30 @@ export default function ReviewEmailSettings({state, setState} : SettingsPageProp
 
         if (products) {
 
-            setState({...state, displayProducts: products.map(product => { 
+            const displayProducts = state.displayProducts.map((product, index) => { 
+
                 return {
-                    productId: product.id, 
-                    title: product.title,
-                    imageUrl: product.images.length > 0 ? product.images[0].originalSrc : null,
+                    ...product,
+                    productId: products[index]?.id || '', 
+                    title: products[index]?.title || '',
+                    imageUrl: products[index]?.images.length > 0 ? products[index].images[0].originalSrc : null
                 }
-            })})
+
+            })
+
+            setState({...state, displayProducts})
 
         }
 
     }
 
+    const selectedProducts = state.displayProducts.filter(product => product.title !== '')
+
   return (
     <Card>
         <BlockStack gap={'300'}>
             <BlockStack gap="050">
-                <Text as="h2" fontWeight="bold" id="productSelections">Product Selections Section</Text>
+                <Text as="h2" fontWeight="bold" id="productSelections">Product Selections</Text>
                 <Text as="p" variant="bodySm">
                     These will appear on the bottom of each review request email to showcase more products to your customers.
                     You may also choose to disable this feature. 
@@ -59,12 +66,12 @@ export default function ReviewEmailSettings({state, setState} : SettingsPageProp
             
             <InlineStack blockAlign="center" gap={'200'}>
                 <Button onClick={selectProducts}>Select Products</Button>
-                <Text fontWeight="bold" as="p">{state.displayProducts.length}/3 products</Text>
+                <Text fontWeight="bold" as="p">{selectedProducts.length}/3 products</Text>
             </InlineStack>            
             }
-            {state.displayProducts.length > 0 && 
+            {state.reviewRequestEmailProductDisplay[0] === 'select' && selectedProducts.length > 0 && 
             <InlineStack gap={'500'}>
-                {state.displayProducts.map(product => {
+                {selectedProducts.map((product) => {
                     return (
                         <BlockStack>
                             {product.imageUrl ? 

@@ -22,6 +22,17 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     if (appSettings) return {...appSettings, path: params.path}
 
+    const initialDisplayProducts = []
+
+    for (let i = 0; i< 3; i++) {
+        initialDisplayProducts.push({
+            productId: '',
+            store: session.shop,
+            title: '',
+            imageUrl: ''
+        })
+    }
+
     const defaultSettings = {
 
         store: session.shop,
@@ -33,7 +44,7 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     }
 
-    const initializedSettings = await db.appSettings.create({data: {...defaultSettings}, omit: {id: true}, include: {displayProducts: true}})
+    const initializedSettings = await db.appSettings.create({data: {...defaultSettings, displayProducts: {createMany: {data: initialDisplayProducts}}}, include: {displayProducts: true}})
 
     return {...initializedSettings, path: params.path}
 
@@ -43,7 +54,30 @@ export async function action({ request } : ActionFunctionArgs) {
 
     const { session } = await authenticate.admin(request)
 
-    console.log('RUN')
+    const data = await request.json()
+
+    const currentDisplayProducts = [...data.settingsState.displayProducts]
+
+    await Promise.all(currentDisplayProducts.map(async (product) => {
+
+        const id = product.id
+        const savedDisplayProduct = await db.displayProduct.findFirst({where: {id: {equals: id}}})
+
+        const updateNeeded = JSON.stringify(savedDisplayProduct) !== JSON.stringify(product)
+
+        if (updateNeeded) {
+
+            delete product['id']
+            await db.displayProduct.update({where: {id}, data: {...product}})
+            return true
+        }
+
+    }))
+
+    delete data.settingsState['id']
+    delete data.settingsState['displayProducts']
+
+    await db.appSettings.updateMany({where: {store: {equals: session.shop}}, data: {...data.settingsState}})
 
     return true
 
@@ -62,8 +96,13 @@ export default function Settings() {
 
     const isStateDirty = JSON.stringify(settingsState) !== JSON.stringify(cleanState)
 
+    console.log(settingsState, cleanState)
+
     const cancelChanges = () => setSettingsState(cleanState)
-    const updateSettings = () => submit(null, {method: 'POST', encType: 'application/json'})
+    const updateSettings = () => {
+        submit(JSON.stringify({settingsState}), {method: 'POST', encType: 'application/json'});
+        setCleanState(settingsState)
+    }
 
     let SettingsComponent
 

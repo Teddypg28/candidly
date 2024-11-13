@@ -57,23 +57,18 @@ model ProductReview {
 }
 
 model ReviewFormQuestion {
-  id                   Int                      @id @default(autoincrement())
-  store                String
-  productId            BigInt
-  title                String
-  label                String?
-  answerLabel          String?
-  displayAnswer        Boolean
-  answerChoices        ReviewFormAnswerChoice[]
-  allowMultipleAnswers Boolean
-  isRequired           Boolean
-}
-
-model ReviewFormAnswerChoice {
-  id         Int                @id @default(autoincrement())
-  questionId Int
-  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  title      String
+  id                        Int      @id @default(autoincrement())
+  store                     String
+  productConfiguration      String[]
+  answerType                String[]
+  productIds                String[]
+  collectionIds             String[]
+  title                     String
+  isRequired                String[]
+  radioAnswerChoices        String[]
+  radioAllowMultipleAnswers String[]
+  radioDisplayAnswer        String[]
+  radioDisplayedAnswerLabel String?
 }
 
 model SavedReviewsTableViews {
@@ -96,6 +91,17 @@ model SavedCustomQuestionsTableView {
   selectedQuestionTypes String?
 }
 
+model SavedReviewRequestTableView {
+  id                          Int      @id @default(autoincrement())
+  store                       String
+  name                        String
+  queryValue                  String
+  selectedProductFilters      String[]
+  selectedFulfillmentFilters  String[]
+  selectedReviewStatusFilters String[]
+  sortSelected                String[]
+}
+
 model AppSettings {
   id                               Int              @id @default(autoincrement())
   store                            String
@@ -107,16 +113,6 @@ model AppSettings {
   secondReviewRequest              Int
 }
 
-model DisplayProduct {
-  id            Int         @id @default(autoincrement())
-  store         String
-  productId     String
-  title         String
-  imageUrl      String?
-  appSettingsId Int
-  appSettings   AppSettings @relation(fields: [appSettingsId], references: [id], onDelete: Cascade)
-}
-
 model ReviewFormSettings {
   id                  Int    @id @default(autoincrement())
   store               String
@@ -125,6 +121,16 @@ model ReviewFormSettings {
   headlinePlaceholder String
   reviewPlaceholder   String
   primaryFormColor    String
+}
+
+model DisplayProduct {
+  id            Int         @id @default(autoincrement())
+  store         String
+  productId     String
+  title         String
+  imageUrl      String?
+  appSettingsId Int
+  appSettings   AppSettings @relation(fields: [appSettingsId], references: [id], onDelete: Cascade)
 }
 
 model ReviewRequest {
@@ -138,23 +144,6 @@ model ReviewRequest {
   reviewStatus      String    @default("waiting")
   requestSentDate   DateTime?
   emailsSent        Int       @default(0)
-}
-
-model CurrentOrdersStatus {
-  id      Int     @id @default(autoincrement())
-  store   String
-  handled Boolean @default(false)
-}
-
-model SavedReviewRequestTableView {
-  id                          Int      @id @default(autoincrement())
-  store                       String
-  name                        String
-  queryValue                  String
-  selectedProductFilters      String[]
-  selectedFulfillmentFilters  String[]
-  selectedReviewStatusFilters String[]
-  sortSelected                String[]
 }
 
 model EligibleProduct {
@@ -197,12 +186,8 @@ model RewardSetting {
   perfectReward Reward? @relation("PerfectReward")
 }
 
-model ReviewFormPresetInfo {
-  id           Int    @id @default(autoincrement())
-  store        String
-  firstName    String
-  email        String
-  productTitle String
-  VariantTitle String
-  imageUrl     String
+model CurrentOrdersStatus {
+  id      Int     @id @default(autoincrement())
+  store   String
+  handled Boolean @default(false)
 }

@@ -149,8 +149,6 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     // Serve both
 
-    console.log(reviewRequests)
-
     return json({savedTableViews, reviewRequests})
 
 }
