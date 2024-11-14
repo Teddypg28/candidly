@@ -6,7 +6,7 @@ import db from '../db.server'
 import { authenticate } from "~/shopify.server";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
-import { ReviewRequestData, ReviewRequestIndexTableState } from "~/types/types";
+import { initialReviewRequestTableState, ReviewRequestData, ReviewRequestTableState } from "~/types/types";
 import { createEachProductReviewRequest } from "~/helpers/createEachProductReviewRequest";
 
 export async function loader({ request } : LoaderFunctionArgs) {
@@ -190,15 +190,6 @@ export async function action({ request } : ActionFunctionArgs) {
 
 }
 
-const defaultState = {
-    queryValue: '',
-    selectedProductFilters: [],
-    selectedFulfillmentFilters: [],
-    selectedReviewStatusFilters: [],
-    selectedTab: 0,
-    sortSelected: ['date desc']
-}
-
 const joinFilters = (filters: string[]) => {
 
     return filters.join(', ')
@@ -212,7 +203,7 @@ export default function ReviewRequests() {
 
     // STATE HANDLING
 
-    const [indexTableState, setIndexTableState]= useState<ReviewRequestIndexTableState>(defaultState)
+    const [indexTableState, setIndexTableState]= useState<ReviewRequestTableState>(initialReviewRequestTableState)
 
     // Filter reviews based on selected filters
     const reviewRequestsAfterFiltering = reviewRequests.filter(request => {
@@ -424,7 +415,7 @@ export default function ReviewRequests() {
         if (index > 0) {
             setIndexTableState({...savedTableViews[index-1], selectedTab: index})
         } else {
-            setIndexTableState({...defaultState})
+            setIndexTableState({...initialReviewRequestTableState})
         }
 
     }
@@ -442,17 +433,15 @@ export default function ReviewRequests() {
     }
 
     const cancelFilterChanges = () => {
-
         if (indexTableState.selectedTab > 0) {
 
             setIndexTableState({...savedTableViews[indexTableState.selectedTab - 1], selectedTab: indexTableState.selectedTab})
 
         } else {
 
-            setIndexTableState(defaultState)
+            setIndexTableState(initialReviewRequestTableState)
 
         }
-
     }
 
     const clearAllFilters = () => {
