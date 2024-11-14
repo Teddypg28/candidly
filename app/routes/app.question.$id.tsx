@@ -1,7 +1,7 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import db from '../db.server'
 
-import { Layout, Page, Card, Button, InlineStack, BlockStack, InlineError, Text, TextField, ChoiceList, Label, Thumbnail, PageActions, Modal, Image } from "@shopify/polaris";
+import { Layout, Page, Card, Button, InlineStack, BlockStack, InlineError, Text, TextField, ChoiceList, Label, Thumbnail, PageActions, Modal } from "@shopify/polaris";
 
 import { useState } from "react"
 import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
@@ -9,46 +9,50 @@ import { authenticate } from "~/shopify.server";
 
 import { ImageIcon } from "@shopify/polaris-icons";
 import { SaveBar } from "@shopify/app-bridge-react";
-import { CustomReviewFormQuestionState, initialQuestionState, SelectedProduct } from "~/types/types";
+import { CustomQuestionFormError, CustomReviewFormQuestionState, initialCustomQuestionErrorState, initialQuestionState, SelectedProduct } from "~/types/types";
+
+import { redirect } from "@remix-run/node";
+
 import fetchProductInfo from "~/helpers/fetchProductInfo";
 import fetchCollectionInfo from "~/helpers/fetchCollectionInfo";
 
-// export const action = async ({ request, params } : ActionFunctionArgs) => {
+export const action = async ({ request, params } : ActionFunctionArgs) => {
 
-//     try {
+    try {
 
-//         const { session } = await authenticate.admin(request)
+        const { session } = await authenticate.admin(request)
 
-//         const data = await request.json()
+        const data = await request.json()
     
-//         const completeData = {...data, store: session.shop}
-//         delete completeData['questionId']
+        const dataWithStore = {...data, store: session.shop}
 
-//         if (data.action === 'delete') {
+        if (data.action === 'delete') {
     
-//             await db.reviewFormQuestion.delete({where: {id: data.id, AND: {store: {equals: session.shop}}}})
-//             return redirect('/app/custom-questions')
+            await db.reviewFormQuestion.delete({where: {id: Number(params.id), AND: {store: {equals: session.shop}}}})
+            return redirect('/app/custom-questions')
     
-//         }
+        }
 
-//         if (params.id === 'new') {
+        if (params.id === 'new') {
 
-//             console.log(data)
+            const question = await db.reviewFormQuestion.create({data: dataWithStore})
 
-//             if (data.hasOwnProperty('answerChoices')) {
-                
-//                 const question = await db.reviewFormQuestion.create({data: {...completeData, answerChoices: {create: data.answerChoices}}, omit: {productId: true}})
+            return redirect(`/app/question/${question.id}`)
 
-//                 return redirect(`/app/question/${question.id}`)
-//             }
+        }
 
-//             const question = await db.reviewFormQuestion.create({data: completeData, omit: {productId: true}})
+        delete dataWithStore['id']
+        await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})
+        return json({message: 'success'}, {status: 200})
 
-//             return redirect(`/app/question/${question.id}`)
+    } catch (error) {
 
-//         }
+        console.log(error)
+        return json({message: 'error'}, {status: 400})
 
-// }
+    }
+
+}
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
@@ -80,7 +84,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                     radioAnswerChoices: result.radioAnswerChoices,
                     radioAllowMultipleAnswers: result.radioAllowMultipleAnswers,
                     radioDisplayAnswer: result.radioDisplayAnswer,
-                    radioDisplayedAnswerLabel: result.radioDisplayedAnswerLabel || undefined
+                    radioDisplayedAnswerLabel: result.radioDisplayedAnswerLabel
                 }    
 
                 return json({initialQuestionState, initialProductDataState: productData, initialCollectionDataState: collectionData})
@@ -103,17 +107,19 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 export default function Question() {
 
     const data = useLoaderData<typeof loader>()
-    
-    const [errors, setErrors] = useState<any>({})
 
+    const [isFormDeleting, setIsFormDeleting] = useState(false)
+    
+    const [state, setState] = useState(data.initialQuestionState)
+    const [cleanState, setCleanState] = useState(data.initialQuestionState)
+
+    const [errors, setErrors] = useState<CustomQuestionFormError>(initialCustomQuestionErrorState)
+    
     const [selectedProductsState, setSelectedProductsState]= useState<SelectedProduct[]>(data.initialProductDataState as SelectedProduct[])
     const cleanSelectedProductState = data.initialProductDataState as SelectedProduct[]
 
     const [selectedCollectionsState, setSelectedCollectionsState]= useState(data.initialCollectionDataState)
     const cleanSelectedCollectionsState = data.initialCollectionDataState
-
-    const [state, setState] = useState(data.initialQuestionState)
-    const cleanState = data.initialQuestionState
     
     const [isSelectedProductsModalOpen, setIsSelectedProductsModalOpen] = useState(false)
     const [isSelectedCollectionsModalOpen, setIsSelectedCollectionsModalOpen] = useState(false)
@@ -122,41 +128,7 @@ export default function Question() {
 
     const navigation = useNavigation()
 
-    const isSaving = navigation.state === 'submitting' && navigation.formData?.get('action') !== 'delete'
-    const isDeleting = navigation.state === 'submitting' && navigation.formData?.get('action') === 'delete'
-
     const submit = useSubmit()
-
-    // const saveQuestion = () => {
-        
-    //     if (isErrors()) return
-
-    //     setCleanState(state)
-
-    //     const { title, label, answerType, productId, answerChoices, id, displayAnswer, answerLabel, allowMultipleAnswers, isRequired } = state
-
-    //     const data: any = {id, productId, title, label, displayAnswer, allowMultipleAnswers, answerLabel, isRequired}
-
-    //     answerType[0] === 'radioBtns' && delete data['label']
-
-    //     if (answerType[0] === 'radioBtns') {
-
-    //         const answerChoicesArray: {title: string | number}[] = []
-
-    //         const choiceKeys = Object.keys(answerChoices)
-
-    //         choiceKeys.forEach(key => {
-    //             answerChoicesArray.push({
-    //                 title: answerChoices[key]
-    //             })
-    //         })
-
-    //         data.answerChoices = answerChoicesArray
-    //     }
-
-    //     submit(JSON.stringify(data), {method: 'POST', encType: 'application/json'})
-
-    // }
 
     const selectReviewFormProducts = async () => {
         const products = await window.shopify.resourcePicker({
@@ -211,78 +183,6 @@ export default function Question() {
         } 
     }
 
-    // const useProductVariantsAsChoices = () => {
-    //     dispatch({type: 'addVariantsAsOptions', payload: {numOfVariants: state.productVariants?.length}})
-    // }
-
-    // const isErrors = () => {
-
-    //     const userInputValues: any = {
-    //         product: state.productId, 
-    //         title: state.title, 
-    //         label: state.label || '', 
-    //         answerLabel: state.answerLabel || '',
-    //         answerChoices: {...state.answerChoices},
-    //         answerType: state.answerType[0]
-    //     }
-
-    //     if (userInputValues.answerType === 'textField') {
-    //         delete userInputValues['answerChoices']
-    //     } 
-
-    //     if (userInputValues.answerType === 'radioBtns') {
-    //         delete userInputValues['label']
-    //     }
-
-    //     let formErrors: any = {}
-
-    //     const userInputValueKeys = Object.keys(userInputValues)
-
-    //     userInputValueKeys.forEach((key: any) => {
-
-    //         if (key === 'answerChoices') {
-
-    //             const answerChoices = Object.keys(state.answerChoices)
-
-    //             answerChoices.forEach(key => {
-
-    //                 if (userInputValues['answerChoices'][key as keyof typeof userInputValues['answerChoices']].toString().trim() === '') {
-
-    //                     formErrors = {...formErrors, [key]: true}
-
-    //                 }
-
-    //             })
-
-    //             if (answerChoices.length === 1) {
-
-    //                 formErrors = {...formErrors, numOfAnswerChoices: true}
-
-    //             }
-
-    //         } 
-
-    //         else if (userInputValues[key as keyof typeof userInputValues].toString().trim() === '') {
-
-    //                 if (key === 'answerLabel' && !state.displayAnswer) {
-    //                     return
-    //                 }
-
-    //                 formErrors = {...formErrors, [key]: true}
-
-    //             } 
-    //     })
-
-    //     state.answerType[0] === 'radioBtns' && delete formErrors['label']
-
-    //     setErrors(formErrors)
-        
-    //     const isErrors = Object.keys(formErrors).length > 0
-
-    //     return isErrors
-
-    // }
-
     const renderAnswerChoices = () => {
 
         const markup  = []
@@ -297,12 +197,8 @@ export default function Question() {
 
             }
 
-            markup.push( (
-            <>
-                <TextField id={`choiceField-${i+1}`} value={state.radioAnswerChoices[i]} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${i+1}`} />
-                { errors[`choiceField-${i+1}`] && <InlineError message='This field is required' fieldID={`choiceField-${i+1}`} /> }
-            </>
-        ))}
+            markup.push( <TextField id={`choiceField-${i+1}`} onBlur={() => checkForAnswerChoiceErrors(i)} error={errors[`choiceField-${i+1}`] === true && state.radioAnswerChoices[i].trim() === ''} value={state.radioAnswerChoices[i]} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${i+1}`} /> )
+        }
 
         const removeAnswerChoice = () => {
             const answerChoicesCopy = [...state.radioAnswerChoices]
@@ -357,6 +253,80 @@ export default function Question() {
         setState(cleanState)
         setSelectedProductsState(cleanSelectedProductState)
         setSelectedCollectionsState(cleanSelectedCollectionsState)
+        setErrors(initialCustomQuestionErrorState)
+    }
+
+    const checkForTextFieldError = (stateKeyName: keyof CustomReviewFormQuestionState) => {
+
+        if (state[stateKeyName]?.toString().trim() === '') {
+            setErrors({...errors, [stateKeyName as keyof CustomQuestionFormError]: true})
+            return true
+        } else {
+            setErrors({...errors, [stateKeyName as keyof CustomQuestionFormError]: false})
+            return false
+        }
+    }
+
+    const checkForAnswerChoiceErrors = (index: number) => {
+        const errorsObject: any = {}
+        
+        if (state.radioAnswerChoices[index].trim() === '') {
+            errorsObject[`choiceField-${index+1}`] = true
+        } else {
+            delete errors[`choiceField-${index+1}`]
+        }
+
+        if (Object.keys(errorsObject).length > 0) {
+            setErrors({...errors, ...errorsObject, answerChoices: true})
+            return true
+        } else {
+            let isChoiceFieldErrors = false
+            const currentErrorsStateKeys = Object.keys(errors)
+            for (let i = 0; i<currentErrorsStateKeys.length; i++) {
+                if (currentErrorsStateKeys[i].includes('choiceField')) {
+                    isChoiceFieldErrors = true
+                    break
+                }
+            }
+            setErrors({...errors, ...errorsObject, answerChoices: isChoiceFieldErrors})
+            return isChoiceFieldErrors
+        }
+    }
+
+    const validSubmission = () => {
+
+        const newErrorsObject: CustomQuestionFormError = {
+            answerChoices: state.answerType[0] === 'textField' && state.radioAnswerChoices.filter(choice => choice === '').length > 0,
+            collection: state.productConfiguration[0] === 'collections' && state.collectionIds.length === 0,
+            product: state.productConfiguration[0] === 'products' && state.productIds.length === 0,
+            radioDisplayedAnswerLabel: state.radioDisplayAnswer[0] === 'true' && !state.radioDisplayedAnswerLabel,
+            title: !state.title
+        }
+
+        if (newErrorsObject.answerChoices) {
+            state.radioAnswerChoices.forEach((choice, index) => {
+                if (choice === '') {
+                    newErrorsObject[`choiceField-${index+1}`] = true
+                }
+            })
+        }
+
+        setErrors(newErrorsObject)
+
+        return !Object.values(newErrorsObject).includes(true)
+
+    }
+
+    const saveQuestion = () => {
+        if (validSubmission()) {
+            submit(JSON.stringify(state), {method: 'POST', encType: 'application/json'})
+            setCleanState(state)
+        }
+    }
+
+    const deleteQuestion = () => {
+        submit({action: 'delete'}, {method: 'POST', encType: 'application/json'})
+        setIsFormDeleting(true)
     }
 
     return (
@@ -367,7 +337,10 @@ export default function Question() {
             <SaveBar
             open={isStateDirty}
             >
-                <button variant='primary' onClick={() => {}} loading={navigation.state === 'submitting' ? 'true' : undefined} />
+                <button 
+                variant='primary' 
+                onClick={saveQuestion} 
+                loading={navigation.state === 'submitting' ? 'true' : undefined} />
                 <button onClick={revertState} />
             </SaveBar>
             <Modal 
@@ -379,16 +352,15 @@ export default function Question() {
                     {
                         selectedCollectionsState.length > 0 ?
                 
-                        selectedCollectionsState.map(collection => {
+                        selectedCollectionsState.map((collection, index) => {
                             return (
-                                <InlineStack gap={'200'} blockAlign="center">
+                                <InlineStack key={index} gap={'200'} blockAlign="center">
                                     <Text as="p" variant="headingMd">{collection.title}</Text>
                                     <Button onClick={() => removeSelectedObject(collection.title, collection.id, 'collection')} tone="critical">Remove</Button>
                                 </InlineStack>
                             )
                         })   :
-        
-                        <Text as="h3" variant="headingMd">You currently have no selected collections</Text>
+                                <Text as="h3" variant="headingMd">You currently have no selected collections</Text>
                     }
                 </div>
             </Modal>
@@ -399,9 +371,9 @@ export default function Question() {
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '10px'}}>
                 {selectedProductsState.length > 0 ?
                 
-                selectedProductsState.map(product => {
+                selectedProductsState.map((product, index) => {
                     return ( 
-                        <div style={{display: 'flex', width: '250px', gap: '20px'}}>      
+                        <div key={index} style={{display: 'flex', width: '250px', gap: '20px'}}>      
                             <Thumbnail alt={product.title} source={product.image} size="medium" />
                             <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
                                 <Text as="p" variant="headingMd">{product.title}</Text>
@@ -410,9 +382,7 @@ export default function Question() {
                         </div>
                     )
                 })   :
-
-                <Text as="h3" variant="headingMd">You currently have no selected products</Text>
-                
+                        <Text as="h3" variant="headingMd">You currently have no selected products</Text>
                 }
                 </div>
             </Modal>
@@ -437,13 +407,13 @@ export default function Question() {
                             title=''
                             choices={[
                                 {label: 'All Products', value: 'all'}, 
-                                {label: 'Select Products', value: 'products', renderChildren(isSelected) {
+                                {label: 'Select Products', value: 'products', id: 'product', renderChildren(isSelected) {
                                     return isSelected && selectedProductsState.length > 0 &&
                                     <Button onClick={() => setIsSelectedProductsModalOpen(true)}>
                                         View {selectedProductsState.length.toString()} {selectedProductsState.length === 1 ? 'Product' : 'Products'}
                                     </Button>
                                 },}, 
-                                {label: 'Select Collections', value: 'collections', renderChildren(isSelected) {
+                                {label: 'Select Collections', value: 'collections', id: 'collections', renderChildren(isSelected) {
                                     return isSelected && selectedCollectionsState.length > 0 &&
                                     <Button onClick={() => setIsSelectedCollectionsModalOpen(true)}>
                                         View {selectedCollectionsState.length.toString()} {selectedCollectionsState.length === 1 ? 'Collection' : 'Collections'}
@@ -453,6 +423,8 @@ export default function Question() {
                             selected={state.productConfiguration}
                             onChange={(value) => setState({...state, productConfiguration: value})}
                             />
+                            {errors['collection'] && state.collectionIds.length === 0 && <InlineError message="You must select at least one collection" fieldID="collection" />}
+                            {errors['product'] && state.productIds.length === 0 && <InlineError message="You must select at least one product" fieldID="product" />}
                         </BlockStack>
                     </Card>
                 </Layout.Section>
@@ -465,11 +437,13 @@ export default function Question() {
                                 id="questionTitle"
                                 value={state.title}
                                 onChange={(value) => setState({...state, title: value})}
+                                onBlur={() => checkForTextFieldError('title')}
+                                error={errors['title'] === true}
                                 autoComplete="off"
                                 label='' 
                                 placeholder="Enter question title" 
                                 />
-                                { errors['title'] && <InlineError message='Title required' fieldID={'questionTitle'} /> }
+                                { errors['title'] && state.title.trim() === '' && <InlineError message='Title required' fieldID={'questionTitle'} /> }
                             </BlockStack>
                             <BlockStack>
                                 <ChoiceList 
@@ -484,6 +458,8 @@ export default function Question() {
                                 <Label id="answerChoices">Answer Choices</Label>
                                 <BlockStack gap={'300'}>
                                     {renderAnswerChoices()}
+                                    {errors['answerChoices'] === true && state.radioAnswerChoices.filter(choice => choice === '').length > 0 &&
+                                     <InlineError fieldID="answerChoices" message="Answer choices must not be blank" />}
                                 </BlockStack>
                             </BlockStack>
                             }
@@ -513,12 +489,20 @@ export default function Question() {
                                         choices={[
                                             {label: 'True', value: 'true', renderChildren(isSelected) {
                                             return isSelected && 
-                                            <TextField 
-                                            label=''
-                                            autoComplete="off"
-                                            onChange={(value) => setState({...state, radioDisplayedAnswerLabel: value})} 
-                                            value={state.radioDisplayedAnswerLabel} 
-                                            placeholder="Answer Label (Ex: 'Flavor Purchased')" />
+                                            (
+                                                <BlockStack gap='050'>
+                                                    <TextField 
+                                                    label=''
+                                                    id="radioDisplayedAnswerLabel"
+                                                    autoComplete="off"
+                                                    onChange={(value) => setState({...state, radioDisplayedAnswerLabel: value})} 
+                                                    onBlur={() => checkForTextFieldError('radioDisplayedAnswerLabel')}
+                                                    error={errors['radioDisplayedAnswerLabel'] === true && state.radioDisplayedAnswerLabel.trim() === ''}
+                                                    value={state.radioDisplayedAnswerLabel} 
+                                                    placeholder="Answer Label (Ex: 'Flavor Purchased')" />
+                                                    {errors['radioDisplayedAnswerLabel'] && state.radioDisplayedAnswerLabel.trim() === '' && <InlineError fieldID="radioDisplayedAnswerLabel" message="Answer label must not be blank" />}
+                                                </BlockStack>
+                                            )
                                             },}, 
                                             {label: 'False', value: 'false'}
                                         ]}
@@ -538,12 +522,11 @@ export default function Question() {
                 </Layout.Section>
                 <Layout.Section>
                     <PageActions
-                    primaryAction={{content: 'Save', loading: isSaving ? true : undefined, disabled: !isStateDirty, onAction: () => {}}}
-                    secondaryActions={[{content: 'Delete', loading: isDeleting, disabled: !data.initialQuestionState.hasOwnProperty('id'), onAction: () => submit({action: 'delete', id: data.initialQuestionState.id as any}, {method: 'POST', encType: 'application/json'}), destructive: true}]}
+                    primaryAction={{content: 'Save', loading: navigation.state === 'submitting' && !isFormDeleting, disabled: !isStateDirty, onAction: saveQuestion}}
+                    secondaryActions={[{content: 'Delete', loading: isFormDeleting, disabled: !data.initialQuestionState.hasOwnProperty('id'), onAction: deleteQuestion, destructive: true}]}
                     />
                 </Layout.Section>
             </Layout>
         </Page>
     )
-
 }

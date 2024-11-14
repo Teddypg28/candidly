@@ -68,7 +68,7 @@ model ReviewFormQuestion {
   radioAnswerChoices        String[]
   radioAllowMultipleAnswers String[]
   radioDisplayAnswer        String[]
-  radioDisplayedAnswerLabel String?
+  radioDisplayedAnswerLabel String
 }
 
 model SavedReviewsTableViews {

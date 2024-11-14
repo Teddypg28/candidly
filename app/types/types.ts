@@ -2,14 +2,23 @@ import { IndexFiltersProps } from "@shopify/polaris"
 
 export const initialQuestionState: CustomReviewFormQuestionState = {
     productConfiguration: ['all'],
-    answerType: [],
+    answerType: ['text'],
     productIds: [],
     collectionIds: [],
     radioAllowMultipleAnswers: ['false'],
     radioAnswerChoices: ['', ''],
     radioDisplayAnswer: ['false'],
+    radioDisplayedAnswerLabel: '',
     title: '',
     isRequired: ['false']
+}
+
+export const initialCustomQuestionErrorState = {
+    title: false, 
+    product: false, 
+    collection: false,
+    answerChoices: false,
+    radioDisplayedAnswerLabel: false
 }
 
 export interface CustomReviewFormQuestionState {
@@ -23,7 +32,7 @@ export interface CustomReviewFormQuestionState {
     radioAnswerChoices: string[]
     radioAllowMultipleAnswers: string[]
     radioDisplayAnswer: string[],
-    radioDisplayedAnswerLabel?: string
+    radioDisplayedAnswerLabel: string
 }
 
 export interface SelectedCollection {
@@ -37,17 +46,17 @@ export interface SelectedProduct {
     title: string
 }
 
+export interface CustomQuestionFormError {
+    title: boolean, 
+    product: boolean,
+    collection: boolean,
+    answerChoices: boolean,
+    radioDisplayedAnswerLabel: boolean,
+    [key: string]: boolean
+}
+
 export interface CustomReviewFormAnswerOption {
     [key: string]: any
-}
-
-export interface ProductVariant {
-    title: string
-}
-
-export interface ReducerAction {
-    type: string,
-    payload?: any
 }
 
 export interface ReviewsTableFilterState {
