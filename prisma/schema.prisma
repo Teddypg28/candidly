@@ -44,7 +44,7 @@ model CustomQuestionAnswer {
 model ProductReview {
   id                    Int                    @id @default(autoincrement())
   store                 String
-  productId             BigInt
+  productId             String
   title                 String
   body                  String
   name                  String
@@ -81,14 +81,13 @@ model SavedReviewsTableViews {
   selectedRatings  String[]
 }
 
-model SavedCustomQuestionsTableView {
-  id                    Int      @id @default(autoincrement())
-  store                 String
-  name                  String
-  queryValue            String
-  sortSelected          String[]
-  selectedProducts      String[]
-  selectedQuestionTypes String[]
+model SavedCustomQuestionTableView {
+  id                           Int      @id @default(autoincrement())
+  store                        String
+  name                         String
+  queryValue                   String
+  sortSelected                 String[]
+  selectedProductConfiguration String[]
 }
 
 model SavedReviewRequestTableView {

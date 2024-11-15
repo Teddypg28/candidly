@@ -16,30 +16,30 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
   const { session, admin } = await authenticate.admin(request)
 
-  const totalReviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, omit: {productId: true}})
+//   const totalReviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, omit: {productId: true}})
   
-  let totalRatingScore = 0
+//   let totalRatingScore = 0
 
-  totalReviews.forEach(review => {
-    totalRatingScore += review.rating
-  })
+//   totalReviews.forEach(review => {
+//     totalRatingScore += review.rating
+//   })
 
-  const averageRating = (totalRatingScore / totalReviews.length).toFixed(2)
+//   const averageRating = (totalRatingScore / totalReviews.length).toFixed(2)
 
-  const newReviewsToday = totalReviews.filter(review => {
+//   const newReviewsToday = totalReviews.filter(review => {
 
-    return review.date.toLocaleDateString() === new Date().toLocaleDateString()
+//     return review.date.toLocaleDateString() === new Date().toLocaleDateString()
 
-  }).length
+//   }).length
 
-  const date = new Date()
-  const oneMonthAgo = date.setMonth(date.getMonth() - 1)
+//   const date = new Date()
+//   const oneMonthAgo = date.setMonth(date.getMonth() - 1)
 
-  const reviewsPastMonth = totalReviews.filter(review => {
+//   const reviewsPastMonth = totalReviews.filter(review => {
 
-    return new Date(review.date) >= new Date(oneMonthAgo)
+//     return new Date(review.date) >= new Date(oneMonthAgo)
 
-  }).length
+//   }).length
 
   let reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
 
@@ -49,34 +49,19 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         }
   }`
 
-  const updatedReviews = await Promise.all(reviews.map(async ({productId, id, ...rest}) => {
+  const updatedReviews = await Promise.all(reviews.map(async (review) => {
 
-      const fullProductId = `gid://shopify/Product/${productId}`
+      const result = await admin.graphql(query, {variables: {id: review.productId}})
 
-      const result = await admin.graphql(query, {variables: {id: fullProductId}})
+      const updatedTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
 
-      const productTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
-
-      return {productTitle, id: id.toString(), ...rest}
+      return {...review, productTitle: updatedTitle}
       
   }))
 
   const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true}})
 
-
-  return json({reviews: updatedReviews, savedTableViews, totalReviews, newReviewsToday, reviewsPastMonth, averageRating})
-
-}
-
-const clarifyLabel = (key: string, value: any[]) => {
-
-    if (key === 'ratings') {
-        return value.map(value => {
-            return `${value} ${value === '1' ? 'star' : 'stars'}`
-        }).join(', ')
-    }
-
-    return value.join(', ')
+  return json({reviews: updatedReviews, savedTableViews})
 
 }
 
@@ -231,7 +216,7 @@ export default function Reviews() {
         }
 
         return (
-            <IndexTable.Row key={index} selected={selectedResources.includes(review.id)} id={review.id} position={index}>
+            <IndexTable.Row key={index} selected={selectedResources.includes(review.id.toString())} id={review.id.toString()} position={index}>
                 <IndexTable.Cell>{new Date(review.date).toLocaleDateString()}</IndexTable.Cell>
                 <IndexTable.Cell><Text as="p" tone={review.productTitle === 'Product Deleted' ? "critical" : "base"}>{review.productTitle}</Text></IndexTable.Cell>
                 <IndexTable.Cell>{review.name}</IndexTable.Cell>
@@ -603,4 +588,16 @@ export default function Reviews() {
             }
         </Page>
     )
+}
+
+const clarifyLabel = (key: string, value: any[]) => {
+
+    if (key === 'ratings') {
+        return value.map(value => {
+            return `${value} ${value === '1' ? 'star' : 'stars'}`
+        }).join(', ')
+    }
+
+    return value.join(', ')
+
 }

@@ -667,7 +667,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             } else {
 
-                const data = {...userInputState, productId: parseInt(reviewProductId), rating: parseInt(userRating), media: addedFiles.toString()}
+                const data = {...userInputState, productId: `gid://shopify/Product/${productId}`, rating: parseInt(userRating), media: addedFiles.toString()}
                 
                 await fetch('https://blizzardbites.myshopify.com/apps/reviews/reviews/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)})
 

@@ -9,7 +9,7 @@ export const initialFileImportState = {
     heading: 'Import File Here' 
 }
 
-export const initialQuestionState: CustomReviewFormQuestionState = {
+export const initialQuestionState: CustomReviewFormQuestion = {
     productConfiguration: ['all'],
     answerType: ['text'],
     productIds: [],
@@ -30,7 +30,7 @@ export const initialCustomQuestionErrorState = {
     radioDisplayedAnswerLabel: false
 }
 
-export interface CustomReviewFormQuestionState {
+export interface CustomReviewFormQuestion {
     id?: number
     answerType: string[]
     productConfiguration: string[]
@@ -89,16 +89,14 @@ export const initialCustomQuestionTableState: CustomQuestionTableState = {
     queryValue: '',
     selectedTab: 0,
     sortSelected: ['choices asc'],
-    selectedQuestionTypes: [],
-    selectedProducts: []
+    selectedProductConfiguration: []
 }
 
 export interface CustomQuestionTableState {
     queryValue: string
     selectedTab: number
     sortSelected: IndexFiltersProps['sortSelected']
-    selectedQuestionTypes: string[]
-    selectedProducts: string[]
+    selectedProductConfiguration: string[]
 }
 
 export interface ReviewTableState {

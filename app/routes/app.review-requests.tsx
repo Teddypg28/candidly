@@ -158,7 +158,7 @@ export async function action({ request } : ActionFunctionArgs) {
     const { session } = await authenticate.admin(request)
 
     const data = await request.json()
-    const { state, action, nameToUpdate, nameToDelete } = data
+    const { state, action, nameToUpdate } = data
     
     if (state) {
         delete state['selectedTab']
@@ -182,7 +182,7 @@ export async function action({ request } : ActionFunctionArgs) {
 
     } else {
 
-        await db.savedReviewRequestTableView.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: nameToDelete}}}})
+        await db.savedReviewRequestTableView.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: data.viewNameToDelete}}}})
 
     }
 
@@ -190,11 +190,7 @@ export async function action({ request } : ActionFunctionArgs) {
 
 }
 
-const joinFilters = (filters: string[]) => {
-
-    return filters.join(', ')
-
-}
+const joinFilters = (filters: string[]) => filters.join(', ')
 
 export default function ReviewRequests() {
 

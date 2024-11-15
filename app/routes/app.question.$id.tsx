@@ -9,7 +9,7 @@ import { authenticate } from "~/shopify.server";
 
 import { ImageIcon } from "@shopify/polaris-icons";
 import { SaveBar } from "@shopify/app-bridge-react";
-import { CustomQuestionFormError, CustomReviewFormQuestionState, initialCustomQuestionErrorState, initialQuestionState, SelectedProduct } from "~/types/types";
+import { CustomQuestionFormError, CustomReviewFormQuestion, initialCustomQuestionErrorState, initialQuestionState, SelectedProduct } from "~/types/types";
 
 import { redirect } from "@remix-run/node";
 
@@ -73,7 +73,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                 const productData = await fetchProductInfo(admin, result.productIds)
                 const collectionData = await fetchCollectionInfo(admin, result.collectionIds)
 
-                const initialQuestionState: CustomReviewFormQuestionState = {
+                const initialQuestionState: CustomReviewFormQuestion = {
                     id: result.id,
                     answerType: result.answerType,
                     productConfiguration: result.productConfiguration,
@@ -256,7 +256,7 @@ export default function Question() {
         setErrors(initialCustomQuestionErrorState)
     }
 
-    const checkForTextFieldError = (stateKeyName: keyof CustomReviewFormQuestionState) => {
+    const checkForTextFieldError = (stateKeyName: keyof CustomReviewFormQuestion) => {
 
         if (state[stateKeyName]?.toString().trim() === '') {
             setErrors({...errors, [stateKeyName as keyof CustomQuestionFormError]: true})
