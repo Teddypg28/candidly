@@ -10,7 +10,7 @@ export async function loader({request, params} : LoaderFunctionArgs) {
         
         try {
             
-            const reviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: parseInt(params.id)}, isPublished: {equals: true}}, include: {customQuestionAnswers: true}, omit: {productId: true}})
+            const reviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Order/${params.id}`}, isPublished: {equals: true}}, include: {customQuestionAnswers: true}, omit: {productId: true}})
 
             if (reviews) {
 
@@ -18,11 +18,15 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
             } else {
 
+                console.log('HERE')
+
                 return new Response('[]', {status: 200})
 
             }
 
         } catch (error) {
+
+            console.log(error)
 
             return new Response(JSON.stringify(error), {status: 500})
             

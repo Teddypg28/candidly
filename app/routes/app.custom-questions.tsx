@@ -123,11 +123,11 @@ const CustomQuestions = () => {
         }
 
         if (indexTableState.selectedProductConfiguration.includes('select collections')) {
-            return question.answerType[0] === 'collections'
+            return question.productConfiguration[0] === 'collections'
         }
 
         if (indexTableState.selectedProductConfiguration.includes('select products')) {
-            return question.answerType[0] === 'products'
+            return question.productConfiguration[0] === 'products'
         }
 
         return []
@@ -139,10 +139,14 @@ const CustomQuestions = () => {
             const sortValue = indexTableState.sortSelected[0]
 
             switch(sortValue) {
-                case 'choices asc':
-                    return a.radioAnswerChoices.length - b.radioAnswerChoices.length
-                case 'choices desc':
-                    return b.radioAnswerChoices.length - a.radioAnswerChoices.length
+                case 'numProducts asc':
+                    return a.productIds.length - b.productIds.length
+                case 'numProducts desc':
+                    return b.productIds.length - a.productIds.length
+                case 'numCollections asc':
+                    return a.collectionIds.length - b.collectionIds.length
+                case 'numCollections desc':
+                    return b.collectionIds.length - a.collectionIds.length
             }
         }
 
@@ -175,6 +179,13 @@ const CustomQuestions = () => {
         }
     ]
 
+    const sortOptions: IndexFiltersProps['sortOptions'] = [
+        {label: 'Number of Select Collections', value: 'numCollections asc', directionLabel: 'Least to Most'},
+        {label: 'Number of Select Collections', value: 'numCollections desc', directionLabel: 'Most to Least'},
+        {label: 'Number of Select Products', value: 'numProducts asc', directionLabel: 'Least to Most'},
+        {label: 'Number of Select Products', value: 'numProducts desc', directionLabel: 'Most to Least'}
+    ] 
+
     const createNewView = async (name: string) => {
         
         submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
@@ -203,7 +214,7 @@ const CustomQuestions = () => {
         removeSelectedResources(selectedResources)
     }
 
-    const tabs: IndexFiltersProps['tabs'] = ['All Review Requests', ...savedViews.map(view => view.name)].map((tabName, index) => {
+    const tabs: IndexFiltersProps['tabs'] = ['All Questions', ...savedViews.map(view => view.name)].map((tabName, index) => {
         return {
             content: tabName, 
             id: `${tabName}-${index}`,
@@ -265,7 +276,7 @@ const CustomQuestions = () => {
             <Card>
                 <IndexFilters
                 filters={filters}
-                sortOptions={[{label: 'Answer Choices', value: 'choices asc', directionLabel: 'Least to Most'}, {label: 'Answer Choices', value: 'choices desc', directionLabel: 'Most to Least'}]}
+                sortOptions={sortOptions}
                 sortSelected={indexTableState.sortSelected}
                 onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
                 mode={mode}

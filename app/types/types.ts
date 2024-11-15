@@ -52,7 +52,8 @@ export interface SelectedCollection {
 export interface SelectedProduct {
     id: string
     image: any
-    title: string
+    title: string,
+    variants: string[]
 }
 
 export interface CustomQuestionFormError {
@@ -88,7 +89,7 @@ export const initialReviewRequestTableState: ReviewRequestTableState = {
 export const initialCustomQuestionTableState: CustomQuestionTableState = {
     queryValue: '',
     selectedTab: 0,
-    sortSelected: ['choices asc'],
+    sortSelected: ['numProducts desc'],
     selectedProductConfiguration: []
 }
 

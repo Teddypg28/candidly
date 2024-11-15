@@ -50,7 +50,7 @@ const reviewSettings = {
 
 // END: INITIALIZE VARIABLES BEFORE FETCHING DATA
 
-fetch(`https://blizzardbites.myshopify.com/apps/reviews/questions/${reviewProductId}`, {headers: new Headers({"ngrok-skip-browser-warning": "28"})}).then(data => {
+fetch(`https://blizzardbites.myshopify.com/apps/reviews/questions/${reviewProductId}`).then(data => {
     return data.json()
 }).then(results => {
 
@@ -667,9 +667,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             } else {
 
-                const data = {...userInputState, productId: `gid://shopify/Product/${productId}`, rating: parseInt(userRating), media: addedFiles.toString()}
+                const data = {...userInputState, productId: `gid://shopify/Product/${reviewProductId}`, rating: parseInt(userRating), media: addedFiles.toString()}
                 
-                await fetch('https://blizzardbites.myshopify.com/apps/reviews/reviews/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)})
+                await fetch('https://blizzardbites.myshopify.com/apps/reviews/review/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)})
 
             }
 
@@ -802,10 +802,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                 let questionMarkup
 
-                if (question.answerChoices.length === 0) {
+                if (question.radioAnswerChoices.length === 0) {
                     questionMarkup = `
                          <div class='reviewFieldWrapper' style="width: 100%">
-                            <label for='customQuestion-${question.id}'>${question.label} ${question.isMandatory ? '*' : ''}</label>
                             <textarea class='reviewFormInput reviewFormTextArea' name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="${question.title}"></textarea>
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
                         </div>
@@ -821,14 +820,14 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                     const questionMarkupContainer = document.querySelector(`.customQuestion-${question.id}`)
 
-                    if (question.allowMultipleAnswers) {
+                    if (question.radioAllowMultipleAnswers) {
                         
                         const renderChoices = () => {
-                            return question.answerChoices.map(choice => {
+                            return question.radioAnswerChoices.map((choice, index) => {
                                 return (
-                                        `<div class="dropdownItem" id="dropdownQuestion${question.id}Item">
-                                            ${choice.title}
-                                            <div class="checkbox" data-value="${choice.title}"> </div>
+                                        `<div key=${index} class="dropdownItem" id="dropdownQuestion${question.id}Item">
+                                            ${choice}
+                                            <div class="checkbox" data-value="${choice}"> </div>
                                         </div>`
                                 )
                         }).join('')}
@@ -857,8 +856,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                         `
                         const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
 
-                        question.answerChoices.forEach((choice) => {
-                            answerChoicesContainer.innerHTML += `<option value="${choice.title}">${choice.title}</option>`
+                        question.radioAnswerChoices.forEach((choice) => {
+                            answerChoicesContainer.innerHTML += `<option value="${choice}">${choice}</option>`
                         })
                     }
                         questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`

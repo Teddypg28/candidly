@@ -121,8 +121,7 @@ export default function Question() {
     const [selectedCollectionsState, setSelectedCollectionsState]= useState(data.initialCollectionDataState)
     const cleanSelectedCollectionsState = data.initialCollectionDataState
     
-    const [isSelectedProductsModalOpen, setIsSelectedProductsModalOpen] = useState(false)
-    const [isSelectedCollectionsModalOpen, setIsSelectedCollectionsModalOpen] = useState(false)
+    const [isSelectedConfigurationsModalOpen, setIsSelectedConfigurationsModalOpen] = useState(false)
 
     const isStateDirty = JSON.stringify(state) !== JSON.stringify(cleanState)
 
@@ -148,7 +147,8 @@ export default function Question() {
                 return {
                     id: product.id,
                     image: product.images.length > 0 ? product.images[0].originalSrc : ImageIcon,
-                    title: product.title
+                    title: product.title,
+                    variants: product.variants.map(variant => variant.title || '')
                 }
             })
 
@@ -206,13 +206,17 @@ export default function Question() {
             setState({...state, radioAnswerChoices: answerChoicesCopy})
         }
 
+        const useProductVariantsAsChoices = () => {
+            setState({...state, radioAnswerChoices: selectedProductsState[0].variants})
+        }
+
         markup.push(
             <BlockStack gap='100'>
                 <InlineStack gap='200'>
                     <Button onClick={() => setState({...state, radioAnswerChoices: [...state.radioAnswerChoices, '']})}>Add Choice</Button>
                     <Button disabled={state.radioAnswerChoices.length === 2} onClick={removeAnswerChoice}>Remove Choice</Button>
                     <InlineStack>
-                        <Button disabled={state.productIds.length !== 1} onClick={() => {}} variant="plain">Use product variants as choices</Button>
+                        <Button disabled={state.productIds.length !== 1} onClick={useProductVariantsAsChoices} variant="plain">Use product variants as choices</Button>
                     </InlineStack>
                 </InlineStack>
             </BlockStack>
@@ -344,12 +348,14 @@ export default function Question() {
                 <button onClick={revertState} />
             </SaveBar>
             <Modal 
-            onClose={() => setIsSelectedCollectionsModalOpen(false)}
-            title="Selected Collections"
-            open={isSelectedCollectionsModalOpen}
+            onClose={() => setIsSelectedConfigurationsModalOpen(false)}
+            title={`Selected ${state.productConfiguration[0] === 'products' ? 'Products' : 'Collections'}`}
+            open={isSelectedConfigurationsModalOpen}
             >
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '10px'}}>
                     {
+                        state.productConfiguration[0] === 'collections' ?
+
                         selectedCollectionsState.length > 0 ?
                 
                         selectedCollectionsState.map((collection, index) => {
@@ -361,29 +367,23 @@ export default function Question() {
                             )
                         })   :
                                 <Text as="h3" variant="headingMd">You currently have no selected collections</Text>
+                        :
+
+                        selectedProductsState.length > 0 ?
+
+                        selectedProductsState.map((product, index) => {
+                            return ( 
+                                <div key={index} style={{display: 'flex', width: '250px', gap: '20px'}}>      
+                                    <Thumbnail alt={product.title} source={product.image} size="medium" />
+                                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                                        <Text as="p" variant="headingMd">{product.title}</Text>
+                                        <Button onClick={() => removeSelectedObject(product.title, product.id, 'product')} tone="critical">Remove</Button>
+                                    </div>
+                                </div>
+                            )
+                        })   :
+                                <Text as="h3" variant="headingMd">You currently have no selected products</Text>
                     }
-                </div>
-            </Modal>
-            <Modal 
-            onClose={() => setIsSelectedProductsModalOpen(false)}
-            title="Selected Products"
-            open={isSelectedProductsModalOpen}>
-                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px', padding: '10px'}}>
-                {selectedProductsState.length > 0 ?
-                
-                selectedProductsState.map((product, index) => {
-                    return ( 
-                        <div key={index} style={{display: 'flex', width: '250px', gap: '20px'}}>      
-                            <Thumbnail alt={product.title} source={product.image} size="medium" />
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                                <Text as="p" variant="headingMd">{product.title}</Text>
-                                <Button onClick={() => removeSelectedObject(product.title, product.id, 'product')} tone="critical">Remove</Button>
-                            </div>
-                        </div>
-                    )
-                })   :
-                        <Text as="h3" variant="headingMd">You currently have no selected products</Text>
-                }
                 </div>
             </Modal>
             <Layout>
@@ -409,13 +409,13 @@ export default function Question() {
                                 {label: 'All Products', value: 'all'}, 
                                 {label: 'Select Products', value: 'products', id: 'product', renderChildren(isSelected) {
                                     return isSelected && selectedProductsState.length > 0 &&
-                                    <Button onClick={() => setIsSelectedProductsModalOpen(true)}>
+                                    <Button onClick={() => setIsSelectedConfigurationsModalOpen(true)}>
                                         View {selectedProductsState.length.toString()} {selectedProductsState.length === 1 ? 'Product' : 'Products'}
                                     </Button>
                                 },}, 
                                 {label: 'Select Collections', value: 'collections', id: 'collections', renderChildren(isSelected) {
                                     return isSelected && selectedCollectionsState.length > 0 &&
-                                    <Button onClick={() => setIsSelectedCollectionsModalOpen(true)}>
+                                    <Button onClick={() => setIsSelectedConfigurationsModalOpen(true)}>
                                         View {selectedCollectionsState.length.toString()} {selectedCollectionsState.length === 1 ? 'Collection' : 'Collections'}
                                     </Button>
                                 },}

@@ -7,7 +7,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
     try {
 
-        let productId
+        let productId: any
 
         if (params.productId) {
             productId = parseInt(params.productId)
@@ -15,9 +15,18 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     
         const { session } = await authenticate.public.appProxy(request)
     
-        const result = await db.reviewFormQuestion.findMany({include: {answerChoices: true}, omit: {productId: true, store: true}, where: {store: {equals: session?.shop}, productId: {equals: productId}}})
+        const result = await db.reviewFormQuestion.findMany({where: {store: {equals: session?.shop}}})
+
+        const eligibleQuestions: any = []
+        result.forEach(question => {
+            if (question.productConfiguration[0] === 'all' || question.productIds.includes(`gid://shopify/Order/${productId}`)) {
+                eligibleQuestions.push(question)
+            }
+        })
+
+        console.log(eligibleQuestions)
         
-        return new Response(JSON.stringify({result}), {status: 200})
+        return new Response(JSON.stringify({result: eligibleQuestions}), {status: 200})
         
     } catch (error) {
 

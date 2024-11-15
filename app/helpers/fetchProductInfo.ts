@@ -22,13 +22,15 @@ export default async function fetchProductInfo(admin: AdminApiContext, productId
 
     const productDataObjects: SelectedProduct[] = await Promise.all(productIds.map(async (id) => {
 
-        const res = await admin.graphql(query, {variables: {id: id}})
+        const res = await admin.graphql(query, {variables: {id}})
         const data = await res.json()
 
         return {
             id,
             image: data.data.product.featuredMedia ? data.data.product.featuredMedia.preview.image.url : ImageIcon,
-            title: data.data.product.title
+            title: data.data.product.title,
+            variants: data.data.product.variants.nodes.map((variant: any) => variant.title)
+
         }
 
     }))
