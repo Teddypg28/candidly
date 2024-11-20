@@ -9,13 +9,13 @@ export const initialFileImportState = {
     heading: 'Import File Here' 
 }
 
-export const initialQuestionState: CustomReviewFormQuestion = {
+export const initialQuestionState: ReviewFormQuestion = {
     productConfiguration: ['all'],
     answerType: ['text'],
     productIds: [],
     collectionIds: [],
     radioAllowMultipleAnswers: ['false'],
-    radioAnswerChoices: ['', ''],
+    radioAnswerChoices: [{value: '', display: false, label: ''}, {value: '', display: false, label: ''}],
     radioDisplayAnswer: ['false'],
     radioDisplayedAnswerLabel: '',
     title: '',
@@ -30,7 +30,13 @@ export const initialCustomQuestionErrorState = {
     radioDisplayedAnswerLabel: false
 }
 
-export interface CustomReviewFormQuestion {
+export interface RadioAnswerChoice {
+    value: string;
+    display: boolean;
+    label?: string;
+}
+
+export interface ReviewFormQuestion {
     id?: number
     answerType: string[]
     productConfiguration: string[]
@@ -38,7 +44,7 @@ export interface CustomReviewFormQuestion {
     collectionIds: string[]
     title: string
     isRequired: string[]
-    radioAnswerChoices: string[]
+    radioAnswerChoices: RadioAnswerChoice[]
     radioAllowMultipleAnswers: string[]
     radioDisplayAnswer: string[]
     radioDisplayedAnswerLabel: string

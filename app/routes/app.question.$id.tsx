@@ -9,7 +9,7 @@ import { authenticate } from "~/shopify.server";
 
 import { ImageIcon } from "@shopify/polaris-icons";
 import { SaveBar } from "@shopify/app-bridge-react";
-import { CustomQuestionFormError, CustomReviewFormQuestion, initialCustomQuestionErrorState, initialQuestionState, SelectedProduct } from "~/types/types";
+import { CustomQuestionFormError, ReviewFormQuestion, initialCustomQuestionErrorState, initialQuestionState, SelectedProduct } from "~/types/types";
 
 import { redirect } from "@remix-run/node";
 
@@ -35,14 +35,77 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
         if (params.id === 'new') {
 
-            const question = await db.reviewFormQuestion.create({data: dataWithStore})
-
+            const answerChoices = [...dataWithStore.radioAnswerChoices]
+            delete dataWithStore['radioAnswerChoices']
+            const question = await db.reviewFormQuestion.create({data: {...dataWithStore, radioAnswerChoices: {createMany: {data: answerChoices}}}, include: {radioAnswerChoices: true}})
             return redirect(`/app/question/${question.id}`)
 
         }
 
-        delete dataWithStore['id']
-        await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})
+        // update logic:
+        
+        const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: Number(params.id)}}, include: {radioAnswerChoices: true}})
+        
+        if (question) {
+
+            const currentAnswerChoices = [...dataWithStore.radioAnswerChoices]
+            const oldAnswerChoices = question.radioAnswerChoices
+
+            const answerChoicesDirty = JSON.stringify(currentAnswerChoices) !== JSON.stringify(oldAnswerChoices)
+
+            if (answerChoicesDirty) {
+
+                if (currentAnswerChoices.length === oldAnswerChoices.length) {
+                    await Promise.all(oldAnswerChoices.map(async (answerChoice, index) => {
+                        await db.radioAnswerChoice.update({where: {id: answerChoice.id}, data: {...currentAnswerChoices[index]}})
+                    }))
+                } else if (currentAnswerChoices.length > oldAnswerChoices.length) {
+
+                    // update current answer choices
+                    await Promise.all(oldAnswerChoices.map(async (answerChoice, index) => {
+                        return await db.radioAnswerChoice.update({where: {id: answerChoice.id}, data: {...currentAnswerChoices[index]}})
+                    }))
+
+                    // create new answer choices using remaining data
+                    const remainingData = currentAnswerChoices.filter((answerChoice, index) => index > oldAnswerChoices.length - 1)
+                    const remainingDataWithQuestionId = remainingData.map((answerChoice) => {return {...answerChoice, questionId: Number(params.id)}})
+                    await db.radioAnswerChoice.createMany({data: remainingDataWithQuestionId})
+
+                } else {
+
+                    // delete removed answer choices
+                    const numChoicesToDelete = oldAnswerChoices.length - currentAnswerChoices.length
+                    const remainingAnswerChoices = [...question.radioAnswerChoices]
+
+                    const deletedAnswerChoices = []
+                    for (let i = 0; i<numChoicesToDelete; i++) {
+                        const deletedAnswerChoice = remainingAnswerChoices.pop()
+                        deletedAnswerChoices.push(deletedAnswerChoice)
+                    }
+
+                    await Promise.all(deletedAnswerChoices.map(async (deletedChoice) => {
+                        return await db.radioAnswerChoice.delete({where: {id: deletedChoice?.id}})
+                    }))
+
+                    // see if remaining answer choice data is clean - if not, update records
+
+                    const remainingAnswerChoiceDataClean = JSON.stringify(currentAnswerChoices) === JSON.stringify(remainingAnswerChoices)
+                    if (remainingAnswerChoiceDataClean) {
+                        return true
+                    } else {
+                        await Promise.all(remainingAnswerChoices.map(async (answerChoice, index) => {
+                            return await db.radioAnswerChoice.update({where: {id: answerChoice.id}, data: {...currentAnswerChoices[index]}})
+                        }))
+                    }
+                }
+            }
+
+            delete dataWithStore['radioAnswerChoices']
+
+            await db.reviewFormQuestion.update({where: {id: Number(params.id)}, data: dataWithStore})
+        }
+
+        // const result = await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})
         return json({message: 'success'}, {status: 200})
 
     } catch (error) {
@@ -66,15 +129,14 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
         } else {
 
-            const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: parseInt(params.id as any)}}})
-            
+            const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: parseInt(params.id as any)}}, include: {radioAnswerChoices: true}, omit: {id: true}})
+
             if (result !== null) {
 
                 const productData = await fetchProductInfo(admin, result.productIds)
                 const collectionData = await fetchCollectionInfo(admin, result.collectionIds)
 
-                const initialQuestionState: CustomReviewFormQuestion = {
-                    id: result.id,
+                const initialQuestionState: ReviewFormQuestion = {
                     answerType: result.answerType,
                     productConfiguration: result.productConfiguration,
                     productIds: result.productIds,
@@ -91,7 +153,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
             } else {
 
-                redirect('/app/custom-questions')
+                return redirect('/app/custom-questions')
 
             }
         } 
@@ -141,7 +203,7 @@ export default function Question() {
             const filteredProducts = products.filter(product => !state.productIds.includes(product.id))
 
             const productIds = filteredProducts.map(product => product.id)
-            setState({...state, productIds: [...state.productIds, ...productIds]})
+            setState(prevState => {return {...prevState, productIds: [...state.productIds, ...productIds]}})
 
             const selectedProductData = filteredProducts.map(product => {
                 return {
@@ -169,7 +231,7 @@ export default function Question() {
             const filteredCollections = collections.filter(collection => !state.collectionIds.includes(collection.id))
 
             const collectionIds = filteredCollections.map(collection => collection.id)
-            setState({...state, collectionIds})
+            setState(prevState => {return {...prevState, collectionIds}})
 
             const selectedCollectionData = filteredCollections.map(collection => {
                 return {
@@ -192,28 +254,43 @@ export default function Question() {
             const onChange = (value: string) => {
 
                 const answerChoicesCopy = [...state.radioAnswerChoices]
-                answerChoicesCopy[i] = value
-                setState({...state, radioAnswerChoices: answerChoicesCopy})
+                answerChoicesCopy[i].value = value
+                setState(prevState => {return {...prevState, radioAnswerChoices: answerChoicesCopy}})
 
             }
 
-            markup.push( <TextField id={`choiceField-${i+1}`} onBlur={() => checkForAnswerChoiceErrors(i)} error={errors[`choiceField-${i+1}`] === true && state.radioAnswerChoices[i].trim() === ''} value={state.radioAnswerChoices[i]} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${i+1}`} /> )
+            markup.push( <TextField id={`choiceField-${i+1}`} onBlur={() => checkForAnswerChoiceErrors(i)} error={errors[`choiceField-${i+1}`] === true && state.radioAnswerChoices[i].value.trim() === ''} value={state.radioAnswerChoices[i].value} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${i+1}`} /> )
         }
 
         const removeAnswerChoice = () => {
             const answerChoicesCopy = [...state.radioAnswerChoices]
             answerChoicesCopy.pop()
-            setState({...state, radioAnswerChoices: answerChoicesCopy})
+            setState(prevState => {return {...prevState, radioAnswerChoices: answerChoicesCopy}})
         }
 
         const useProductVariantsAsChoices = () => {
-            setState({...state, radioAnswerChoices: selectedProductsState[0].variants})
+
+            const radioAnswerChoices = selectedProductsState[0].variants.map((variant) => {
+                return {
+                    value: variant, 
+                    display: state.radioDisplayAnswer[0] === 'true' ? true : false,
+                    label: state.radioDisplayedAnswerLabel
+                }
+            })
+            setState(prevState => {return {...prevState, radioAnswerChoices}})
+            
+        }
+
+        const newAnswerChoice = {
+            value: '', 
+            display: state.radioDisplayAnswer[0] === 'true' ? true : false,
+            label: state.radioDisplayedAnswerLabel
         }
 
         markup.push(
             <BlockStack gap='100'>
                 <InlineStack gap='200'>
-                    <Button onClick={() => setState({...state, radioAnswerChoices: [...state.radioAnswerChoices, '']})}>Add Choice</Button>
+                    <Button onClick={() => setState(prevState => {return {...prevState, radioAnswerChoices: [...state.radioAnswerChoices, newAnswerChoice]}})}>Add Choice</Button>
                     <Button disabled={state.radioAnswerChoices.length === 2} onClick={removeAnswerChoice}>Remove Choice</Button>
                     <InlineStack>
                         <Button disabled={state.productIds.length !== 1} onClick={useProductVariantsAsChoices} variant="plain">Use product variants as choices</Button>
@@ -233,10 +310,10 @@ export default function Question() {
             const updatedSelectedProducts = selectedProductsStateCopy.filter(product => product.title !== title)
     
             setSelectedProductsState(updatedSelectedProducts)
-    
+
             const updatedProductIds = [...state.productIds].filter(productId => productId !== id)
     
-            setState({...state, productIds: updatedProductIds})
+            setState(prevState => {return {...prevState, productIds: updatedProductIds}})
 
         } else {
 
@@ -247,7 +324,7 @@ export default function Question() {
     
             const updatedCollectionIds = [...state.collectionIds].filter(collectionId => collectionId !== id)
     
-            setState({...state, collectionIds: updatedCollectionIds})
+            setState(prevState => {return {...prevState, collectionIds: updatedCollectionIds}})
 
         }
 
@@ -260,13 +337,13 @@ export default function Question() {
         setErrors(initialCustomQuestionErrorState)
     }
 
-    const checkForTextFieldError = (stateKeyName: keyof CustomReviewFormQuestion) => {
+    const checkForTextFieldError = (stateKeyName: keyof ReviewFormQuestion) => {
 
         if (state[stateKeyName]?.toString().trim() === '') {
-            setErrors({...errors, [stateKeyName as keyof CustomQuestionFormError]: true})
+            setErrors(prevErrors => {return {...prevErrors, [stateKeyName as keyof CustomQuestionFormError]: true}})
             return true
         } else {
-            setErrors({...errors, [stateKeyName as keyof CustomQuestionFormError]: false})
+            setErrors(prevErrors => {return {...prevErrors, [stateKeyName as keyof CustomQuestionFormError]: false}})
             return false
         }
     }
@@ -274,14 +351,14 @@ export default function Question() {
     const checkForAnswerChoiceErrors = (index: number) => {
         const errorsObject: any = {}
         
-        if (state.radioAnswerChoices[index].trim() === '') {
+        if (state.radioAnswerChoices[index].value.trim() === '') {
             errorsObject[`choiceField-${index+1}`] = true
         } else {
             delete errors[`choiceField-${index+1}`]
         }
 
         if (Object.keys(errorsObject).length > 0) {
-            setErrors({...errors, ...errorsObject, answerChoices: true})
+            setErrors(prevErrors => {return {...prevErrors, ...errorsObject, answerChoices: true}})
             return true
         } else {
             let isChoiceFieldErrors = false
@@ -292,7 +369,7 @@ export default function Question() {
                     break
                 }
             }
-            setErrors({...errors, ...errorsObject, answerChoices: isChoiceFieldErrors})
+            setErrors(prevErrors => {return {...prevErrors, ...errorsObject, answerChoices: isChoiceFieldErrors}})
             return isChoiceFieldErrors
         }
     }
@@ -300,16 +377,16 @@ export default function Question() {
     const validSubmission = () => {
 
         const newErrorsObject: CustomQuestionFormError = {
-            answerChoices: state.answerType[0] === 'textField' && state.radioAnswerChoices.filter(choice => choice === '').length > 0,
+            answerChoices: state.answerType[0] === 'radio' && state.radioAnswerChoices.filter(choice => choice.value.trim() === '').length > 0,
             collection: state.productConfiguration[0] === 'collections' && state.collectionIds.length === 0,
             product: state.productConfiguration[0] === 'products' && state.productIds.length === 0,
-            radioDisplayedAnswerLabel: state.radioDisplayAnswer[0] === 'true' && !state.radioDisplayedAnswerLabel,
+            radioDisplayedAnswerLabel: state.radioDisplayAnswer[0] === 'true' && state.radioDisplayedAnswerLabel.trim() === '',
             title: !state.title
         }
 
         if (newErrorsObject.answerChoices) {
             state.radioAnswerChoices.forEach((choice, index) => {
-                if (choice === '') {
+                if (choice.value === '') {
                     newErrorsObject[`choiceField-${index+1}`] = true
                 }
             })
@@ -331,6 +408,20 @@ export default function Question() {
     const deleteQuestion = () => {
         submit({action: 'delete'}, {method: 'POST', encType: 'application/json'})
         setIsFormDeleting(true)
+    }
+
+    const handleDisplayAnswerValueChange = (value: string[]) => {
+        const updatedRadioAnswerChoices = state.radioAnswerChoices.map(answerChoice => {
+            return {...answerChoice, display: value[0] === 'true' ? true : false}
+        })
+        setState(prevState => {return {...prevState, radioDisplayAnswer: value, radioAnswerChoices: updatedRadioAnswerChoices}})
+    }
+
+    const handleDisplayedAnswerLabelChange = (value: string) => {
+        const updatedRadioAnswerChoice = state.radioAnswerChoices.map(answerChoice => {
+            return {...answerChoice, label: value}
+        })
+        setState(prevState => {return {...prevState, radioDisplayedAnswerLabel: value, radioAnswerChoices: updatedRadioAnswerChoice}})
     }
 
     return (
@@ -458,7 +549,7 @@ export default function Question() {
                                 <Label id="answerChoices">Answer Choices</Label>
                                 <BlockStack gap={'300'}>
                                     {renderAnswerChoices()}
-                                    {errors['answerChoices'] === true && state.radioAnswerChoices.filter(choice => choice === '').length > 0 &&
+                                    {errors['answerChoices'] === true && state.radioAnswerChoices.filter(choice => choice.value === '').length > 0 &&
                                      <InlineError fieldID="answerChoices" message="Answer choices must not be blank" />}
                                 </BlockStack>
                             </BlockStack>
@@ -485,21 +576,21 @@ export default function Question() {
                                         <ChoiceList 
                                         title='Display Answer in Review'
                                         selected={state.radioDisplayAnswer}
-                                        onChange={(value) => setState({...state, radioDisplayAnswer: value})}
+                                        onChange={handleDisplayAnswerValueChange}
                                         choices={[
                                             {label: 'True', value: 'true', renderChildren(isSelected) {
                                             return isSelected && 
                                             (
                                                 <BlockStack gap='050'>
                                                     <TextField 
-                                                    label=''
+                                                    label='Answer Label'
                                                     id="radioDisplayedAnswerLabel"
                                                     autoComplete="off"
-                                                    onChange={(value) => setState({...state, radioDisplayedAnswerLabel: value})} 
+                                                    onChange={handleDisplayedAnswerLabelChange} 
                                                     onBlur={() => checkForTextFieldError('radioDisplayedAnswerLabel')}
                                                     error={errors['radioDisplayedAnswerLabel'] === true && state.radioDisplayedAnswerLabel.trim() === ''}
                                                     value={state.radioDisplayedAnswerLabel} 
-                                                    placeholder="Answer Label (Ex: 'Flavor Purchased')" />
+                                                    placeholder="Ex: 'Flavor Purchased'" />
                                                     {errors['radioDisplayedAnswerLabel'] && state.radioDisplayedAnswerLabel.trim() === '' && <InlineError fieldID="radioDisplayedAnswerLabel" message="Answer label must not be blank" />}
                                                 </BlockStack>
                                             )

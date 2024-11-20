@@ -19,12 +19,10 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
         const eligibleQuestions: any = []
         result.forEach(question => {
-            if (question.productConfiguration[0] === 'all' || question.productIds.includes(`gid://shopify/Order/${productId}`)) {
+            if (question.productConfiguration[0] === 'all' || question.productIds.includes(`gid://shopify/Product/${productId}`)) {
                 eligibleQuestions.push(question)
             }
         })
-
-        console.log(eligibleQuestions)
         
         return new Response(JSON.stringify({result: eligibleQuestions}), {status: 200})
         

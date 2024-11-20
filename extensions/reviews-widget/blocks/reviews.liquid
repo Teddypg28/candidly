@@ -60,7 +60,7 @@ fetch(`https://blizzardbites.myshopify.com/apps/reviews/questions/${reviewProduc
         })
 
         reviewSettings.customQuestions.sort((a, b) => {
-            return a.answerChoices.length - b.answerChoices.length
+            return a.radioAnswerChoices.length - b.radioAnswerChoices.length
         })
     }
 
@@ -109,7 +109,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             numOfReviewsContainer.textContent = `${reviews.length} ${reviews.length === 1 ? 'Review' : 'Reviews'}`
             numOfReviewsContainer.style.marginLeft = '10px'
 
-            navigationTag.href = '#shopify-block-reviews_app_reviews_FtVgWw'
+            navigationTag.href = '#shopify-section-template--18290334367908__172966007473ca7a81'
             navigationTag.style.marginTop = '15px'
 
             let starsLeft
@@ -283,20 +283,23 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                 const displayAnswers = () => {
                     if (review.customQuestionAnswers.length > 0) {
-                        const answers = review.customQuestionAnswers.map(review => {
-                            return `<div> <strong>${review.label}:</strong> ${review.value}</div>`
+                        const answers = review.customQuestionAnswers.map((customQuestionAnswer) => {
+                            console.log(customQuestionAnswer)
+                            if (customQuestionAnswer.display === true) {
+                                return `<div> <strong>${review.label}:</strong> ${review.value}</div>`
+                            }
+                            return ''
                         })
 
-                        if (window.screen.width <= 400) {
+                        console.log(answers)
 
-                            return answers.join('')
-
+                        if (!answers.includes('')) {
+                            if (window.screen.width <= 400) {
+                                return answers.join('')
+                            }
+                            return answers.join('|')
                         }
-
-                        return answers.join('|')
-
                     }
-
                     return ''
                 }
 
@@ -605,12 +608,14 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
         let userRating = '5'
 
-        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating }
+        const userInputState = { title: '', body: '', name: '', email: '', rating: userRating, customQuestions: {} }
 
         const handleUserInput = (event) => {
-
-            userInputState[event.target.name] = event.target.value
-
+            if (event.target.name.includes('customQuestion')) {
+                userInputState['customQuestions'][event.target.name] = {...userInputState['customQuestions'][event.target.name], value: event.target.value}
+            } else {
+                userInputState[event.target.name] = event.target.value
+            } 
         }
 
         function clearErrors() {
@@ -634,11 +639,13 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             for (let i = 0; i<inputKeys.length; i++) {
 
-                if (inputKeys[i].includes('customQuestion')) {
-
-                    if (userInputStateCopy[inputKeys[i]].value.trim() === '' && userInputStateCopy[inputKeys[i]].isMandatory) {
-                        errors.push({id: `${inputKeys[i]}Error`})
-                    }
+                if (inputKeys[i].includes('customQuestions')) {
+                    
+                    Object.keys(userInputStateCopy['customQuestions']).forEach(key => {
+                        if (userInputStateCopy['customQuestions'][key].value.trim() === '' && userInputStateCopy['customQuestions'][key].isRequired === 'true') {
+                            errors.push({id: `${inputKeys[i]}Error`})
+                        }
+                    })
 
                 } else if (userInputStateCopy[inputKeys[i]].trim() === '') { 
                     errors.push({id: `${inputKeys[i]}Error`})
@@ -802,15 +809,18 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                 let questionMarkup
 
-                if (question.radioAnswerChoices.length === 0) {
+                if (question.answerType[0] === 'text') {
                     questionMarkup = `
                          <div class='reviewFieldWrapper' style="width: 100%">
-                            <textarea class='reviewFormInput reviewFormTextArea' name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="${question.title}"></textarea>
+                            <label for='customQuestion-${question.id}'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
+                            <textarea class='reviewFormInput reviewFormTextArea' name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="Enter your response here"></textarea>
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
                         </div>
                     `
 
                     customQuestionsContainer.innerHTML += questionMarkup
+
+                    userInputState['customQuestions'][`customQuestion-${question.id}`] = {type: 'text', value: '', display: 'false', isRequired: question.isRequired[0]}
 
                 } else {
 
@@ -833,7 +843,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                         }).join('')}
 
                         questionMarkupContainer.innerHTML+= `
-                            <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isMandatory ? '*' : ''}</label>
+                            <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
                             <div id='multipleChoicesContainer-${question.id}' class="multipleChoicesContainer">
                                 <div class="dropdownTop" id="dropdownTop-${question.id}">
                                     <p class="selectedOptionsContainer" id="selectedOptionsContainer-${question.id}">Select</p>
@@ -849,7 +859,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     } else {
 
                         questionMarkupContainer.innerHTML+= `
-                            <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isMandatory ? '*' : ''}</label>
+                            <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
                             <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
                                 <option value="">Select one</option>
                             </select>
@@ -860,11 +870,11 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                             answerChoicesContainer.innerHTML += `<option value="${choice}">${choice}</option>`
                         })
                     }
-                        questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`
+
+                    questionMarkupContainer.innerHTML += `<p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`
+                
+                    userInputState['customQuestions'][`customQuestion-${question.id}`] = {type: 'radio', value: '', display: question.radioDisplayAnswer[0], label: question.radioDisplayedAnswerLabel, isRequired: question.isRequired[0]}
                 }
-
-                userInputState[`customQuestion-${question.id}`] = {value: '', display: question.displayAnswer, isMandatory: question.isMandatory}
-
             }
 
             if (reviewSettings.customQuestions.length > 0) {
@@ -895,11 +905,11 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                         customQuestionMultipleChoices.forEach(dropdown => {
 
-                            const id = dropdown.id.split('-')[1]
+                            const questionId = dropdown.id.split('-')[1]
 
-                            const dropdownTop = document.querySelector(`#dropdownTop-${id}`)
-                            const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${id}`)
-                            const chevronContainer = document.querySelector(`#chevronContainer-${id}`)
+                            const dropdownTop = document.querySelector(`#dropdownTop-${questionId}`)
+                            const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${questionId}`)
+                            const chevronContainer = document.querySelector(`#chevronContainer-${questionId}`)
 
                             let isDropdownOpen = false
 
@@ -924,7 +934,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                                 }
 
-                                const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${id}`)
+                                const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${questionId}`)
 
                                  if (dropdownItemsContainer.classList.contains('hidden')) {
 
@@ -946,39 +956,35 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                             })
 
-                            document.querySelectorAll(`#dropdownQuestion${id}Item`).forEach(element => {
+                            document.querySelectorAll(`#dropdownQuestion${questionId}Item`).forEach(element => {
 
                                 element.addEventListener('click', (e) => {
 
-                                    if (e.target.id === `dropdownQuestion${id}Item`) {
+                                    if (e.target.id === `dropdownQuestion${questionId}Item`) {
 
-                                        if (e.target.children[0].classList.contains(`checked-${id}`)) {
+                                        if (e.target.children[0].classList.contains(`checked-${questionId}`)) {
 
                                             e.target.children[0].textContent = ' '
-
-                                            e.target.children[0].classList.remove(`checked-${id}`)
+                                            e.target.children[0].classList.remove(`checked-${questionId}`)
 
                                         } else {
 
                                             e.target.children[0].textContent = '•'
-
-                                            e.target.children[0].classList.add(`checked-${id}`)
+                                            e.target.children[0].classList.add(`checked-${questionId}`)
 
                                         }
 
                                     } else {
 
-                                        if (e.target.classList.contains(`checked-${id}`)) {
+                                        if (e.target.classList.contains(`checked-${questionId}`)) {
 
                                             e.target.textContent = ' '
-
-                                            e.target.classList.remove(`checked-${id}`)
+                                            e.target.classList.remove(`checked-${questionId}`)
 
                                         } else {
 
                                             e.target.textContent = '•'
-
-                                            e.target.classList.add(`checked-${id}`)
+                                            e.target.classList.add(`checked-${questionId}`)
 
                                         }
 
@@ -986,9 +992,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                                     const checkedValues = []
 
-                                    document.querySelectorAll(`.checked-${id}`).forEach(checkedElement => {
+                                    document.querySelectorAll(`.checked-${questionId}`).forEach(checkedElement => {
                                         checkedValues.push(checkedElement.dataset.value)
-
                                     })
 
                                     const selectedAnswers = checkedValues.join(', ')
@@ -1005,7 +1010,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                                     }
 
-                                    userInputState[`customQuestion-${id}`] = {...userInputState[`customQuestion-${id}`], value: selectedAnswers.length > 0 ? selectedAnswers : ''}
+                                    userInputState['customQuestions'][`customQuestion-${questionId}`] = {...userInputState['customQuestions'][`customQuestion-${question.id}`], value: selectedAnswers.length > 0 ? selectedAnswers : ''}
 
                                 })
 

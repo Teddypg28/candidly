@@ -10,15 +10,13 @@ export async function loader({request, params} : LoaderFunctionArgs) {
         
         try {
             
-            const reviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Order/${params.id}`}, isPublished: {equals: true}}, include: {customQuestionAnswers: true}, omit: {productId: true}})
+            const reviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Product/${params.id}`}, isPublished: {equals: true}}, include: {customQuestionAnswers: true}, omit: {productId: true}})
 
             if (reviews) {
 
                 return new Response(JSON.stringify({reviews}), {status: 200})
 
             } else {
-
-                console.log('HERE')
 
                 return new Response('[]', {status: 200})
 

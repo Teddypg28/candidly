@@ -1,5 +1,5 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge } from "@shopify/polaris";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge, DropZone } from "@shopify/polaris";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -11,56 +11,51 @@ import db from '../db.server'
 import { importFileReviewsFormState, initialFileImportState, initialReviewTableState, ReviewTableState } from "~/types/types";
 
 import styles from '../styles/ImportReviews.module.css'
+import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
+
+export const action = async ({ request } : ActionFunctionArgs) => {
+
+    const { admin, session } = await authenticate.admin(request)
+
+    const data = await request.json()
+    const { action } = data
+
+    if (action === 'delete') {
+        return await Promise.all(data.reviewIds.map(async (id: string) => {
+            return await db.productReview.delete({where: {id: parseInt(id)}})
+        }))
+    }
+
+    if (action === 'publish') {
+        const publishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
+            return await db.productReview.update({where: {id: parseInt(id)}, data: {isPublished: true}})
+        }))
+
+        return await Promise.all(publishedReviews.map(async (review) => {
+            return updateProductRatingMetafields(review.productId, review.rating, admin, session)
+        }))
+    }
+}
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
 
   const { session, admin } = await authenticate.admin(request)
-
-//   const totalReviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, omit: {productId: true}})
-  
-//   let totalRatingScore = 0
-
-//   totalReviews.forEach(review => {
-//     totalRatingScore += review.rating
-//   })
-
-//   const averageRating = (totalRatingScore / totalReviews.length).toFixed(2)
-
-//   const newReviewsToday = totalReviews.filter(review => {
-
-//     return review.date.toLocaleDateString() === new Date().toLocaleDateString()
-
-//   }).length
-
-//   const date = new Date()
-//   const oneMonthAgo = date.setMonth(date.getMonth() - 1)
-
-//   const reviewsPastMonth = totalReviews.filter(review => {
-
-//     return new Date(review.date) >= new Date(oneMonthAgo)
-
-//   }).length
 
   let reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
 
   const query = `query getProductTitle($id: ID!) {
       product(id: $id) {
         title
-        }
+    }
   }`
 
   const updatedReviews = await Promise.all(reviews.map(async (review) => {
-
       const result = await admin.graphql(query, {variables: {id: review.productId}})
-
-      const updatedTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
-
-      return {...review, productTitle: updatedTitle}
-      
+      const productTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
+      return {...review, productTitle}
   }))
 
   const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true}})
-
   return json({reviews: updatedReviews, savedTableViews})
 
 }
@@ -69,10 +64,12 @@ export default function Reviews() {
     
     const { reviews, savedTableViews } = useLoaderData<typeof loader>()
 
+    const [indexTableState, setIndexTableState] = useState<ReviewTableState>(initialReviewTableState)
+    const [fileImportState, setFileImportState] = useState<importFileReviewsFormState>(initialFileImportState)
+    
     const submit = useSubmit()
     const navigate = useNavigate()
-
-    const [fileImportState, setFileImportState] = useState<importFileReviewsFormState>(initialFileImportState)
+    const {mode, setMode} = useSetIndexFiltersMode()
 
     const { errors, fileUploaded, isImportingFileReviews, selectedProductDataFile, heading } = fileImportState
 
@@ -80,49 +77,7 @@ export default function Reviews() {
 
     const [downloadHrefValue, setDownloadHrefValue] = useState('')
 
-    const [indexTableState, setIndexTableState] = useState<ReviewTableState>(initialReviewTableState)
-    
     const isFirstRender = useRef(true)
-
-    const {mode, setMode} = useSetIndexFiltersMode()
-
-    useEffect(() => {
-
-        if (isImportingFileReviews) {
-
-            const importFileReviewsContainer = document.getElementById('importFileReviewsContainer')
-    
-            let active = () => {}
-            let inactive = () => {}
-    
-            if (importFileReviewsContainer) {
-    
-                active = () => { importFileReviewsContainer.style.border = '2px dotted darkgray' }
-                inactive = () => { importFileReviewsContainer.style.border = '2px dotted lightgray' }
-    
-            }
-    
-            if (importFileReviewsContainer) {
-    
-                importFileReviewsContainer.addEventListener('dragover', active)
-                
-                importFileReviewsContainer.addEventListener('drop', inactive)
-                importFileReviewsContainer.addEventListener('dragleave', inactive)
-    
-            }
-    
-            return () => {
-        
-                importFileReviewsContainer?.removeEventListener('dragover', active)
-    
-                importFileReviewsContainer?.removeEventListener('drop', inactive)
-                importFileReviewsContainer?.removeEventListener('dragleave', inactive)
-    
-            }
-
-        }
-
-    }, [isImportingFileReviews])
 
     useEffect(() => {
 
@@ -285,7 +240,6 @@ export default function Reviews() {
     ]
 
     const tabs: IndexFiltersProps['tabs'] = ['All Reviews', ...savedTableViews.map(view => view.name)].map((tabName, index) => {
-
         return {
             content: tabName, 
             id: `${tabName}-${index}`,
@@ -296,13 +250,11 @@ export default function Reviews() {
                 {type: 'delete', onPrimaryAction: deleteView}
             ]
         }
-
     })
 
     const appliedFilters: IndexFiltersProps['appliedFilters'] = []
 
     if (indexTableState.selectedProducts.length > 0) {
-
         appliedFilters.push(
             {
                 key: 'products', 
@@ -351,13 +303,9 @@ export default function Reviews() {
 
     const cancelFilterChanges = () => {
         if (indexTableState.selectedTab > 0) {
-
             setIndexTableState({...savedTableViews[indexTableState.selectedTab - 1], selectedTab: indexTableState.selectedTab})
-
         } else {
-
             setIndexTableState(initialReviewTableState)
-
         }
     }
 
@@ -366,9 +314,7 @@ export default function Reviews() {
     }
 
     const importFileReviews = useCallback(() => {
-
         setFileImportState({...fileImportState, isImportingFileReviews: true})
-
     }, [])
 
     const selectProductFile = async () => {
@@ -394,21 +340,15 @@ export default function Reviews() {
 
     const deleteSelectedReviews = useCallback(async () => {
 
-        await fetch('/api/reviews/admin/delete', {body: JSON.stringify({ids: selectedResources}), method: 'POST', headers: {'Content-Type': 'application/json'}})
-
+        submit(JSON.stringify({reviewIds: selectedResources, action: 'delete'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
-
-        navigate('.', {replace: true})
 
     }, [selectedResources])
 
     const publishSelectedReviews = useCallback(async () => {
 
-        await fetch('/api/reviews/admin/publish', {body: JSON.stringify({ids: selectedResources}), method: 'POST', headers: {'Content-Type': 'application/json'}})
-
+        submit(JSON.stringify({reviewIds: selectedResources, action: 'publish'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
-
-        navigate('.', {replace: true})
 
     }, [selectedResources])
 
@@ -431,24 +371,6 @@ export default function Reviews() {
         setDownloadHrefValue(`data:text/csv;charset=utf-8,${encodedReviewData}`)
 
     }
-
-    const handleFileUpload = useCallback((e: any) => {
-
-        const acceptedTypes = ['vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'csv']
-
-        const uploadedFile: any = Array.from(e.target.files)[0]
-
-        if (!acceptedTypes.includes(uploadedFile.type.split('/')[1])) {
-
-            setFileImportState({...fileImportState, heading: 'Invalid File Type', errors: true, fileUploaded: false})
-
-        } else {
-
-            setFileImportState({...fileImportState, file: uploadedFile, heading: uploadedFile.name, errors: false, fileUploaded: true})
-
-        }
-
-    }, [fileImportState])
 
     const importReviewsFromFile = async () => {
 
@@ -517,12 +439,7 @@ export default function Reviews() {
                                     }
                                 </BlockStack>
                             </div>
-                            <div className={styles.importContainer} id="importFileReviewsContainer">
-                                <label className={styles.label} id="importFileReviews">
-                                    <Text as="p" variant="bodyMd" tone={fileUploaded && !errors ? 'success' : errors ? 'critical' : 'base'}>{heading}</Text>
-                                    <input onChange={handleFileUpload} className={styles.input} id="importFileReviews" type="file" accept=".csv" />
-                                </label>
-                            </div>
+                            <DropZone />
                             <Text as="p" variant="bodySm">Please make sure the column headings are ordered as such:</Text>
                             <Text as="p" variant="bodySm" tone="success">Title, Body, Name, Email, Rating, Media, Date</Text>
                             <div style={{width: 'fit-content', marginLeft: 'auto'}}>
@@ -551,6 +468,7 @@ export default function Reviews() {
                         sortSelected={indexTableState.sortSelected}
                         onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
                         tabs={tabs}
+                        onSelect={changeTabs}
                         mode={mode}
                         setMode={setMode}
                         filters={filters}
@@ -562,7 +480,6 @@ export default function Reviews() {
                         onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
                         cancelAction={{onAction: cancelFilterChanges}}
                         onCreateNewView={createNewView}
-                        onSelect={changeTabs}
                         selected={indexTableState.selectedTab}
                         />
                         <IndexTable

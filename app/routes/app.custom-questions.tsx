@@ -156,7 +156,7 @@ const CustomQuestions = () => {
         return (
             <IndexTable.Row selected={selectedResources.includes(question.id.toString())} position={index} id={question.id.toString()}>
                 <IndexTable.Cell><Link url={`/app/question/${question.id}`}>{question.title}</Link></IndexTable.Cell>
-                <IndexTable.Cell>{question.radioAnswerChoices.length === 0 ? 'Text Field' : 'Radio Buttons'}</IndexTable.Cell>
+                <IndexTable.Cell>{question.answerType[0] === 'text' ? 'Text Field' : 'Radio Buttons'}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <CustomQuestionConfigurationDetails question={question} />
                 </IndexTable.Cell>
