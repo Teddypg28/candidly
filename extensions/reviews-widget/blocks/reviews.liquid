@@ -98,8 +98,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             const avgRating = parseFloat('{{avg_rating}}')
 
-            console.log('{{avg_rating}}')
-
             const navigationTag = document.createElement('a')
             navigationTag.style.textDecoration = 'none'
             navigationTag.style.color = 'black'
@@ -111,7 +109,16 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             numOfReviewsContainer.textContent = `${reviews.length} ${reviews.length === 1 ? 'Review' : 'Reviews'}`
             numOfReviewsContainer.style.marginLeft = '10px'
 
-            navigationTag.href = '#shopify-section-template--18290334367908__172966007473ca7a81'
+            let navigationTagHref
+            const divs = document.querySelectorAll('div')
+            for (let i = 0; i<divs.length; i++) {
+                if (divs[i].id.includes('reviews_app')) {
+                    navigationTagHref = divs[i].id
+                    break
+                }
+            }
+
+            navigationTag.href = `#${navigationTagHref}`
             navigationTag.style.marginTop = '15px'
 
             let starsLeft

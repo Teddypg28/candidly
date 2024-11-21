@@ -35,7 +35,7 @@ model Session {
 model AnswerChoiceSnapshot {
   id           Int           @id @default(autoincrement())
   reviewId     Int
-  review       ProductReview @relation(fields: [reviewId], references: [id])
+  review       ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   questionId   Int
   label        String
   value        String
