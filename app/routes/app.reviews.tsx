@@ -32,7 +32,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         }))
 
         return await Promise.all(publishedReviews.map(async (review) => {
-            return updateProductRatingMetafields(review.productId, review.rating, admin, session)
+            return await updateProductRatingMetafields(review.productId, review.rating, admin, session)
         }))
     }
 }

@@ -98,6 +98,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             const avgRating = parseFloat('{{avg_rating}}')
 
+            console.log('{{avg_rating}}')
+
             const navigationTag = document.createElement('a')
             navigationTag.style.textDecoration = 'none'
             navigationTag.style.color = 'black'
@@ -294,8 +296,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                 answerData[customQuestionAnswer.label] = {display: customQuestionAnswer.display, answers: [customQuestionAnswer.value]}
                             }
                         })
-
-                        console.log(answerData)
                     
                         const answers = Object.keys(answerData).map((label) => {
                             if (answerData[label].display === true) {
