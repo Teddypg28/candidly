@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { ColorPicker, IColor, useColor } from 'react-color-palette'
 import "react-color-palette/css"
+
 import { SaveBar } from "@shopify/app-bridge-react";
 
 export async function loader({ request } : LoaderFunctionArgs) {

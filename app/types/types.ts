@@ -1,12 +1,10 @@
 import { IndexFiltersProps } from "@shopify/polaris"
 
-export const initialFileImportState = {
-    file: undefined,
-    errors: false,
-    fileUploaded: false,
-    isImportingFileReviews: false,
-    selectedProductDataFile: undefined,
-    heading: 'Import File Here' 
+export const initialImportCsvFileState: ImportCsvFileState = {
+    files: [],
+    products: [],
+    importInitiated: false,
+    errors: {}
 }
 
 export const initialQuestionState: ReviewFormQuestion = {
@@ -145,19 +143,17 @@ export interface Import3rdPartyReviewsFormState {
     importFormErrors: any
 }
 
+export interface ImportCsvFileState {
+    files: File[],
+    products: SelectedProductData[],
+    importInitiated: boolean,
+    errors: any
+}
+
 interface SelectedProductData {
     id: string 
     image: string
     title: string
-}
-
-export interface importFileReviewsFormState {
-    errors: boolean
-    fileUploaded: boolean
-    isImportingFileReviews: boolean
-    selectedProductDataFile?: SelectedProductData
-    heading: string
-    file?: File
 }
 
 export interface ReviewRequestData {

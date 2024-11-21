@@ -8,7 +8,7 @@ import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import db from '../db.server'
 
-import { importFileReviewsFormState, initialFileImportState, initialReviewTableState, ReviewTableState } from "~/types/types";
+import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState, ReviewTableState } from "~/types/types";
 
 import styles from '../styles/ImportReviews.module.css'
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
@@ -82,8 +82,8 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
       const productTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
       return {...review, productTitle}
   }))
-
   const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
+
   return json({reviews: updatedReviews, savedTableViews})
 
 }
@@ -93,17 +93,13 @@ export default function Reviews() {
     const { reviews, savedTableViews } = useLoaderData<typeof loader>()
 
     const [indexTableState, setIndexTableState] = useState<ReviewTableState>(initialReviewTableState)
-    const [fileImportState, setFileImportState] = useState<importFileReviewsFormState>(initialFileImportState)
+    const [importCsvFileState, setImportCsvFileState] = useState<ImportCsvFileState>(initialImportCsvFileState)
+
+    const [downloadFileHrefValue, setDownloadFileHrefValue] = useState('')
     
     const submit = useSubmit()
     const navigate = useNavigate()
     const {mode, setMode} = useSetIndexFiltersMode()
-
-    const { errors, fileUploaded, isImportingFileReviews, selectedProductDataFile, heading } = fileImportState
-
-    const [isFileReviewFormSubmitting, setIsFileReviewFormSubmitting] = useState(false)
-
-    const [downloadHrefValue, setDownloadHrefValue] = useState('')
 
     const isFirstRender = useRef(true)
 
@@ -118,7 +114,7 @@ export default function Reviews() {
         
         exportCsvAnchor.style.display = 'none'
 
-        exportCsvAnchor.setAttribute('href', downloadHrefValue)
+        exportCsvAnchor.setAttribute('href', downloadFileHrefValue)
         exportCsvAnchor.setAttribute('download', 'reviews.csv')
 
         document.body.appendChild(exportCsvAnchor)
@@ -127,7 +123,7 @@ export default function Reviews() {
 
         document.body.removeChild(exportCsvAnchor)
 
-    }, [downloadHrefValue])
+    }, [downloadFileHrefValue])
 
     const filteredReviews = reviews.sort((a, b) => {
 
@@ -341,10 +337,6 @@ export default function Reviews() {
         setIndexTableState({...indexTableState, selectedProducts: [], selectedRatings: []})
     }
 
-    const importFileReviews = useCallback(() => {
-        setFileImportState({...fileImportState, isImportingFileReviews: true})
-    }, [])
-
     const selectProductFile = async () => {
 
         const selectedProduct = await window.shopify.resourcePicker({
@@ -355,14 +347,16 @@ export default function Reviews() {
 
         if (selectedProduct) {
 
-            setFileImportState({
-                ...fileImportState, 
-                selectedProductDataFile: 
-                {
-                    id: selectedProduct[0].id, 
-                    image: selectedProduct[0].images[0].originalSrc,
-                    title: selectedProduct[0].title
-                }})
+            setImportCsvFileState({
+                ...importCsvFileState, 
+                products: [
+                    {
+                        id: selectedProduct[0].id, 
+                        image: selectedProduct[0].images[0].originalSrc,
+                        title: selectedProduct[0].title
+                    }
+                ]
+            })
         }
     }
 
@@ -403,30 +397,26 @@ export default function Reviews() {
 
         const encodedReviewData = rows.map(row => row.join()).join('\n')
 
-        setDownloadHrefValue(`data:text/csv;charset=utf-8,${encodedReviewData}`)
+        setDownloadFileHrefValue(`data:text/csv;charset=utf-8,${encodedReviewData}`)
 
     }
 
-    const importReviewsFromFile = async () => {
+    const importCsvFileReviews = async () => {
 
-        if (fileImportState.file && fileImportState.selectedProductDataFile) {
+        if (importCsvFileState.files.length > 0 && importCsvFileState.products.length > 0) {
 
             const formData = new FormData()
-            formData.append('reviews', fileImportState.file)
-            formData.append('productId', fileImportState.selectedProductDataFile.id)
-
-            setIsFileReviewFormSubmitting(true)
+            formData.append('reviews', importCsvFileState.files[0])
+            formData.append('productId', importCsvFileState.products[0].id)
 
             const response = await fetch('/api/reviews/admin/import', {method: 'POST', body: formData})
-
-            setIsFileReviewFormSubmitting(false)
 
             const data = await response.json()
 
             if (data.success) {
 
                 shopify.toast.show('Reviews successfully imported!', {duration: 3000})
-                setFileImportState(initialFileImportState)
+                setImportCsvFileState(initialImportCsvFileState)
                 navigate('.', {replace: true})
 
             } else {
@@ -434,31 +424,55 @@ export default function Reviews() {
                 shopify.toast.show('Error importing reviews', {duration: 3000})
 
             }
+        } else {
+
+            const errors: any = {}
+
+            if (importCsvFileState.products.length === 0) {
+                errors.product = true
+            } 
+
+            if (importCsvFileState.files.length === 0) {
+                errors.file = true
+            }
+
+            setImportCsvFileState({...importCsvFileState, errors})
+
         }
     }
+
+    const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
+        if (acceptedFiles.length > 0) {
+            setImportCsvFileState({...importCsvFileState, files: acceptedFiles})
+        }
+    }
+    const fileUpload = importCsvFileState.files.length === 0 && <DropZone.FileUpload />
 
     return (
         <Page
         title="All Product Reviews"
-        primaryAction={{content: 'Import CSV', onAction: importFileReviews}}
+        primaryAction={{content: 'Import CSV', onAction: () => setImportCsvFileState({...importCsvFileState, importInitiated: true})}}
         secondaryActions={[
             {content: 'Export as CSV', disabled: filteredReviews.length === 0, onAction: exportAsCsv, id: 'exportCsvBtn'},
         ]}
         >
             <BlockStack gap='100'>
-                <Modal title='Import CSV File' onClose={() => setFileImportState(initialFileImportState)} open={isImportingFileReviews}>
+                <Modal 
+                open={importCsvFileState.importInitiated} 
+                title='Import CSV File' 
+                onClose={() => setImportCsvFileState(initialImportCsvFileState)}>
                     <div className={styles.container}>
                         <BlockStack gap='200'>
                             <div>
                                 <BlockStack gap='200'>
                                     { 
                                     
-                                    selectedProductDataFile ?
+                                    importCsvFileState.products.length > 0 ?
 
                                     <InlineStack align="space-between">
                                         <InlineStack blockAlign="center" gap="150">
-                                            <Thumbnail alt="product image" source={selectedProductDataFile.image} />
-                                            <Text as="h1" variant="bodyMd">{selectedProductDataFile.title}</Text>
+                                            <Thumbnail alt="product image" source={importCsvFileState.products[0].image} />
+                                            <Text as="h1" variant="bodyMd">{importCsvFileState.products[0].title}</Text>
                                         </InlineStack>
                                         <Button variant="plain" onClick={selectProductFile}>Change Product</Button>
                                     </InlineStack>
@@ -472,11 +486,27 @@ export default function Reviews() {
                                     }
                                 </BlockStack>
                             </div>
-                            <DropZone />
-                            <Text as="p" variant="bodySm">Please make sure the column headings are ordered as such:</Text>
-                            <Text as="p" variant="bodySm" tone="success">Title, Body, Name, Email, Rating, Media, Date</Text>
+                            {importCsvFileState.errors.product && importCsvFileState.products.length === 0 && <Text as="p" tone="critical">Product is required</Text>}
+                            <DropZone 
+                            accept="text/csv"
+                            onDrop={handleDrop}
+                            allowMultiple={false}
+                            >
+                                <div style={{padding: '10px 5px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                    <InlineStack 
+                                    align="center"   
+                                    gap={'500'}
+                                    >
+                                    {importCsvFileState.files.length > 0 && 
+                                    <Text as="p" tone="success">{importCsvFileState.files[0].name}</Text>
+                                    }
+                                    </InlineStack>
+                                    {fileUpload}
+                                </div>
+                            </DropZone>
+                            {importCsvFileState.errors.file && importCsvFileState.files.length === 0 && <Text as="p" tone="critical">File is required</Text>}
                             <div style={{width: 'fit-content', marginLeft: 'auto'}}>
-                                <Button onClick={importReviewsFromFile} loading={isFileReviewFormSubmitting} variant="primary" disabled={errors || !fileUploaded || !selectedProductDataFile}>Import Reviews</Button>
+                                <Button onClick={importCsvFileReviews} variant="primary">Import Reviews</Button>
                             </div>
                         </BlockStack>
                     </div>
@@ -486,7 +516,7 @@ export default function Reviews() {
                 
                 <Card>
                     <EmptyState 
-                    action={{content: 'Import Your First Reviews', onAction: importFileReviews}}
+                    action={{content: 'Import Your First Reviews', onAction: () => setImportCsvFileState({...importCsvFileState, importInitiated: true})}}
                     heading="You Don't Have Any Reviews Yet"
                     image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
                     />
