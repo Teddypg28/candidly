@@ -52,11 +52,18 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             const answerChoicesDirty = JSON.stringify(currentAnswerChoices) !== JSON.stringify(oldAnswerChoices)
 
             if (answerChoicesDirty) {
-                updateAnswerChoices(currentAnswerChoices, oldAnswerChoices, params.id as string)
+                await updateAnswerChoices(currentAnswerChoices, oldAnswerChoices, params.id as string)
             }
 
             delete data['radioAnswerChoices']
-            await db.reviewFormQuestion.update({where: {id: Number(params.id)}, data: {...data, store: session.shop}})
+            const updatedQuestion = await db.reviewFormQuestion.update({where: {id: Number(params.id)}, data: {...data, store: session.shop}})
+
+            const currentAnswerChoiceSnapshots = await db.answerChoiceSnapshot.findMany({where: {questionId: {equals: Number(params.id)}}})
+            if (currentAnswerChoiceSnapshots[0].display.toString() !== updatedQuestion.radioDisplayAnswer[0]) {
+                const display = updatedQuestion.radioDisplayAnswer[0] === 'true' ? true : false
+                await db.answerChoiceSnapshot.updateMany({where: {questionId: {equals: Number(params.id)}}, data: {display}})
+            }
+
         }
 
         // const result = await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})

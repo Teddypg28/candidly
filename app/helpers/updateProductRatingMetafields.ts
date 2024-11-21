@@ -4,7 +4,7 @@ import db from '../db.server'
 
 export default async function updateProductRatingMetafields(productId: string, rating: number, admin: any, session: SessionData) {
 
-    const productIdNumber = productId.split('Product/')[1]
+    const productIdNumber = parseInt(productId.split('Product/')[1])
 
     const totalReviews = await db.productReview.findMany({where: {productId: {equals: productId}, AND: {store: {equals: session.shop}, AND: {isPublished: {equals: true}}}}})
     const metafields = await admin.rest.resources.Metafield.all({product_id: productIdNumber, session});   

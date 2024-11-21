@@ -18,22 +18,50 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     const { admin, session } = await authenticate.admin(request)
 
     const data = await request.json()
-    const { action } = data
+    const { state, action, nameToUpdate } = data
+
+     if (state) {
+        delete state['selectedTab']
+    }
+
+    if (action === 'create') {
+        return await db.savedReviewsTableViews.create({ data: { ...state, store: session.shop } })
+    }
+
+    if (action === 'update') {
+        if (nameToUpdate) {
+            return await db.savedReviewsTableViews.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: nameToUpdate}}}, data : { ...state, store: session.shop } })
+        } else {
+            return await db.savedReviewsTableViews.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: state.name}}}, data : { ...state, store: session.shop } })
+        }
+    }
 
     if (action === 'delete') {
+        return await db.savedReviewsTableViews.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: data.nameToDelete}}}})
+    }
+
+    if (action === 'deleteReviews') {
         return await Promise.all(data.reviewIds.map(async (id: string) => {
             return await db.productReview.delete({where: {id: parseInt(id)}})
         }))
     }
 
-    if (action === 'publish') {
+    if (action === 'publishReviews') {
         const publishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
             return await db.productReview.update({where: {id: parseInt(id)}, data: {isPublished: true}})
         }))
-
         return await Promise.all(publishedReviews.map(async (review) => {
             return await updateProductRatingMetafields(review.productId, review.rating, admin, session)
         }))
+    }
+
+    if (action === 'unpublishReviews') {
+        const unpublishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
+            return await db.productReview.update({where: {id: parseInt(id)}, data: {isPublished: false}})
+        }))
+        return await Promise.all(unpublishedReviews.map(async (review) => {
+            return await updateProductRatingMetafields(review.productId, 0, admin, session)
+        })) 
     }
 }
 
@@ -41,7 +69,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
   const { session, admin } = await authenticate.admin(request)
 
-  let reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
+  const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
 
   const query = `query getProductTitle($id: ID!) {
       product(id: $id) {
@@ -55,7 +83,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
       return {...review, productTitle}
   }))
 
-  const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true}})
+  const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
   return json({reviews: updatedReviews, savedTableViews})
 
 }
@@ -239,6 +267,28 @@ export default function Reviews() {
         }
     ]
 
+    const createNewView = async (name: string) => {
+        submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
+        setIndexTableState({...indexTableState, selectedTab: savedTableViews.length + 1})                    
+        return true
+    }
+
+    const saveView = async () => {
+        submit(JSON.stringify({state: { ...indexTableState }, action: 'update'}), {method: 'POST', encType: 'application/json'})
+        return true
+    }
+
+    const renameView = (newName: string, currentName: string) => {
+        submit(JSON.stringify({state: { ...indexTableState, name: newName }, action: 'update', nameToUpdate: currentName}), {method: 'POST', encType: 'application/json'})
+    }
+
+    const deleteView = (viewNameToDelete: string) => {
+        submit(JSON.stringify({nameToDelete: viewNameToDelete, action: 'delete'}), {method: 'POST', encType: 'application/json'})
+        setTimeout(() => {
+            setIndexTableState({...indexTableState, selectedTab: 0})
+        }, 500);
+    }
+
     const tabs: IndexFiltersProps['tabs'] = ['All Reviews', ...savedTableViews.map(view => view.name)].map((tabName, index) => {
         return {
             content: tabName, 
@@ -272,28 +322,6 @@ export default function Reviews() {
                 onRemove: () => setIndexTableState({...indexTableState, selectedRatings: []})
             }
         )
-    }
-
-    const createNewView = async (name: string) => {
-        submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
-        setIndexTableState({...indexTableState, selectedTab: savedTableViews.length + 1})                    
-        return true
-    }
-
-    const saveView = async () => {
-        submit(JSON.stringify({state: { ...indexTableState }, action: 'update'}), {method: 'POST', encType: 'application/json'})
-        return true
-    }
-
-    const renameView = (newName: string, currentName: string) => {
-        submit(JSON.stringify({state: { ...indexTableState, name: newName }, action: 'update', nameToUpdate: currentName}), {method: 'POST', encType: 'application/json'})
-    }
-
-    const deleteView = (viewNameToDelete: string) => {
-        submit(JSON.stringify({nameToDelete: viewNameToDelete, action: 'delete'}), {method: 'POST', encType: 'application/json'})
-        setTimeout(() => {
-            setIndexTableState({...indexTableState, selectedTab: 0})
-        }, 500);
     }
 
     const primaryAction: IndexFiltersProps['primaryAction'] = {
@@ -340,14 +368,21 @@ export default function Reviews() {
 
     const deleteSelectedReviews = useCallback(async () => {
 
-        submit(JSON.stringify({reviewIds: selectedResources, action: 'delete'}), {method: 'POST', encType: 'application/json'})
+        submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
 
     }, [selectedResources])
 
     const publishSelectedReviews = useCallback(async () => {
 
-        submit(JSON.stringify({reviewIds: selectedResources, action: 'publish'}), {method: 'POST', encType: 'application/json'})
+        submit(JSON.stringify({reviewIds: selectedResources, action: 'publishReviews'}), {method: 'POST', encType: 'application/json'})
+        removeSelectedResources(selectedResources)
+
+    }, [selectedResources])
+
+    const unpublishSelectedReviews = useCallback(async () => {
+
+        submit(JSON.stringify({reviewIds: selectedResources, action: 'unpublishReviews'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
 
     }, [selectedResources])
@@ -399,9 +434,7 @@ export default function Reviews() {
                 shopify.toast.show('Error importing reviews', {duration: 3000})
 
             }
-
         }
-
     }
 
     return (
@@ -499,7 +532,8 @@ export default function Reviews() {
                 <PageActions 
                 primaryAction={{content: 'Publish', disabled: selectedResources.length === 0, onAction: publishSelectedReviews}}
                 secondaryActions={[
-                    {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews}
+                    {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews},
+                    {content: 'Unpublish', disabled: selectedResources.length === 0, onAction: unpublishSelectedReviews}
                 ]}
                 />
             }

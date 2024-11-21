@@ -12,6 +12,8 @@ export async function action({ request } : ActionFunctionArgs) {
                 
                 const customQuestionData = {...data.customQuestionAnswers}
                 delete data['customQuestionAnswers']
+
+                const newReviewData = await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false}})
                 
                 const answerChoiceSets = Object.keys(customQuestionData)
                     .filter(key => customQuestionData[key].type === 'radio')
@@ -23,9 +25,21 @@ export async function action({ request } : ActionFunctionArgs) {
                         answerChoiceIds.push(answerId)
                     })
                 })
-                
-                await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false, customQuestionAnswers: {connect: answerChoiceIds.map(id => ({id: parseInt(id)}))}}})
 
+                await Promise.all(answerChoiceIds.map(async (id) => {
+                    const answerChoiceData = await db.radioAnswerChoice.findFirst({where: {id: Number(id)}})
+                    if (answerChoiceData) {
+                        const data = {
+                            display: answerChoiceData.display, 
+                            label: answerChoiceData.label,
+                            value: answerChoiceData.value,
+                            questionId: answerChoiceData.questionId,
+                            reviewId: newReviewData.id
+                        }
+                        return await db.answerChoiceSnapshot.create({data})
+                    }
+                }))
+                
                 return json({status: 'success'}, {status: 200})
             } 
         
@@ -34,7 +48,6 @@ export async function action({ request } : ActionFunctionArgs) {
         console.log(error)
 
         return new Response(JSON.stringify({status: 'review verification failed'}), {status: 400})
-
 
     }
 }
