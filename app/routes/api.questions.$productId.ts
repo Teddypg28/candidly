@@ -15,10 +15,10 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     
         const { session } = await authenticate.public.appProxy(request)
     
-        const result = await db.reviewFormQuestion.findMany({where: {store: {equals: session?.shop}}})
+        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session?.shop}}, include: {radioAnswerChoices: true}})
 
         const eligibleQuestions: any = []
-        result.forEach(question => {
+        questions.forEach(question => {
             if (question.productConfiguration[0] === 'all' || question.productIds.includes(`gid://shopify/Product/${productId}`)) {
                 eligibleQuestions.push(question)
             }

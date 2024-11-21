@@ -96,8 +96,6 @@ export default function Settings() {
 
     const isStateDirty = JSON.stringify(settingsState) !== JSON.stringify(cleanState)
 
-    console.log(settingsState, cleanState)
-
     const cancelChanges = () => setSettingsState(cleanState)
     const updateSettings = () => {
         submit(JSON.stringify({settingsState}), {method: 'POST', encType: 'application/json'});

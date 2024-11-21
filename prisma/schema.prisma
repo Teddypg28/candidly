@@ -39,8 +39,7 @@ model RadioAnswerChoice {
   display    Boolean
   questionId Int
   question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  reviewId   Int?
-  review     ProductReview?     @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  review     ProductReview[]
 }
 
 model ProductReview {

@@ -9,22 +9,23 @@ export async function action({ request } : ActionFunctionArgs) {
         
             if (session && admin) {
                 const data = await request.json()
-
-                const customQuestionData = {...data.customQuestions}
-                delete data['customQuestions']
                 
-                const customQuestionAnswers = Object.keys(customQuestionData)
+                const customQuestionData = {...data.customQuestionAnswers}
+                delete data['customQuestionAnswers']
+                
+                const answerChoiceSets = Object.keys(customQuestionData)
                     .filter(key => customQuestionData[key].type === 'radio')
-                    .map(key => {
-                        return {
-                            value: customQuestionData[key].value,
-                            label: customQuestionData[key].label,
-                            display: customQuestionData[key].display === 'true' ? true : false
-                        }
+                    .map(key =>  customQuestionData[key].value)
+                
+                const answerChoiceIds: string[] = []
+                answerChoiceSets.forEach(set => {
+                    set.forEach((answerId: string) => {
+                        answerChoiceIds.push(answerId)
                     })
-        
-                await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false, customQuestionAnswers: {createMany: {data: customQuestionAnswers}}}})
-        
+                })
+                
+                await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false, customQuestionAnswers: {connect: answerChoiceIds.map(id => ({id: parseInt(id)}))}}})
+
                 return json({status: 'success'}, {status: 200})
             } 
         

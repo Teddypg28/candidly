@@ -19,13 +19,12 @@ export async function loader({ request } : LoaderFunctionArgs) {
     }
 
     const currentOrdersStatus = await db.currentOrdersStatus.findFirst({where: {store: {equals: session.shop}}})
-    const storeSettingsSet = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
     // Retrieve all current orders if current orders aren't handled and store settings are set
-    if (!currentOrdersStatus?.handled && storeSettingsSet) {
+    if (!currentOrdersStatus?.handled && appSettings) {
 
         const reviewRequestObjects: any = []
-        const emailSendingSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
         const query = `{
             orders(first: 100) {
@@ -60,13 +59,13 @@ export async function loader({ request } : LoaderFunctionArgs) {
                     const numOfDaysSince = Math.round((new Date().valueOf() - new Date(node.createdAt).valueOf()) / (1000 * 60 * 60 * 24))
                     let requestDate
         
-                    if (emailSendingSettings && node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
-                        if (numOfDaysSince >= emailSendingSettings.firstReviewRequest) {                            
+                    if (node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
+                        if (numOfDaysSince >= appSettings.firstReviewRequest) {                            
                             requestDate = new Date()
                             requestDate.setDate(requestDate.getDate() + 1) 
                         } else {
                             requestDate = new Date(node.createdAt)
-                            requestDate.setDate(requestDate.getDate() + emailSendingSettings.firstReviewRequest)
+                            requestDate.setDate(requestDate.getDate() + appSettings.firstReviewRequest)
                         }
 
                     }      

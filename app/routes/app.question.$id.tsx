@@ -15,6 +15,7 @@ import { redirect } from "@remix-run/node";
 
 import fetchProductInfo from "~/helpers/fetchProductInfo";
 import fetchCollectionInfo from "~/helpers/fetchCollectionInfo";
+import updateAnswerChoices from "~/helpers/updateAnswerChoices";
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
 
@@ -23,8 +24,6 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         const { session } = await authenticate.admin(request)
 
         const data = await request.json()
-    
-        const dataWithStore = {...data, store: session.shop}
 
         if (data.action === 'delete') {
     
@@ -35,74 +34,29 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
         if (params.id === 'new') {
 
-            const answerChoices = [...dataWithStore.radioAnswerChoices]
-            delete dataWithStore['radioAnswerChoices']
-            const question = await db.reviewFormQuestion.create({data: {...dataWithStore, radioAnswerChoices: {createMany: {data: answerChoices}}}, include: {radioAnswerChoices: true}})
+            const answerChoices = [...data.radioAnswerChoices]
+            delete data['radioAnswerChoices']
+            const question = await db.reviewFormQuestion.create({data: {...data, store: session.shop, radioAnswerChoices: {createMany: {data: answerChoices}}}, include: {radioAnswerChoices: true}})
             return redirect(`/app/question/${question.id}`)
 
         }
 
-        // update logic:
-        
+        // update logic
         const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: Number(params.id)}}, include: {radioAnswerChoices: true}})
         
         if (question) {
 
-            const currentAnswerChoices = [...dataWithStore.radioAnswerChoices]
+            const currentAnswerChoices = data.radioAnswerChoices
             const oldAnswerChoices = question.radioAnswerChoices
 
             const answerChoicesDirty = JSON.stringify(currentAnswerChoices) !== JSON.stringify(oldAnswerChoices)
 
             if (answerChoicesDirty) {
-
-                if (currentAnswerChoices.length === oldAnswerChoices.length) {
-                    await Promise.all(oldAnswerChoices.map(async (answerChoice, index) => {
-                        await db.radioAnswerChoice.update({where: {id: answerChoice.id}, data: {...currentAnswerChoices[index]}})
-                    }))
-                } else if (currentAnswerChoices.length > oldAnswerChoices.length) {
-
-                    // update current answer choices
-                    await Promise.all(oldAnswerChoices.map(async (answerChoice, index) => {
-                        return await db.radioAnswerChoice.update({where: {id: answerChoice.id}, data: {...currentAnswerChoices[index]}})
-                    }))
-
-                    // create new answer choices using remaining data
-                    const remainingData = currentAnswerChoices.filter((answerChoice, index) => index > oldAnswerChoices.length - 1)
-                    const remainingDataWithQuestionId = remainingData.map((answerChoice) => {return {...answerChoice, questionId: Number(params.id)}})
-                    await db.radioAnswerChoice.createMany({data: remainingDataWithQuestionId})
-
-                } else {
-
-                    // delete removed answer choices
-                    const numChoicesToDelete = oldAnswerChoices.length - currentAnswerChoices.length
-                    const remainingAnswerChoices = [...question.radioAnswerChoices]
-
-                    const deletedAnswerChoices = []
-                    for (let i = 0; i<numChoicesToDelete; i++) {
-                        const deletedAnswerChoice = remainingAnswerChoices.pop()
-                        deletedAnswerChoices.push(deletedAnswerChoice)
-                    }
-
-                    await Promise.all(deletedAnswerChoices.map(async (deletedChoice) => {
-                        return await db.radioAnswerChoice.delete({where: {id: deletedChoice?.id}})
-                    }))
-
-                    // see if remaining answer choice data is clean - if not, update records
-
-                    const remainingAnswerChoiceDataClean = JSON.stringify(currentAnswerChoices) === JSON.stringify(remainingAnswerChoices)
-                    if (remainingAnswerChoiceDataClean) {
-                        return true
-                    } else {
-                        await Promise.all(remainingAnswerChoices.map(async (answerChoice, index) => {
-                            return await db.radioAnswerChoice.update({where: {id: answerChoice.id}, data: {...currentAnswerChoices[index]}})
-                        }))
-                    }
-                }
+                updateAnswerChoices(currentAnswerChoices, oldAnswerChoices, params.id as string)
             }
 
-            delete dataWithStore['radioAnswerChoices']
-
-            await db.reviewFormQuestion.update({where: {id: Number(params.id)}, data: dataWithStore})
+            delete data['radioAnswerChoices']
+            await db.reviewFormQuestion.update({where: {id: Number(params.id)}, data: {...data, store: session.shop}})
         }
 
         // const result = await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})
@@ -269,7 +223,6 @@ export default function Question() {
         }
 
         const useProductVariantsAsChoices = () => {
-
             const radioAnswerChoices = selectedProductsState[0].variants.map((variant) => {
                 return {
                     value: variant, 
@@ -278,7 +231,6 @@ export default function Question() {
                 }
             })
             setState(prevState => {return {...prevState, radioAnswerChoices}})
-            
         }
 
         const newAnswerChoice = {
