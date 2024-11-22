@@ -10,37 +10,25 @@ export default async function importCsvFile(session: SessionData, data: FormData
     const text = await file.text()
 
     const cleanedData = text.trim().replaceAll('\r', '').split('\n').map(row => row.split(','))
-
-    const headings: any = cleanedData.shift()
+    const headings = cleanedData.shift() as string[]
 
     const reviews = cleanedData.map(row => {
-
-        const reviewsObj: any = {}
-
-        row.forEach((data, index) => {
+        const reviewsDbObject: any = {}
+        row.forEach((column, index) => {
 
             if (headings[index] === 'date') {
-
-                return reviewsObj[headings[index]] = new Date(data)
-
+                return reviewsDbObject[headings[index]] = new Date(column)
             }
-
             if (headings[index] === 'rating') {
-
-                return reviewsObj[headings[index]] = parseInt(data)
-
+                return reviewsDbObject[headings[index]] = parseInt(column)
             }
-
-            reviewsObj[headings[index]] = data
+            reviewsDbObject[headings[index]] = column
 
         })
-
-        reviewsObj['productId'] = parseInt((productId as string).split('Product/')[1])
-        reviewsObj['store'] = session.shop
-        reviewsObj['isPublished'] = false
-
-        return reviewsObj
-        
+        reviewsDbObject['productId'] = productId
+        reviewsDbObject['store'] = session.shop
+        reviewsDbObject['isPublished'] = false
+        return reviewsDbObject
     })
 
     await db.productReview.createMany({data: reviews})

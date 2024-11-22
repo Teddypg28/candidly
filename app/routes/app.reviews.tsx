@@ -8,7 +8,7 @@ import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import db from '../db.server'
 
-import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState, ReviewTableState } from "~/types/types";
+import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState, ReviewTableState, sampleReviewData } from "~/types/types";
 
 import styles from '../styles/ImportReviews.module.css'
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
@@ -95,35 +95,34 @@ export default function Reviews() {
     const [indexTableState, setIndexTableState] = useState<ReviewTableState>(initialReviewTableState)
     const [importCsvFileState, setImportCsvFileState] = useState<ImportCsvFileState>(initialImportCsvFileState)
 
-    const [downloadFileHrefValue, setDownloadFileHrefValue] = useState('')
+    const [fileData, setFileData] = useState('')
     
     const submit = useSubmit()
     const navigate = useNavigate()
     const {mode, setMode} = useSetIndexFiltersMode()
 
-    const isFirstRender = useRef(true)
-
     useEffect(() => {
 
-        if (isFirstRender.current) {
-            // isFirstRender.current = false
-            return
+        let exportCsvAnchor: HTMLAnchorElement
+
+        if (fileData) {
+            exportCsvAnchor = document.createElement('a')
+            exportCsvAnchor.style.display = 'none'
+            exportCsvAnchor.setAttribute('href', fileData)
+            exportCsvAnchor.setAttribute('download', 'reviews.csv')
+            document.body.appendChild(exportCsvAnchor)
+            exportCsvAnchor.click()
+            document.body.removeChild(exportCsvAnchor)
         }
-        
-        const exportCsvAnchor = document.createElement('a')
-        
-        exportCsvAnchor.style.display = 'none'
 
-        exportCsvAnchor.setAttribute('href', downloadFileHrefValue)
-        exportCsvAnchor.setAttribute('download', 'reviews.csv')
+        return () => {
+            if (exportCsvAnchor) {
+                document.body.removeChild(exportCsvAnchor)
+            }
+            setFileData('')
+        }
 
-        document.body.appendChild(exportCsvAnchor)
-        
-        exportCsvAnchor.click()
-
-        document.body.removeChild(exportCsvAnchor)
-
-    }, [downloadFileHrefValue])
+    }, [fileData])
 
     const filteredReviews = reviews.sort((a, b) => {
 
@@ -382,23 +381,16 @@ export default function Reviews() {
     }, [selectedResources])
 
     const exportAsCsv = () => {
-
-        const rows = filteredReviews.map(review => {
-
-            const { title, body, name, email, rating, media, date } = review
-
-            return [ title, body, name, email, rating, media, new Date(date).toLocaleDateString() ]
-
-        })
-
-        const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'store'].includes(key))
-
+        const rows = filteredReviews.map(review => [review.title, review.body, review.name, review.email, review.rating, review.media, new Date(review.date).toLocaleDateString(), review.isPublished])
+        const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'store'].includes(key))
         rows.unshift(rowHeadings)
-
         const encodedReviewData = rows.map(row => row.join()).join('\n')
+        setFileData(`data:text/csv;charset=utf-8,${encodedReviewData}`)
+    }
 
-        setDownloadFileHrefValue(`data:text/csv;charset=utf-8,${encodedReviewData}`)
-
+    const downloadSampleFile = () => {
+        const encodedReviewData = sampleReviewData.map(row => row.join()).join('\n')
+        setFileData(`data:text/csv;charset=utf-8,${encodedReviewData}`)
     }
 
     const importCsvFileReviews = async () => {
@@ -409,11 +401,10 @@ export default function Reviews() {
             formData.append('reviews', importCsvFileState.files[0])
             formData.append('productId', importCsvFileState.products[0].id)
 
-            const response = await fetch('/api/reviews/admin/import', {method: 'POST', body: formData})
+            const response = await fetch('/api/csv/import', {method: 'POST', body: formData})
+            const res = await response.json()
 
-            const data = await response.json()
-
-            if (data.success) {
+            if (res.ok) {
 
                 shopify.toast.show('Reviews successfully imported!', {duration: 3000})
                 setImportCsvFileState(initialImportCsvFileState)
@@ -505,9 +496,10 @@ export default function Reviews() {
                                 </div>
                             </DropZone>
                             {importCsvFileState.errors.file && importCsvFileState.files.length === 0 && <Text as="p" tone="critical">File is required</Text>}
-                            <div style={{width: 'fit-content', marginLeft: 'auto'}}>
+                            <InlineStack align="space-between">
+                                <Button onClick={downloadSampleFile} variant="plain">Download Sample File</Button>
                                 <Button onClick={importCsvFileReviews} variant="primary">Import Reviews</Button>
-                            </div>
+                            </InlineStack>
                         </BlockStack>
                     </div>
                 </Modal>

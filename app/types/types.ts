@@ -1,5 +1,19 @@
 import { IndexFiltersProps } from "@shopify/polaris"
 
+export const sampleReviewData = [
+    ['title, body', 'name', 'email', 'rating', 'media', 'date', 'isPublished'],
+    [
+        'Blizzard Bites are awesome!',
+        'They are definitely some of the best protein bites on the market! Looking forward to trying more soon!',
+        'Katie',
+        'katielovesblizzardbites@gmail.com',
+        5,
+        '',
+        new Date().toLocaleDateString(),
+        false
+    ]
+]
+
 export const initialImportCsvFileState: ImportCsvFileState = {
     files: [],
     products: [],
