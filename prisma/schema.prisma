@@ -61,7 +61,7 @@ model ProductReview {
   name                  String
   email                 String?
   rating                Int
-  media                 String
+  media                 String[]
   date                  DateTime
   isPublished           Boolean
   customQuestionAnswers AnswerChoiceSnapshot[]
