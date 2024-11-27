@@ -61,10 +61,19 @@ model ProductReview {
   name                  String
   email                 String?
   rating                Int
-  media                 String[]
+  media                 ProductReviewMedia[]
   date                  DateTime
   isPublished           Boolean
   customQuestionAnswers AnswerChoiceSnapshot[]
+}
+
+model ProductReviewMedia {
+  id       Int           @id @default(autoincrement())
+  store    String
+  url      String
+  name     String
+  reviewId Int
+  review   ProductReview @relation(fields: [reviewId], references: [id])
 }
 
 model ReviewFormQuestion {

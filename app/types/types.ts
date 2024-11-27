@@ -135,19 +135,6 @@ export interface ReviewRequestTableState {
     selectedReviewStatusFilters: string[]
 }
 
-export interface Review {
-    store: string;
-    title: string;
-    body: string;
-    name: string;
-    email: string | null;
-    rating: number;
-    media: string;
-    date: Date | string;
-    productTitle: string;
-    id: string
-}
-
 export interface Import3rdPartyReviewsFormState {
     isImporting3rdPartyReviews: boolean
     numberOfReviews: number

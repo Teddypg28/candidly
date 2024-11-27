@@ -2,9 +2,14 @@ import { ActionFunctionArgs, json, LoaderFunctionArgs, redirect } from "@remix-r
 import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
 import { BlockStack, Card, DropZone, InlineStack, Layout, Page, PageActions, Text, TextField, Thumbnail } from "@shopify/polaris";
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+
 import db from '../db.server'
+import styles from '../styles/Review.module.css'
+
 import { authenticate } from "~/shopify.server";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
@@ -16,7 +21,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         const reviewId = params.id
 
         if (reviewId) {
-            const review = await db.productReview.findFirst({where: {store: {equals: session.shop}, AND: {id: {equals: parseInt(reviewId)}}}})
+            const review = await db.productReview.findFirst({where: {store: {equals: session.shop}, AND: {id: {equals: parseInt(reviewId)}}}, include: {media: {select: {url: true, name: true}}}})
             if (review) {
                 return json(
                     {
@@ -25,13 +30,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                         body: review.body, 
                         name: review.name, 
                         rating: review.rating.toString(), 
-                        media: await Promise.all(review.media.map(
-                            async (s3Url) => { 
-                                const response = await fetch(s3Url)
-                                const blob = await response.blob()
-                                return new File([blob], s3Url.split('.com/')[1], {type: blob.type})
-                             })
-                        )
+                        media: review.media
                     })
             }
             return redirect('/app/reviews')
@@ -51,13 +50,17 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     const data = await request.json()
 
-    const id = data.state.id
+    console.log(data)
 
-    delete data.state['id']
+    return true
 
-    const rating = parseInt(data.state.rating)
+    // const id = data.state.id
 
-    return await db.productReview.update({where: {id}, data: {...data.state, rating}})
+    // delete data.state['id']
+
+    // const rating = parseInt(data.state.rating)
+
+    // return await db.productReview.update({where: {id}, data: {...data.state, rating}})
 
 }
 
@@ -66,16 +69,57 @@ export default function Review() {
     const review = useLoaderData<typeof loader>()
 
     const navigate = useNavigate()
+    const submit = useSubmit()
 
     const [state, setState] = useState(review)
     const [cleanState, setCleanState] = useState(review)
 
+    const uploadedMediaContainerRefs = useRef<HTMLDivElement[]>([])
+    const trashCanIconContainerRefs = useRef<HTMLDivElement[]>([])
+    const useEffectFunctions = useRef<any[]>([])
+
+    useEffect(() => {
+        uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
+            // Check if uploaded media container exists and not null
+            if (uploadedMediaContainer) {
+                const showTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'flex' 
+                const hideTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'none' 
+                const removeMedia = (el: MouseEvent) => {
+                    el.stopPropagation()
+                    const filteredMedia = state.media.filter(media => media.name !== uploadedMediaContainer.id)
+                    setState(prevState => {return {...prevState, media: filteredMedia}})
+                }
+
+                const showTrashCanIconHandler = () => showTrashCanIcon(index)
+                const hideTrashCanIconHandler = () => hideTrashCanIcon(index)
+
+                uploadedMediaContainer.addEventListener('mouseover', showTrashCanIconHandler)
+                uploadedMediaContainer.addEventListener('mouseleave', hideTrashCanIconHandler)
+                trashCanIconContainerRefs.current[index].addEventListener('click', removeMedia)
+
+                useEffectFunctions.current[index] = [showTrashCanIconHandler, hideTrashCanIconHandler, removeMedia]
+                uploadedMediaContainer.dataset.listeners = "true"
+            } 
+        })
+
+        return () => {
+            uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
+                // If container exists and there are already listeners attached, remove them
+                if (uploadedMediaContainer && uploadedMediaContainer.dataset.listeners === "true") {
+                    uploadedMediaContainer.removeEventListener('mouseover', useEffectFunctions.current[index][0])
+                    uploadedMediaContainer.removeEventListener('mouseleave', useEffectFunctions.current[index][1])
+                    trashCanIconContainerRefs.current[index].removeEventListener('click', useEffectFunctions.current[index][2])
+                    uploadedMediaContainer.dataset.listeners = "false"
+                }
+            }
+        )}
+
+    }, [state.media])
+
     const isStateClean = JSON.stringify(state) === JSON.stringify(cleanState)
 
-    const submit = useSubmit()
-
     const handleSave = () => {
-        submit(JSON.stringify({state}), {method: 'POST', encType: 'application/json'})
+        submit(JSON.stringify(state), {method: 'POST', encType: 'application/json'})
         setCleanState(state)
     }
 
@@ -88,20 +132,25 @@ export default function Review() {
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         const currentUploadedFileNames = state.media.map(file => file.name)
-        const newUploadedFiles = acceptedFiles.filter(file => !currentUploadedFileNames.includes(file.name))
-        setState({...state, media: [...newUploadedFiles]})
+        const newUploadedFiles = acceptedFiles
+            .filter(file => !currentUploadedFileNames.includes(file.name))
+            .map(file => {return {url: window.URL.createObjectURL(file), name: file.name}})
+        setState(prevState => {return {...prevState, media: [...state.media, ...newUploadedFiles]}})
     }
 
     const uploadedFileMarkup = state.media.map((file, index) => {
         return (
-            <div key={index}>
+            <div ref={(el: HTMLDivElement) => uploadedMediaContainerRefs.current[index] = el} id={file.name} className={styles.uploadedMedia} key={index}>
                 <BlockStack gap={'200'} inlineAlign="center">
                     <Thumbnail
-                    source={window.URL.createObjectURL(file as File)}
+                    source={file.url}
                     alt={file.name}
                     />
                     <Text as="p">{file.name}</Text>
                 </BlockStack>
+                <div ref={(el: HTMLDivElement) => trashCanIconContainerRefs.current[index] = el} className={styles.trashCanIconContainer}> 
+                    <FontAwesomeIcon icon={faTrashCan} color="white" size="3x" />
+                </div>
             </div>
         )
     })
@@ -128,6 +177,7 @@ export default function Review() {
                         label="Reviewer Name" />
                         <TextField 
                         value={state.rating} 
+                        type="integer"
                         onChange={value => setState(prevState => {return {...prevState, rating: value}})}
                         placeholder="Star Rating" 
                         label="Star Rating" 
@@ -173,7 +223,6 @@ export default function Review() {
                         </DropZone>
                     </BlockStack>
                 </Card>
-
             </Layout.Section>
             <Layout.Section>
                 <PageActions 

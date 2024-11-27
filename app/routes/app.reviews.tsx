@@ -69,7 +69,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
   const { session, admin } = await authenticate.admin(request)
 
-  const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
+  const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, include: {media: true}})
 
   const query = `query getProductTitle($id: ID!) {
       product(id: $id) {
