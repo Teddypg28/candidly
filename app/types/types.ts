@@ -168,12 +168,18 @@ export interface ReviewRequestData {
     orderName: string
 }
 
-// export interface DisplayProduct {
-//     store: string; 
-//     productId: string; 
-//     title: string; 
-//     imageUrl: string | null; 
-// }
+export interface ProductReview {
+    id: number,
+    title: string
+    body: string
+    name: string
+    rating: string
+    media: {
+        name: string
+        url: string
+        file?: File
+    }[]
+}
 
 export interface AppSettings {
     id: number
