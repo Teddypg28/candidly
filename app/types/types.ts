@@ -169,7 +169,6 @@ export interface ReviewRequestData {
 }
 
 export interface ProductReview {
-    id: number,
     title: string
     body: string
     name: string

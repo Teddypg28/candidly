@@ -23,11 +23,10 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         const reviewId = params.id
 
         if (reviewId) {
-            const review = await db.productReview.findFirst({where: {store: {equals: session.shop}, AND: {id: {equals: parseInt(reviewId)}}}, include: {media: {select: {url: true, name: true}}}})
+            const review = await db.productReview.findFirst({where: {store: {equals: session.shop}, AND: {id: {equals: parseInt(reviewId)}}}, include: {media: {select: {url: true, name: true}}}, omit: {id: true}})
             if (review) {
                 return json(
                     {
-                        id: review.id, 
                         title: review.title, 
                         body: review.body, 
                         name: review.name, 
@@ -49,33 +48,47 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     try {
-        const {session} = await authenticate.admin(request)
+        const s3Client = new S3Client({
+            region: process.env.AWS_REGION as string,
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
+            }
+        })
 
         const allFormData = await request.formData()
+
+        const action = allFormData.get('action')
+        if (action === 'delete') {
+            // get media s3 bucket keys from db record urls and then remove them from s3 bucket
+            const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: Number(params.id)}}})
+            await Promise.all(reviewMediaRecords.map(async (record) => {
+                const bucketKey = record.url.split('.com/')[1]
+                const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: bucketKey})
+                return await s3Client.send(deleteCommand)
+            }))
+            // delete the review
+            await db.productReview.delete({where: {id: Number(params.id)}})
+            return redirect('/app/reviews')
+        } 
+
         const newFileData = allFormData.getAll('newFiles')
         const currentFileData = allFormData.getAll('currentFileKeys')
-    
         allFormData.delete('currentFileKeys')
         allFormData.delete('newFiles')
         allFormData.delete('id')
     
+        // update product review data first, then media
         const updatedData = Object.fromEntries(allFormData)
         const updatedProductReview = await db.productReview.update({where: {id: Number(params.id)}, data: {...updatedData, rating: parseInt(allFormData.get('rating') as string)}})
-    
+
         const updateCurrentFiles = async () => {
-            const s3Client = new S3Client({
-                region: process.env.AWS_REGION as string,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-                }
-            })
             const command = new ListObjectsV2Command({Bucket: process.env.S3_BUCKET_NAME})
             const data = await s3Client.send(command)
             const storedFiles = data.Contents || []
             const filesToRemove = storedFiles.filter(file => !currentFileData.includes(file.Key as string))
             if (filesToRemove.length > 0) {
-                // remove objects from s3 bucket logic
+                // remove objects from s3 bucket
                 // remove media records from db table
                 await Promise.all(filesToRemove.map(async (file) => {
                     const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: file.Key as string})
@@ -86,51 +99,25 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             }
         }
 
-        await updateCurrentFiles()
+        const uploadFileToS3 = async (file: File) => {
+            const uploadParams = {
+                client: s3Client,
+                params: {
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: `${Date.now()}-${file.name}`,
+                    Body: file.stream()
+                }
+            }
+            const upload = new Upload(uploadParams)
+            const result = await upload.done()
+            return result
+        }
+
+        if (currentFileData.length > 0) {
+            await updateCurrentFiles()
+        }
 
         if (newFileData.length > 0) {
-            // initialize s3Client
-            const s3Client = new S3Client({
-                region: process.env.AWS_REGION as string,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-                }
-            })
-        
-            // function to upload file using Upload class
-            const uploadFileToS3 = async (file: File) => {
-                const uploadParams = {
-                    client: s3Client,
-                    params: {
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: `${Date.now()}-${file.name}`,
-                        Body: file.stream()
-                    }
-                }
-                const upload = new Upload(uploadParams)
-                const result = await upload.done()
-                return result
-            }
-
-            // function to check new updated files against stored files
-            // const updateCurrentFiles = async () => {
-            //     const s3Client = new S3Client({
-            //         region: process.env.AWS_REGION as string,
-            //         credentials: {
-            //             accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-            //             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-            //         }
-            //     })
-            //     const command = new ListObjectsV2Command({Bucket: process.env.S3_BUCKET_NAME})
-            //     const data = await s3Client.send(command)
-            //     const storedFileKeys = data.Contents || []
-            //     const filesToRemove = 
-            //     console.log(data)
-            // }
-    
-            // await updateCurrentFiles()
-        
             // upload each new file logic
             const results = await Promise.all(newFileData.map(async (file) => {
                 return await uploadFileToS3(file as File)
@@ -138,21 +125,14 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             
             await Promise.all(results.map(async (result) => {
                 if (result.$metadata.httpStatusCode === 200) {
-                    const currentMedia = await db.productReviewMedia.findMany({where: {reviewId: {equals: Number(params.id)}}})
-                    if (currentMedia.length > 0) {
-                        // handle current media logic here
-
-                    } else {
                     // create new product review media record
                         await db.productReviewMedia.create({data: 
                             {
-                                store: session.id, 
                                 name: result.Location?.split('.com/')[1].split('-')[1] as string,
                                 url: result.Location as string,
                                 reviewId: updatedProductReview.id
                             }
                     })
-                    }
                 }
             }))
         }
@@ -169,7 +149,6 @@ export default function Review() {
 
     const review = useLoaderData<typeof loader>()
 
-    const navigate = useNavigate()
     const submit = useSubmit()
 
     const [state, setState] = useState<ProductReview>(review)
@@ -242,8 +221,7 @@ export default function Review() {
     }
 
     const deleteReview = () => {
-        submit(JSON.stringify({ids: [review.id]}), {method: 'POST', encType: 'application/json', action: '/api/reviews/admin/delete', navigate: false})
-        navigate('/app')
+        submit({action: 'delete'}, {method: 'POST'})
     }
 
     const fileUpload = !state.media.length && <DropZone.FileUpload actionTitle="Upload Images/Videos" />

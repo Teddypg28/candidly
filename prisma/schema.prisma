@@ -69,11 +69,10 @@ model ProductReview {
 
 model ProductReviewMedia {
   id       Int           @id @default(autoincrement())
-  store    String
   url      String
   name     String
   reviewId Int
-  review   ProductReview @relation(fields: [reviewId], references: [id])
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 }
 
 model ReviewFormQuestion {
