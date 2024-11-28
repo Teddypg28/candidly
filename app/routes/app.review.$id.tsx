@@ -224,7 +224,7 @@ export default function Review() {
         submit({action: 'delete'}, {method: 'POST'})
     }
 
-    const fileUpload = !state.media.length && <DropZone.FileUpload actionTitle="Upload Images/Videos" />
+    const fileUploadBtn = !state.media.length && <DropZone.FileUpload actionTitle="Upload Images/Videos" />
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         const currentUploadedFileNames = state.media.map(file => file.name)
@@ -314,7 +314,7 @@ export default function Review() {
                                 >
                                 {uploadedFileMarkup}
                                 </InlineStack>
-                                {fileUpload}
+                                {fileUploadBtn}
                             </div>
                         </DropZone>
                     </BlockStack>

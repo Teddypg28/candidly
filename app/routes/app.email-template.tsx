@@ -1,20 +1,33 @@
-import { Banner, BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Link, Page, Text, Thumbnail } from "@shopify/polaris";
-import { useState } from "react";
+import { Banner, BlockStack, Button, Card, DropZone, Image, Label, Layout, Link, Page, Text, Thumbnail } from "@shopify/polaris";
+import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+
+import styles from '../styles/EmailTemplate.module.css'
 
 export default function EmailTemplate() {
 
     const [color, setColor] = useColor('black')
-    const [files, setFiles] = useState<File[]>([])
-    const [rejectedFiles, setRejectedFiles] = useState<File[]>([])
-    const isUploadError = rejectedFiles.length > 0 && files.length === 0
+    const [file, setFile] = useState<File>()
+
+    const selectedFileContainerRef = useRef<HTMLDivElement>()
+    const trashCanIconContainerRef = useRef<HTMLDivElement>()
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
-
-        setFiles(acceptedFiles)
-        setRejectedFiles(rejectedFiles)
-
+        setFile(acceptedFiles[0])
     }
+
+    useEffect(() => {
+        if (selectedFileContainerRef.current) {
+            selectedFileContainerRef.current.addEventListener('click', () => setFile(undefined))
+            selectedFileContainerRef.current.addEventListener('mouseover', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'flex')
+            selectedFileContainerRef.current.addEventListener('mouseleave', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'none')
+        }
+    }, [file])
+
+    const fileUploadBtn = !file && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
     return (
 
@@ -25,26 +38,32 @@ export default function EmailTemplate() {
                 <Layout.Section variant="oneThird">
                     <Card>
                         <BlockStack gap='300'>
-                            <DropZone onDrop={handleDrop} allowMultiple={false} id="bannerLogo" accept="image/*" label='Banner Logo' overlayText="Drop to Upload">
-                                 <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                {files.length === 0 ?
-                                    <Button>Upload Logo</Button>
-                                    :
-                                    <InlineStack gap='100' blockAlign="center">
-                                        <Thumbnail
-                                        size="medium"
-                                        alt={files[0].name}
-                                        source={window.URL.createObjectURL(files[0])}
-                                        />
-                                        <BlockStack gap='100'>
-                                            <Text as="h1" variant="headingMd">{files[0].name}</Text>
-                                            <Text as="p" variant="bodyXs">{files[0].size} bytes</Text>
-                                        </BlockStack>
-                                    </InlineStack>
-                                }
-                                 </div>
+                            <DropZone 
+                            onDrop={handleDrop} 
+                            allowMultiple={false} 
+                            id="bannerLogo" 
+                            accept="image/*" 
+                            label='Banner Logo' 
+                            overlayText="Drop to Upload">
+                                {file ? 
+                                <div ref={(element: HTMLDivElement) => selectedFileContainerRef.current = element} className={styles.uploadedMedia}>
+                                    <Thumbnail
+                                    size="medium"
+                                    alt={file.name}
+                                    source={window.URL.createObjectURL(file)}
+                                    />
+                                    <BlockStack gap='100'>
+                                        <Text as="h1" variant="headingMd">{file.name}</Text>
+                                        <Text as="p" variant="bodyXs">{file.size} bytes</Text>
+                                    </BlockStack>
+                                    <div ref={(element: HTMLDivElement) => trashCanIconContainerRef.current = element} className={styles.trashCanIconContainer}> 
+                                        <FontAwesomeIcon icon={faTrashCan} color="white" size="3x" />
+                                    </div>
+                                </div> 
+                                :
+                                fileUploadBtn  
+                            }
                             </DropZone>
-                            {isUploadError && <InlineError fieldID="bannerLogo" message="Only Image Files are Accepted" />}
                             <BlockStack gap='100'>
                                 <Label id="colorPicker">Banner Background Color</Label>
                                 <ColorPicker
@@ -67,7 +86,14 @@ export default function EmailTemplate() {
                             <BlockStack gap='300'>
                                 <div style={{backgroundColor: color.hex, height:'70px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                                     <div style={{color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                        {files.length > 0 && <Image height={50} width={50} source={window.URL.createObjectURL(files[0])} alt={files[0].name} />}
+                                        {file && 
+                                            <Image 
+                                            height={50} 
+                                            width={50} 
+                                            source={window.URL.createObjectURL(file)} 
+                                            alt={file.name} 
+                                            />
+                                        }
                                     </div>
                                 </div>
                                 <BlockStack gap={'300'}>
