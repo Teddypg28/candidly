@@ -13,14 +13,13 @@ import { useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
 
-import { S3Client } from '@aws-sdk/client-s3'
+import { S3Client, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
+
     try {
-
         const { session } = await authenticate.admin(request)
-
         const reviewId = params.id
 
         if (reviewId) {
@@ -36,15 +35,15 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                         media: review.media
                     })
             }
+
             return redirect('/app/reviews')
         }
 
         return redirect('/app/reviews')
     
     } catch (error) {
-
         console.log(error)
-        
+        return redirect('/app/reviews')
     }
 }
 
@@ -63,6 +62,32 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         const updatedData = Object.fromEntries(allFormData)
         const updatedProductReview = await db.productReview.update({where: {id: Number(params.id)}, data: {...updatedData, rating: parseInt(allFormData.get('rating') as string)}})
     
+        const updateCurrentFiles = async () => {
+            const s3Client = new S3Client({
+                region: process.env.AWS_REGION as string,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
+                }
+            })
+            const command = new ListObjectsV2Command({Bucket: process.env.S3_BUCKET_NAME})
+            const data = await s3Client.send(command)
+            const storedFiles = data.Contents || []
+            const filesToRemove = storedFiles.filter(file => !currentFileData.includes(file.Key as string))
+            if (filesToRemove.length > 0) {
+                // remove objects from s3 bucket logic
+                // remove media records from db table
+                await Promise.all(filesToRemove.map(async (file) => {
+                    const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: file.Key as string})
+                    await s3Client.send(deleteCommand)
+                    const productReviewMedia = await db.productReviewMedia.findMany({where: {url: {contains: file.Key as string}}})
+                    await db.productReviewMedia.delete({where: {id: productReviewMedia[0].id}})
+                }))
+            }
+        }
+
+        await updateCurrentFiles()
+
         if (newFileData.length > 0) {
             // initialize s3Client
             const s3Client = new S3Client({
@@ -87,8 +112,26 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
                 const result = await upload.done()
                 return result
             }
+
+            // function to check new updated files against stored files
+            // const updateCurrentFiles = async () => {
+            //     const s3Client = new S3Client({
+            //         region: process.env.AWS_REGION as string,
+            //         credentials: {
+            //             accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+            //             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
+            //         }
+            //     })
+            //     const command = new ListObjectsV2Command({Bucket: process.env.S3_BUCKET_NAME})
+            //     const data = await s3Client.send(command)
+            //     const storedFileKeys = data.Contents || []
+            //     const filesToRemove = 
+            //     console.log(data)
+            // }
+    
+            // await updateCurrentFiles()
         
-            // upload each file logic
+            // upload each new file logic
             const results = await Promise.all(newFileData.map(async (file) => {
                 return await uploadFileToS3(file as File)
             }))   
@@ -98,6 +141,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
                     const currentMedia = await db.productReviewMedia.findMany({where: {reviewId: {equals: Number(params.id)}}})
                     if (currentMedia.length > 0) {
                         // handle current media logic here
+
                     } else {
                     // create new product review media record
                         await db.productReviewMedia.create({data: 
@@ -116,6 +160,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         return json('success', {status: 200})
         
     } catch (error) {
+        console.log(error)
         return json({error}, {status: 400}) 
     }
 }
@@ -182,7 +227,7 @@ export default function Review() {
                 formData.append(key, state[key as keyof ProductReview].toString())
             } else {
                 state.media.forEach((media) => {
-                    if (media.file) {
+                    if (media.file && !media.url) {
                         formData.append('newFiles', media.file)
                     } else {
                         formData.append('currentFileKeys', media.url.split('.com/')[1])
