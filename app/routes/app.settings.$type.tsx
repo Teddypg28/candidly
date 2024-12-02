@@ -12,13 +12,12 @@ import db from '../db.server'
 import SettingsTabs from "~/components/SettingsTabs";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
 import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
-import ReviewEmailSettings from "~/components/settings/ReviewEmailSettings";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
 
     const { session } = await authenticate.admin(request)
 
-    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}, include: {displayProducts: true}})
+    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
     if (appSettings) return {...appSettings, path: params.path}
 
@@ -44,7 +43,7 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     }
 
-    const initializedSettings = await db.appSettings.create({data: {...defaultSettings, displayProducts: {createMany: {data: initialDisplayProducts}}}, include: {displayProducts: true}})
+    const initializedSettings = await db.appSettings.create({data: defaultSettings})
 
     return {...initializedSettings, path: params.path}
 
@@ -107,10 +106,7 @@ export default function Settings() {
     switch(settingsPath) {
         case "review-request-timing":
             SettingsComponent = <ReviewRequestTimingSettings state={settingsState} setState={setSettingsState} />
-            break
-        case "email":
-            SettingsComponent = <ReviewEmailSettings state={settingsState} setState={setSettingsState} />
-            break    
+            break   
         case "verification":
             SettingsComponent = <ReviewVerificationSettings state={settingsState} setState={setSettingsState} />
             break

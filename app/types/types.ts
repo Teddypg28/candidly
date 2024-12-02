@@ -14,6 +14,16 @@ export const sampleReviewData = [
     ]
 ]
 
+export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
+    bannerBgColor: 'black',
+    logo: {
+        url: '',
+        name: ''
+    },
+    productDisplay: ['disabled'],
+    productIds: []
+}
+
 export const initialImportCsvFileState: ImportCsvFileState = {
     files: [],
     products: [],
@@ -183,12 +193,26 @@ export interface ProductReview {
 export interface AppSettings {
     id: number
     store: string
-    reviewRequestEmailProductDisplay: string[]
-    displayProducts: any[]
     autoPublishReviews: string[]
     minReviewRating: number 
     firstReviewRequest: number
     secondReviewRequest: number
+}
+
+export interface ReviewRequestEmailSettings {
+    bannerBgColor: string,
+    logo: {
+        name: string,
+        url: string,
+        file?: File
+    },
+    productDisplay: string[],
+    productIds: string[]
+}
+
+export interface EmailTemplateProductData {
+    title: string,
+    image: string | null
 }
 
 export interface SettingsPageProps {

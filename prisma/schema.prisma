@@ -121,14 +121,29 @@ model SavedReviewRequestTableView {
 }
 
 model AppSettings {
-  id                               Int              @id @default(autoincrement())
-  store                            String
-  autoPublishReviews               String[]
-  reviewRequestEmailProductDisplay String[]
-  displayProducts                  DisplayProduct[]
-  minReviewRating                  Int
-  firstReviewRequest               Int
-  secondReviewRequest              Int
+  id                  Int      @id @default(autoincrement())
+  store               String
+  autoPublishReviews  String[]
+  minReviewRating     Int
+  firstReviewRequest  Int
+  secondReviewRequest Int
+}
+
+model ReviewRequestEmailLogo {
+  id                           Int                        @id @default(autoincrement())
+  url                          String
+  name                         String
+  reviewRequestEmailSettingsId Int                        @unique
+  reviewRequestEmailSettings   ReviewRequestEmailSettings @relation(fields: [reviewRequestEmailSettingsId], references: [id], onDelete: Cascade)
+}
+
+model ReviewRequestEmailSettings {
+  id             Int                     @id @default(autoincrement())
+  store          String
+  bannerBgColor  String
+  logo           ReviewRequestEmailLogo?
+  productDisplay String[]
+  products       DisplayProduct[]
 }
 
 model ReviewFormSettings {
@@ -142,13 +157,13 @@ model ReviewFormSettings {
 }
 
 model DisplayProduct {
-  id            Int         @id @default(autoincrement())
-  store         String
-  productId     String
-  title         String
-  imageUrl      String?
-  appSettingsId Int
-  appSettings   AppSettings @relation(fields: [appSettingsId], references: [id], onDelete: Cascade)
+  id                           Int                        @id @default(autoincrement())
+  store                        String
+  productId                    String
+  title                        String
+  imageUrl                     String?
+  reviewRequestEmailSettingsId Int
+  reviewRequestEmailSettings   ReviewRequestEmailSettings @relation(fields: [reviewRequestEmailSettingsId], references: [id], onDelete: Cascade)
 }
 
 model ReviewRequest {

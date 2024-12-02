@@ -1,7 +1,7 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge, DropZone } from "@shopify/polaris";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { authenticate } from "~/shopify.server";
 import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
@@ -345,7 +345,6 @@ export default function Reviews() {
         })
 
         if (selectedProduct) {
-
             setImportCsvFileState({
                 ...importCsvFileState, 
                 products: [
@@ -564,13 +563,10 @@ export default function Reviews() {
 }
 
 const clarifyLabel = (key: string, value: any[]) => {
-
     if (key === 'ratings') {
         return value.map(value => {
             return `${value} ${value === '1' ? 'star' : 'stars'}`
         }).join(', ')
     }
-
     return value.join(', ')
-
 }

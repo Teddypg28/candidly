@@ -1,19 +1,43 @@
-import { Banner, BlockStack, Button, Card, DropZone, Image, Label, Layout, Link, Page, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, ChoiceList, DropZone, Image, InlineStack, Label, Layout, Page, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { ImageIcon } from '@shopify/polaris-icons';
+
+import db from '../db.server'
 
 import styles from '../styles/EmailTemplate.module.css'
+import { authenticate } from "~/shopify.server";
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useSubmit } from "@remix-run/react";
+import { defaultReviewRequestEmailSettings, EmailTemplateProductData } from "~/types/types";
+
+export const loader = async ({ request } : LoaderFunctionArgs) => {
+    const { session } = await authenticate.admin(request)
+    const settings = await db.reviewRequestEmailSettings.findFirst({
+        where: {store: {equals: session.shop}}, 
+        omit: {id: true, store: true}, 
+        include: {products: {omit: {id: true, reviewRequestEmailSettingsId: true, productId: true, store: true}}, logo: {omit: {reviewRequestEmailSettingsId: true, id: true}}
+    }})
+    return settings || defaultReviewRequestEmailSettings
+}
 
 export default function EmailTemplate() {
+
+    const settingsData = useLoaderData<typeof loader>()
+    const [settings, setSettings] = useState(settingsData)
+
+    const [productData, setProductData] = useState<EmailTemplateProductData[]>([])
 
     const [color, setColor] = useColor('black')
     const [file, setFile] = useState<File>()
 
     const selectedFileContainerRef = useRef<HTMLDivElement>()
     const trashCanIconContainerRef = useRef<HTMLDivElement>()
+
+    const submit = useSubmit()
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         setFile(acceptedFiles[0])
@@ -28,6 +52,39 @@ export default function EmailTemplate() {
     }, [file])
 
     const fileUploadBtn = !file && <DropZone.FileUpload actionTitle="Upload Your Logo" />
+
+    const selectProducts = async () => {
+        const products = await window.shopify.resourcePicker({
+            type: 'product',
+            action: 'select',
+            multiple: true
+        })
+        if (products) {
+            const productIds = products.map((product) => product.id)
+            setSettings(prevSettings => {return {...prevSettings, productIds}})
+            const productData: EmailTemplateProductData[] = products.map(product => {
+                return {
+                    title: product.title,
+                    image: product.images.length > 0 ? product.images[0].originalSrc : null
+                }
+            })
+            setProductData(productData)
+        } else {
+            setSettings(prevSettings => {return {...prevSettings, productIds: []}})
+            setProductData([])
+        }
+    }
+
+    const displaySelectedProducts = () => {
+        return productData.map((product, index) => {
+            return (
+                <InlineStack blockAlign="center" gap={'200'} key={index}>
+                    <Thumbnail source={product.image || ImageIcon} alt={product.title} />
+                    <Text as="p">{product.title}</Text>
+                </InlineStack>
+            )
+         })  
+    }
 
     return (
 
@@ -73,19 +130,43 @@ export default function EmailTemplate() {
                                 onChange={setColor} 
                                 />
                             </BlockStack>
+                            <ChoiceList 
+                            title=''
+                            onChange={(productDisplay) => setSettings(prevSettings => {return {...prevSettings, productDisplay}})}
+                            selected={settings.productDisplay}
+                            choices={[
+                                {
+                                    label: 'Disable',
+                                    value: 'disabled'
+                                },
+                                {
+                                    label: 'Random Products',
+                                    value: 'random'
+                                }, 
+                                {
+                                    label: 'Select Products',
+                                    value: 'select',
+                                    renderChildren: (isSelected) => {
+                                        return isSelected && (
+                                            <InlineStack gap={'200'} blockAlign="center">
+                                                <Button onClick={selectProducts}>{productData.length > 0 ? 'Change Products' : 'Select Products'}</Button> 
+                                                <Text as="p" fontWeight="bold">{productData.length}/5 Select Products</Text>
+                                            </InlineStack>
+                                        )
+                                    },
+                                }
+                            ]}
+                            />
                         </BlockStack>
                     </Card>
                 </Layout.Section>
                 <Layout.Section variant="oneHalf">
                     <Card>
                         <BlockStack gap={'200'}>
-                            <BlockStack>
-                                <Banner>To edit product selections, go to <Link url="/app/settings/email">email settings</Link></Banner>
-                            </BlockStack>
                             <h2 style={{fontWeight: 'bold'}}>Email Preview</h2>
                             <BlockStack gap='300'>
-                                <div style={{backgroundColor: color.hex, height:'70px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                    <div style={{color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                <div className={styles.emailHeaderContainer} style={{backgroundColor: color.hex}}>
+                                    <div className={styles.logoContainer}>
                                         {file && 
                                             <Image 
                                             height={50} 
@@ -112,13 +193,32 @@ export default function EmailTemplate() {
                                     <br />
                                     Thank you for your support!
                                 </Text>
-                                <hr style={{width: '100%', border: 'none', height: '0.10px', backgroundColor: 'lightgray'}} />
-                                <h2 style={{fontWeight: 'bold', fontSize: '18px'}}>Top Picks for You</h2>
-                                <div style={{display: 'flex', alignItems: 'center', gap: '60px'}}>
-                                    <div style={{border: '2px solid lightgray', width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Product #1</div>
-                                    <div style={{border: '2px solid lightgray', width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Product #2</div>
-                                    <div style={{border: '2px solid lightgray', width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Product #3</div>
-                                </div>
+                                {
+                                    settings.productDisplay[0] !== 'disabled' && 
+                                    <>
+                                        <hr className={styles.separator} />
+                                        <h2 style={{fontWeight: 'bold', fontSize: '18px'}}>Top Picks for You</h2>
+                                        {settings.productDisplay[0] === 'random' ?
+                                        <Banner tone="info">
+                                            5 random products will be displayed here
+                                        </Banner>
+                                        :
+                                        <InlineStack gap={'600'}>
+                                            {productData.map((product, index) => {
+                                                return (
+                                                    <div key={index} style={{width: '100px'}}>
+                                                        <div className={styles.imageContainer}>
+                                                            {product.image ? <img style={{objectFit: 'cover'}} height={'100%'} width={'100%'} src={product.image} /> : <ImageIcon height={'100%'} width={'100%'} />}
+                                                        </div>
+                                                        <p style={{fontSize: '10px', textAlign: 'center', fontWeight: 'bold'}}>{product.title}</p>
+                                                        <button className={styles.shopNowBtn}>Shop Now</button>
+                                                    </div>
+                                                )
+                                            })}
+                                        </InlineStack>
+                                        }
+                                    </>
+                                }
                             </BlockStack>
                         </BlockStack>
                     </Card>

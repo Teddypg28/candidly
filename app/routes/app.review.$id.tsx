@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { BlockStack, Card, DropZone, InlineStack, Layout, Page, PageActions, Text, TextField, Thumbnail } from "@shopify/polaris";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
@@ -13,7 +13,9 @@ import { useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
 
-import { S3Client, ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import s3Client from "~/utils/s3Client";
+
+import { ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
@@ -48,14 +50,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     try {
-        const s3Client = new S3Client({
-            region: process.env.AWS_REGION as string,
-            credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-            }
-        })
-
+        
         const allFormData = await request.formData()
 
         const action = allFormData.get('action')
@@ -160,7 +155,7 @@ export default function Review() {
 
     useEffect(() => {
         uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
-            // Check if uploaded media container exists and not null
+            // Check if uploaded media container exists (not null)
             if (uploadedMediaContainer) {
                 const showTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'flex' 
                 const hideTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'none' 
