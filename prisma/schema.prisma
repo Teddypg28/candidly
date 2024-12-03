@@ -143,7 +143,7 @@ model ReviewRequestEmailSettings {
   bannerBgColor  String
   logo           ReviewRequestEmailLogo?
   productDisplay String[]
-  products       DisplayProduct[]
+  productIds     String[]
 }
 
 model ReviewFormSettings {
@@ -154,16 +154,6 @@ model ReviewFormSettings {
   headlinePlaceholder String
   reviewPlaceholder   String
   primaryFormColor    String
-}
-
-model DisplayProduct {
-  id                           Int                        @id @default(autoincrement())
-  store                        String
-  productId                    String
-  title                        String
-  imageUrl                     String?
-  reviewRequestEmailSettingsId Int
-  reviewRequestEmailSettings   ReviewRequestEmailSettings @relation(fields: [reviewRequestEmailSettingsId], references: [id], onDelete: Cascade)
 }
 
 model ReviewRequest {

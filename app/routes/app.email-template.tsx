@@ -1,4 +1,4 @@
-import { Banner, BlockStack, Button, Card, ChoiceList, DropZone, Image, InlineStack, Label, Layout, Page, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, ChoiceList, DropZone, Image, InlineError, InlineStack, Label, Layout, Page, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
 
@@ -7,32 +7,122 @@ import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { ImageIcon } from '@shopify/polaris-icons';
 
 import db from '../db.server'
-
 import styles from '../styles/EmailTemplate.module.css'
+
 import { authenticate } from "~/shopify.server";
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import { defaultReviewRequestEmailSettings, EmailTemplateProductData } from "~/types/types";
+import { defaultReviewRequestEmailSettings, ReviewRequestEmailProductData, ReviewRequestEmailSettings } from "~/types/types";
+import { SaveBar } from "@shopify/app-bridge-react";
+
+import uploadImageToS3 from "~/utils/uploadImageToS3";
+import deleteLogo from "~/utils/deleteLogo";
+
+export const action = async ({ request } : ActionFunctionArgs) => {
+    const { session } = await authenticate.admin(request)
+
+    const formData = await request.formData()
+    // convert form data to regular javascript object
+    const data: any = Object.fromEntries(formData)
+    Object.keys(data).forEach(key => {
+        if (key === "productDisplay") {
+            data[key] = [data[key]]
+        } else if (key === "productIds") {
+            data[key] = data[key].split(',')
+        }
+    })
+    const newLogo = data.newLogo
+    const logoDeleted = !data.currentLogo
+    // remove logo properties from object to properly update/create records
+    delete data['newLogo']
+    delete data['currentLogo']
+    // see if settings already exist -- determines whether update or create is needed
+    let settingsId
+    const currentSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
+    if (currentSettings) {
+        await db.reviewRequestEmailSettings.update({where: {id: currentSettings.id}, data})
+        settingsId = currentSettings.id
+    } else {
+        const settings = await db.reviewRequestEmailSettings.create({data})
+        settingsId = settings.id
+    }
+
+    const currentLogo = await db.reviewRequestEmailLogo.findFirst({where: {reviewRequestEmailSettingsId: {equals: settingsId}}})
+    // check if there is a new logo image
+    if (newLogo) {
+        // if so, delete the currently stored image from the s3 bucket (if it exists)
+        if (currentLogo) {
+            // first...remove current file from bucket and db
+            await deleteLogo(currentLogo)
+        }
+        // now...add new file to bucket and db
+        const result = await uploadImageToS3(newLogo as File)
+        await db.reviewRequestEmailLogo.create({data: 
+            {
+                name: (result.Location as string).split('.com/')[1].split('-timestamp-separator-')[1] as string, 
+                url: result.Location as string,
+                reviewRequestEmailSettingsId: settingsId
+            }
+        })
+    } else if (currentLogo && logoDeleted) {
+        await deleteLogo(currentLogo)
+    }
+    return true
+}
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
-    const { session } = await authenticate.admin(request)
+    const { session, admin } = await authenticate.admin(request)
     const settings = await db.reviewRequestEmailSettings.findFirst({
         where: {store: {equals: session.shop}}, 
-        omit: {id: true, store: true}, 
-        include: {products: {omit: {id: true, reviewRequestEmailSettingsId: true, productId: true, store: true}}, logo: {omit: {reviewRequestEmailSettingsId: true, id: true}}
-    }})
-    return settings || defaultReviewRequestEmailSettings
+        omit: {id: true}, 
+        include: {logo: {omit: {reviewRequestEmailSettingsId: true, id: true}}}
+    })
+    if (settings) {
+        const productData = await Promise.all(settings.productIds.map(async (productId) => {
+            const query = `query getProductData($id: ID!) {
+                product(id: $id) {
+                  handle
+                  title
+                  featuredMedia {
+                    preview {
+                      image {
+                        url
+                      }
+                    }
+                  }
+                }
+              }`
+            const result = await admin.graphql(query, {variables: {id: productId}})
+            const data = await result.json()
+            return {
+                title: data.data.product.title as string,
+                image: data.data.product.featuredMedia ? data.data.product.featuredMedia.preview.image.url as string : null,
+                handle: data.data.product.handle as string
+            }
+        }))        
+        return json({settings, productData})
+    }
+    return json({settings: {...defaultReviewRequestEmailSettings, store: session.shop}, productData: [] as ReviewRequestEmailProductData[]})
 }
 
 export default function EmailTemplate() {
 
-    const settingsData = useLoaderData<typeof loader>()
-    const [settings, setSettings] = useState(settingsData)
+    const data = useLoaderData<typeof loader>()
 
-    const [productData, setProductData] = useState<EmailTemplateProductData[]>([])
+    const [settings, setSettings] = useState<ReviewRequestEmailSettings>(data.settings)
+    const [productData, setProductData] = useState<ReviewRequestEmailProductData[]>(data.productData)
+    const [productSelectionError, setProductSelectionError] = useState(false)
 
+    useEffect(() => {
+        setSettings(data.settings)
+    }, [data.settings.logo])
+
+    const cleanSettings = data.settings
+    const cleanProductData = data.productData
+
+    const isFormDirty = JSON.stringify(settings) !== JSON.stringify(cleanSettings)
+    
     const [color, setColor] = useColor('black')
-    const [file, setFile] = useState<File>()
 
     const selectedFileContainerRef = useRef<HTMLDivElement>()
     const trashCanIconContainerRef = useRef<HTMLDivElement>()
@@ -40,18 +130,50 @@ export default function EmailTemplate() {
     const submit = useSubmit()
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
-        setFile(acceptedFiles[0])
+        if (acceptedFiles.length > 0) {
+            const acceptedFile = acceptedFiles[0]
+            setSettings(prevSettings => {return {...prevSettings, logo: {name: acceptedFile.name, url: window.URL.createObjectURL(acceptedFile), file: acceptedFile}}})
+        }
+    }
+
+    const handleSave = () => { 
+        if (settings.productDisplay[0] === 'select' && settings.productIds.length === 0) {
+            return setProductSelectionError(true)
+        }
+        const formData = new FormData()
+        Object.keys(settings).forEach(key => {
+            if (key === "productDisplay" || key === "productIds") {
+                formData.append(key, settings[key].toString())
+            } else if (key === "logo") {
+                // check if logo upload exists
+                if (settings[key]) {
+                    // if there's a file property, there's a new uploaded logo
+                    if (settings[key].file) {
+                        formData.append('newLogo', settings[key].file)
+                    } else {
+                        // otherwise, there's no change
+                        formData.append('currentLogo', settings[key].url)
+                    }
+                } else {
+                    // logo was removed
+                    return
+                }
+            } else {
+                formData.append(key, settings[key as keyof typeof settings] as string)
+            }
+        })
+        submit(formData, {method: 'POST', encType: 'multipart/form-data'})
     }
 
     useEffect(() => {
         if (selectedFileContainerRef.current) {
-            selectedFileContainerRef.current.addEventListener('click', () => setFile(undefined))
+            selectedFileContainerRef.current.addEventListener('click', () => setSettings(prevSettings => {return {...prevSettings, logo: null}}))
             selectedFileContainerRef.current.addEventListener('mouseover', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'flex')
             selectedFileContainerRef.current.addEventListener('mouseleave', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'none')
         }
-    }, [file])
+    }, [settings.logo])
 
-    const fileUploadBtn = !file && <DropZone.FileUpload actionTitle="Upload Your Logo" />
+    const fileUploadBtn = !settings.logo && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
     const selectProducts = async () => {
         const products = await window.shopify.resourcePicker({
@@ -60,14 +182,17 @@ export default function EmailTemplate() {
             multiple: true
         })
         if (products) {
-            const productIds = products.map((product) => product.id)
+            const productIds = products.map((product) => product.id).filter((id, index) => index <= 3-1)
             setSettings(prevSettings => {return {...prevSettings, productIds}})
-            const productData: EmailTemplateProductData[] = products.map(product => {
-                return {
-                    title: product.title,
-                    image: product.images.length > 0 ? product.images[0].originalSrc : null
-                }
-            })
+            const productData: ReviewRequestEmailProductData[] = products
+                .map((product) => {
+                    return {
+                        title: product.title,
+                        image: product.images.length > 0 ? product.images[0].originalSrc : null,
+                        handle: product.handle
+                    }
+                })
+                .filter((product, index) => index <= 3-1)
             setProductData(productData)
         } else {
             setSettings(prevSettings => {return {...prevSettings, productIds: []}})
@@ -75,22 +200,14 @@ export default function EmailTemplate() {
         }
     }
 
-    const displaySelectedProducts = () => {
-        return productData.map((product, index) => {
-            return (
-                <InlineStack blockAlign="center" gap={'200'} key={index}>
-                    <Thumbnail source={product.image || ImageIcon} alt={product.title} />
-                    <Text as="p">{product.title}</Text>
-                </InlineStack>
-            )
-         })  
-    }
-
     return (
-
         <Page
         secondaryActions={[{content: 'Send Test Email'}]}
         >
+            <SaveBar open={isFormDirty}>
+                <button variant="primary" onClick={handleSave}></button>
+                <button onClick={() => { setSettings(cleanSettings); setProductData(cleanProductData); setProductSelectionError(false) }}></button>
+            </SaveBar>
             <Layout>
                 <Layout.Section variant="oneThird">
                     <Card>
@@ -102,16 +219,15 @@ export default function EmailTemplate() {
                             accept="image/*" 
                             label='Banner Logo' 
                             overlayText="Drop to Upload">
-                                {file ? 
+                                {settings.logo ? 
                                 <div ref={(element: HTMLDivElement) => selectedFileContainerRef.current = element} className={styles.uploadedMedia}>
                                     <Thumbnail
                                     size="medium"
-                                    alt={file.name}
-                                    source={window.URL.createObjectURL(file)}
+                                    alt={settings.logo.name}
+                                    source={settings.logo.url}
                                     />
                                     <BlockStack gap='100'>
-                                        <Text as="h1" variant="headingMd">{file.name}</Text>
-                                        <Text as="p" variant="bodyXs">{file.size} bytes</Text>
+                                        <Text as="h1" variant="headingMd">{settings.logo.name}</Text>
                                     </BlockStack>
                                     <div ref={(element: HTMLDivElement) => trashCanIconContainerRef.current = element} className={styles.trashCanIconContainer}> 
                                         <FontAwesomeIcon icon={faTrashCan} color="white" size="3x" />
@@ -127,7 +243,7 @@ export default function EmailTemplate() {
                                 key='colorPicker'
                                 height={150}
                                 color={color} 
-                                onChange={setColor} 
+                                onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color.hex}}); setColor(color) }} 
                                 />
                             </BlockStack>
                             <ChoiceList 
@@ -150,7 +266,7 @@ export default function EmailTemplate() {
                                         return isSelected && (
                                             <InlineStack gap={'200'} blockAlign="center">
                                                 <Button onClick={selectProducts}>{productData.length > 0 ? 'Change Products' : 'Select Products'}</Button> 
-                                                <Text as="p" fontWeight="bold">{productData.length}/5 Select Products</Text>
+                                                <Text as="p" fontWeight="bold">{productData.length}/3 Products</Text>
                                             </InlineStack>
                                         )
                                     },
@@ -167,12 +283,12 @@ export default function EmailTemplate() {
                             <BlockStack gap='300'>
                                 <div className={styles.emailHeaderContainer} style={{backgroundColor: color.hex}}>
                                     <div className={styles.logoContainer}>
-                                        {file && 
+                                        {settings.logo && 
                                             <Image 
                                             height={50} 
                                             width={50} 
-                                            source={window.URL.createObjectURL(file)} 
-                                            alt={file.name} 
+                                            source={settings.logo.url} 
+                                            alt={settings.logo.name} 
                                             />
                                         }
                                     </div>
@@ -204,17 +320,24 @@ export default function EmailTemplate() {
                                         </Banner>
                                         :
                                         <InlineStack gap={'600'}>
-                                            {productData.map((product, index) => {
+                                            {
+                                            productData.length > 0 ? productData.map((product, index) => {
                                                 return (
                                                     <div key={index} style={{width: '100px'}}>
-                                                        <div className={styles.imageContainer}>
+                                                        <div className={styles.productImageContainer}>
                                                             {product.image ? <img style={{objectFit: 'cover'}} height={'100%'} width={'100%'} src={product.image} /> : <ImageIcon height={'100%'} width={'100%'} />}
                                                         </div>
-                                                        <p style={{fontSize: '10px', textAlign: 'center', fontWeight: 'bold'}}>{product.title}</p>
-                                                        <button className={styles.shopNowBtn}>Shop Now</button>
+                                                        <p style={{fontSize: '10px', textAlign: 'center'}}>{product.title}</p>
+                                                        <button onClick={() => window.open(`https://${settings.store}/products/${product.handle}`)} className={styles.shopNowBtn}>Shop Now</button>
                                                     </div>
                                                 )
-                                            })}
+                                            })
+                                            :
+                                                <BlockStack>
+                                                    <div id="productSelection">Select which products to display</div>
+                                                    {productSelectionError && <InlineError fieldID="productSelection" message="Please select at least 1 product" />}
+                                                </BlockStack>
+                                            }
                                         </InlineStack>
                                         }
                                     </>
@@ -225,7 +348,5 @@ export default function EmailTemplate() {
                 </Layout.Section>
             </Layout>
         </Page>
-
     )
-
 }

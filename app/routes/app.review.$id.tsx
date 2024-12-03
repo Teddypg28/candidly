@@ -16,7 +16,7 @@ import { ProductReview } from "~/types/types";
 import s3Client from "~/utils/s3Client";
 
 import { ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
-import { Upload } from '@aws-sdk/lib-storage'
+import uploadImageToS3 from "~/utils/uploadImageToS3";
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
@@ -50,9 +50,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     try {
-        
         const allFormData = await request.formData()
-
         const action = allFormData.get('action')
         if (action === 'delete') {
             // get media s3 bucket keys from db record urls and then remove them from s3 bucket
@@ -94,20 +92,6 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             }
         }
 
-        const uploadFileToS3 = async (file: File) => {
-            const uploadParams = {
-                client: s3Client,
-                params: {
-                    Bucket: process.env.S3_BUCKET_NAME,
-                    Key: `${Date.now()}-${file.name}`,
-                    Body: file.stream()
-                }
-            }
-            const upload = new Upload(uploadParams)
-            const result = await upload.done()
-            return result
-        }
-
         if (currentFileData.length > 0) {
             await updateCurrentFiles()
         }
@@ -115,7 +99,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         if (newFileData.length > 0) {
             // upload each new file logic
             const results = await Promise.all(newFileData.map(async (file) => {
-                return await uploadFileToS3(file as File)
+                return await uploadImageToS3(file as File)
             }))   
             
             await Promise.all(results.map(async (result) => {
@@ -123,7 +107,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
                     // create new product review media record
                         await db.productReviewMedia.create({data: 
                             {
-                                name: result.Location?.split('.com/')[1].split('-')[1] as string,
+                                name: result.Location?.split('.com/')[1].split('-timestamp-separator-')[1] as string,
                                 url: result.Location as string,
                                 reviewId: updatedProductReview.id
                             }
@@ -194,7 +178,6 @@ export default function Review() {
     const isStateClean = JSON.stringify(state) === JSON.stringify(cleanState)
 
     const handleSave = () => {
-
         const formData = new FormData()
         Object.keys(state).forEach((key) => {
             if (key !== "media") {
@@ -211,7 +194,6 @@ export default function Review() {
         })
         
         submit(formData, {method: 'POST', encType: 'multipart/form-data'})
-
         setCleanState(state)
     }
 

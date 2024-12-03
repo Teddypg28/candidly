@@ -5,11 +5,11 @@
     justify-content: center
 }
 
-.imageContainer {
+.productImageContainer {
     height: 100px;
     width: 100%;
-    border-radius: 10px;
-    overflow: hidden
+    border-radius: 5px;
+    overflow: hidden;
 }
 
 .logoContainer {

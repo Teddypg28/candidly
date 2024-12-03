@@ -15,11 +15,9 @@ export const sampleReviewData = [
 ]
 
 export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
+    store: '',
+    logo: null,
     bannerBgColor: 'black',
-    logo: {
-        url: '',
-        name: ''
-    },
     productDisplay: ['disabled'],
     productIds: []
 }
@@ -200,19 +198,21 @@ export interface AppSettings {
 }
 
 export interface ReviewRequestEmailSettings {
+    store: string,
     bannerBgColor: string,
     logo: {
         name: string,
         url: string,
         file?: File
-    },
+    } | null,
     productDisplay: string[],
     productIds: string[]
 }
 
-export interface EmailTemplateProductData {
+export interface ReviewRequestEmailProductData {
     title: string,
-    image: string | null
+    image: string | null,
+    handle: string
 }
 
 export interface SettingsPageProps {
