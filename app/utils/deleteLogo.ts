@@ -7,5 +7,5 @@ export default async function deleteLogo(currentLogo: any) {
     const bucketKey = currentLogo.url.split('.com/')[1]
     const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: bucketKey})
     await s3Client.send(deleteCommand)
-    await db.reviewRequestEmailLogo.delete({where: {id: currentLogo.id}}) 
+    return await db.reviewRequestEmailLogo.delete({where: {id: currentLogo.id}}) 
 }

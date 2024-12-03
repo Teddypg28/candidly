@@ -15,59 +15,56 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { defaultReviewRequestEmailSettings, ReviewRequestEmailProductData, ReviewRequestEmailSettings } from "~/types/types";
 import { SaveBar } from "@shopify/app-bridge-react";
 
-import uploadImageToS3 from "~/utils/uploadImageToS3";
 import deleteLogo from "~/utils/deleteLogo";
+import uploadLogo from "~/utils/uploadLogo";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
-    const { session } = await authenticate.admin(request)
-
-    const formData = await request.formData()
-    // convert form data to regular javascript object
-    const data: any = Object.fromEntries(formData)
-    Object.keys(data).forEach(key => {
-        if (key === "productDisplay") {
-            data[key] = [data[key]]
-        } else if (key === "productIds") {
-            data[key] = data[key].split(',')
-        }
-    })
-    const newLogo = data.newLogo
-    const logoDeleted = !data.currentLogo
-    // remove logo properties from object to properly update/create records
-    delete data['newLogo']
-    delete data['currentLogo']
-    // see if settings already exist -- determines whether update or create is needed
-    let settingsId
-    const currentSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
-    if (currentSettings) {
-        await db.reviewRequestEmailSettings.update({where: {id: currentSettings.id}, data})
-        settingsId = currentSettings.id
-    } else {
-        const settings = await db.reviewRequestEmailSettings.create({data})
-        settingsId = settings.id
-    }
-
-    const currentLogo = await db.reviewRequestEmailLogo.findFirst({where: {reviewRequestEmailSettingsId: {equals: settingsId}}})
-    // check if there is a new logo image
-    if (newLogo) {
-        // if so, delete the currently stored image from the s3 bucket (if it exists)
-        if (currentLogo) {
-            // first...remove current file from bucket and db
-            await deleteLogo(currentLogo)
-        }
-        // now...add new file to bucket and db
-        const result = await uploadImageToS3(newLogo as File)
-        await db.reviewRequestEmailLogo.create({data: 
-            {
-                name: (result.Location as string).split('.com/')[1].split('-timestamp-separator-')[1] as string, 
-                url: result.Location as string,
-                reviewRequestEmailSettingsId: settingsId
+    try {
+        const { session } = await authenticate.admin(request)
+        const formData = await request.formData()
+        // convert form data to regular javascript object
+        const data: any = Object.fromEntries(formData)
+        // convert strings to array of strings to match db shape
+        Object.keys(data).forEach(key => {
+            if (key === "productDisplay") {
+                data[key] = [data[key]]
+            } else if (key === "productIds") {
+                data[key] = data[key].split(',')
             }
         })
-    } else if (currentLogo && logoDeleted) {
-        await deleteLogo(currentLogo)
+        const newLogo = data.newLogo
+        const logoDeleted = !data.currentLogo
+        // remove logo properties from object to properly update/create records
+        delete data['newLogo']
+        delete data['currentLogo']
+        // see if settings already exist -- determines whether update or create is needed
+        let settingsId
+        const currentSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
+        if (currentSettings) {
+            await db.reviewRequestEmailSettings.update({where: {id: currentSettings.id}, data})
+            settingsId = currentSettings.id
+        } else {
+            const newSettings = await db.reviewRequestEmailSettings.create({data})
+            settingsId = newSettings.id
+        }
+        const currentLogo = await db.reviewRequestEmailLogo.findFirst({where: {reviewRequestEmailSettingsId: {equals: settingsId}}})
+        // check if there is a new logo image
+        if (newLogo) {
+            // if so, delete the currently stored image from the s3 bucket (if it exists)
+            if (currentLogo) {
+                // first...remove current file from bucket and db
+                await deleteLogo(currentLogo)
+            }
+            // now...add new file to bucket and db
+            await uploadLogo(newLogo, settingsId)
+        } else if (currentLogo && logoDeleted) {
+            // if there is a current logo stored in db, yet there is no logo in the form data, delete the current logo
+            await deleteLogo(currentLogo)
+        }
+        return json({status: 'success'}, {status: 200})
+    } catch (error) {
+        return json({status: error}, {status: 400})
     }
-    return true
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
@@ -112,18 +109,13 @@ export default function EmailTemplate() {
     const [settings, setSettings] = useState<ReviewRequestEmailSettings>(data.settings)
     const [productData, setProductData] = useState<ReviewRequestEmailProductData[]>(data.productData)
     const [productSelectionError, setProductSelectionError] = useState(false)
-
-    useEffect(() => {
-        setSettings(data.settings)
-    }, [data.settings.logo])
+    const [color, setColor] = useColor('black')
 
     const cleanSettings = data.settings
     const cleanProductData = data.productData
 
     const isFormDirty = JSON.stringify(settings) !== JSON.stringify(cleanSettings)
     
-    const [color, setColor] = useColor('black')
-
     const selectedFileContainerRef = useRef<HTMLDivElement>()
     const trashCanIconContainerRef = useRef<HTMLDivElement>()
 
@@ -167,11 +159,15 @@ export default function EmailTemplate() {
 
     useEffect(() => {
         if (selectedFileContainerRef.current) {
-            selectedFileContainerRef.current.addEventListener('click', () => setSettings(prevSettings => {return {...prevSettings, logo: null}}))
+            selectedFileContainerRef.current.addEventListener('click', () => { setSettings(prevSettings => {return {...prevSettings, logo: null}}); console.log('clicked!') })
             selectedFileContainerRef.current.addEventListener('mouseover', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'flex')
             selectedFileContainerRef.current.addEventListener('mouseleave', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'none')
         }
     }, [settings.logo])
+
+    useEffect(() => {
+        setSettings(data.settings)
+    }, [data.settings.logo])
 
     const fileUploadBtn = !settings.logo && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
