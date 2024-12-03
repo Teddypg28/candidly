@@ -99,14 +99,15 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         }))        
         return json({settings, productData})
     }
-    return json({settings: {...defaultReviewRequestEmailSettings, store: session.shop}, productData: [] as ReviewRequestEmailProductData[]})
+    const defaultSettings = await db.reviewRequestEmailSettings.create({data: {...defaultReviewRequestEmailSettings, logo: undefined, store: session.shop}, include: {logo: {omit: {id: true, reviewRequestEmailSettingsId: true}}}})
+    return json({settings: defaultSettings, productData: [] as ReviewRequestEmailProductData[]})
 }
 
 export default function EmailTemplate() {
 
     const data = useLoaderData<typeof loader>()
 
-    const [settings, setSettings] = useState<ReviewRequestEmailSettings>(data.settings)
+    const [settings, setSettings] = useState<ReviewRequestEmailSettings>({...data.settings, logo: null})
     const [productData, setProductData] = useState<ReviewRequestEmailProductData[]>(data.productData)
     const [productSelectionError, setProductSelectionError] = useState(false)
     const [color, setColor] = useColor('black')
@@ -243,7 +244,7 @@ export default function EmailTemplate() {
                                 />
                             </BlockStack>
                             <ChoiceList 
-                            title=''
+                            title='Recommended Products Display'
                             onChange={(productDisplay) => setSettings(prevSettings => {return {...prevSettings, productDisplay}})}
                             selected={settings.productDisplay}
                             choices={[
@@ -312,7 +313,7 @@ export default function EmailTemplate() {
                                         <h2 style={{fontWeight: 'bold', fontSize: '18px'}}>Top Picks for You</h2>
                                         {settings.productDisplay[0] === 'random' ?
                                         <Banner tone="info">
-                                            5 random products will be displayed here
+                                            3 random products will be displayed here
                                         </Banner>
                                         :
                                         <InlineStack gap={'600'}>

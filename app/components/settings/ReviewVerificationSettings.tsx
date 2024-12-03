@@ -1,18 +1,8 @@
-import { Card, BlockStack, Banner, ChoiceList, Text, TextField, InlineError } from "@shopify/polaris"
+import { Card, BlockStack, Banner, ChoiceList, Text, TextField } from "@shopify/polaris"
 
 import { SettingsPageProps } from "~/types/types"
 
-const isValueInvalid = (value: number) => {
-
-    return value < 1 || value > 5
-
-}
-
 export default function ReviewVerificationSettings({state, setState}: SettingsPageProps) {
-
-    const isRatingInvalid = isValueInvalid(state.minReviewRating)
-    const errorMessage = isRatingInvalid ? 'Please enter a number from 1 to 5' : ''
-
     return (
 
         <>
@@ -43,16 +33,11 @@ export default function ReviewVerificationSettings({state, setState}: SettingsPa
                             type="number"
                             max={5}
                             min={1}
-                            error={isRatingInvalid}
                             autoComplete="off"
                             label="Minimum Stars"
                             suffix="stars"
                             onChange={(value) => setState({...state, minReviewRating: parseInt(value)})}
                             value={state.minReviewRating.toString()}
-                            />
-                            <InlineError 
-                            message={errorMessage}
-                            fieldID="minRatingField"
                             />
                         </BlockStack>
                     </BlockStack>}

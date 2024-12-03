@@ -1,4 +1,5 @@
 import { IndexFiltersProps } from "@shopify/polaris"
+import { MutableRefObject, Ref } from "react"
 
 export const sampleReviewData = [
     ['title, body', 'name', 'email', 'rating', 'media', 'date', 'isPublished'],
@@ -13,6 +14,14 @@ export const sampleReviewData = [
         false
     ]
 ]
+
+export const defaultReviewFormSettings = {
+    heading: 'Tell Us What You Think',
+    subheading: 'Rate it out of 5 stars:',
+    headlinePlaceholder: 'Sum up your experience in a few short words',
+    reviewPlaceholder: 'What did you like or not like?',
+    primaryFormColor: '#000000'
+}
 
 export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     store: '',
@@ -48,6 +57,11 @@ export const initialCustomQuestionErrorState = {
     collection: false,
     answerChoices: false,
     radioDisplayedAnswerLabel: false
+}
+
+export interface SettingsTab {
+    store: string,
+    path: string
 }
 
 export interface RadioAnswerChoice {
@@ -218,6 +232,7 @@ export interface ReviewRequestEmailProductData {
 export interface SettingsPageProps {
     state: AppSettings
     setState: (value: AppSettings) => void
+    errors: MutableRefObject<string[]>
 }
 
 export interface Reward {

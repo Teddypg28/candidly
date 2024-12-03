@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { json, LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, Card, Label, Layout, Page, TextField } from "@shopify/polaris";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
 
@@ -11,30 +11,16 @@ import { ColorPicker, IColor, useColor } from 'react-color-palette'
 import "react-color-palette/css"
 
 import { SaveBar } from "@shopify/app-bridge-react";
+import { defaultReviewFormSettings } from "~/types/types";
 
 export async function loader({ request } : LoaderFunctionArgs) {
-
     const { session } = await authenticate.admin(request)
-
     const reviewFormSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
-
-    if (!reviewFormSettings) {
-
-        const defaultSettings = {
-            store: session.shop,
-            heading: 'Tell Us What You Think',
-            subheading: 'Rate it out of 5 stars:',
-            headlinePlaceholder: 'Sum up your experience in a few short words',
-            reviewPlaceholder: 'What did you like or not like?',
-            primaryFormColor: '#000000'
-        }
-
-        return await db.reviewFormSettings.create({data: defaultSettings})
-
+    if (reviewFormSettings) {
+        return json(reviewFormSettings)
     }
-
-    return reviewFormSettings
-
+    const defaultSettings = await db.reviewFormSettings.create({data: {...defaultReviewFormSettings, store: session.shop}})
+    return json(defaultSettings)
 }
 
 export default function ReviewForm() {
@@ -42,7 +28,7 @@ export default function ReviewForm() {
     const data = useLoaderData<typeof loader>()
 
     const [settingsState, setSettingsState] = useState(data)
-    const [cleanState, setCleanState] = useState(settingsState)
+    const cleanState = data
 
     const [color, setColor] = useColor(settingsState.primaryFormColor)
     const [cleanColor, setCleanColor] = useState(color)
@@ -62,29 +48,29 @@ export default function ReviewForm() {
                         <BlockStack gap='200'>
                             <TextField 
                             value={settingsState.heading} 
-                            onChange={(value) => setSettingsState({...settingsState, heading: value})}
+                            onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, heading: value}})}
                             label='Heading' 
                             autoComplete="off" />
                             <TextField 
                             value={settingsState.subheading} 
-                            onChange={(value) => setSettingsState({...settingsState, subheading: value})} 
+                            onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, subheading: value}})} 
                             label='Subheading' 
                             autoComplete="off" />
                             <TextField 
                             value={settingsState.headlinePlaceholder} 
-                            onChange={(value) => setSettingsState({...settingsState, headlinePlaceholder: value})}
+                            onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, headlinePlaceholder: value}})}
                             label='Headline Placeholder' 
                             autoComplete="off" />
                             <TextField 
                             value={settingsState.reviewPlaceholder} 
-                            onChange={(value) => setSettingsState({...settingsState, reviewPlaceholder: value})} 
+                            onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, reviewPlaceholder: value}})} 
                             label='Review Placeholder' 
                             autoComplete="off" />
                             <Label id="primaryFormColor">Primary Form Color</Label>
                             <ColorPicker
                             height={150}
                             color={color} 
-                            onChange={(color: IColor) => { setSettingsState({...settingsState, primaryFormColor: color.hex}); setColor(color) }} />
+                            onChange={(color: IColor) => { setSettingsState(prevSettingsState => {return {...prevSettingsState, primaryFormColor: color.hex}}); setColor(color)}} />
                         </BlockStack>
                     </Card>
                 </Layout.Section>
