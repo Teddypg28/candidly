@@ -10,7 +10,7 @@ export async function loader({request, params} : LoaderFunctionArgs) {
         
         try {
             
-            const reviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Product/${params.id}`}, isPublished: {equals: true}}, include: {customQuestionAnswers: true}, omit: {productId: true}})
+            const reviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Product/${params.id}`}, isPublished: {equals: true}}, include: {customQuestionAnswers: true, media: true}, omit: {productId: true}})
 
             if (reviews) {
 

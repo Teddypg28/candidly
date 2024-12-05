@@ -53,35 +53,27 @@ const reviewSettings = {
 fetch(`https://blizzardbites.myshopify.com/apps/reviews/questions/${reviewProductId}`).then(data => {
     return data.json()
 }).then(questions => {
-
     if (questions.result.length > 0) {
         questions.result.forEach(question => {
             reviewSettings.customQuestions.push(question)
         })
-
         reviewSettings.customQuestions.sort((a, b) => {
             return a.radioAnswerChoices.length - b.radioAnswerChoices.length
         })
     }
 
 }).then(() => {
-
 fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => {
     return data.json()
 }).then(result => {
     if (!result.error) {
-
         const { formHeading, formSubheading, primaryColor, backgroundColor } = result
-
         reviewSettings.formHeading = formHeading
         reviewSettings.formSubheading = formSubheading
         reviewSettings.primaryColor = primaryColor
         reviewSettings.backgroundColor = backgroundColor
-
     }
-
     document.querySelector('.mainReviewContainer').style.backgroundColor = reviewSettings.backgroundColor
-
 }).then(() => {
 
     fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}`, {headers: new Headers({"ngrok-skip-browser-warning": "28"})}).then(res => {
@@ -286,6 +278,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             const reviewMarkup = reviews.slice(startIndex, endIndex + 1).map((review, index) => {
 
+                console.log(review)
+
                 const month = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
                 const date = new Date(review.date)
@@ -321,6 +315,18 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     return ''
                 }
 
+                const reviewMediaContainer = review.media.length > 0 ?
+                `<div class="reviewMediaContainer">
+                    ${review.media.map(mediaItem => {
+                        return (
+                            `<div class="reviewMediaItemContainer">
+                                <img class="reviewMediaItem" src="${mediaItem.url}" />
+                            </div>`
+                        )
+                    })}
+                </div>` :
+                null
+
                 return (
                     `<div class='reviewContainer'>
                         <p>${month[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}</p>
@@ -332,6 +338,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                         <div class='reviewBody'>${review.body}</div>
                     </div>
                     <div class='reviewAnswerDisplayContainer'>${displayAnswers()}</div>
+                    ${reviewMediaContainer}
                     ${renderSeparatorOrPaginator(index)}
                     `
                 )

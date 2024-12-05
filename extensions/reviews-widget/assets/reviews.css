@@ -333,6 +333,26 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     height: 100%;
 }
 
+.reviewMediaContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reviewMediaItemContainer {
+    height: 75px;
+    width: 75px;
+    border-radius: 5px;
+    border: 2px solid rgb(246, 246, 246);
+    cursor: pointer;
+}
+
+.reviewMediaItem {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
 .sortByContainer {
     height: fit-content;
     width: fit-content;

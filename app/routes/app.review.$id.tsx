@@ -92,9 +92,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             }
         }
 
-        if (currentFileData.length > 0) {
-            await updateCurrentFiles()
-        }
+        await updateCurrentFiles()
 
         if (newFileData.length > 0) {
             // upload each new file logic
@@ -146,6 +144,7 @@ export default function Review() {
                 const removeMedia = (el: MouseEvent) => {
                     el.stopPropagation()
                     const filteredMedia = state.media.filter(media => media.name !== uploadedMediaContainer.id)
+                    console.log(filteredMedia)
                     setState(prevState => {return {...prevState, media: filteredMedia}})
                 }
 

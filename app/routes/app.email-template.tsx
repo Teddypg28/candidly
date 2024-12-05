@@ -47,19 +47,19 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             const newSettings = await db.reviewRequestEmailSettings.create({data})
             settingsId = newSettings.id
         }
-        const currentLogo = await db.reviewRequestEmailLogo.findFirst({where: {reviewRequestEmailSettingsId: {equals: settingsId}}})
+        const currentlyStoredLogo = await db.reviewRequestEmailLogo.findFirst({where: {reviewRequestEmailSettingsId: {equals: settingsId}}})
         // check if there is a new logo image
         if (newLogo) {
             // if so, delete the currently stored image from the s3 bucket (if it exists)
-            if (currentLogo) {
+            if (currentlyStoredLogo) {
                 // first...remove current file from bucket and db
-                await deleteLogo(currentLogo)
+                await deleteLogo(currentlyStoredLogo)
             }
             // now...add new file to bucket and db
             await uploadLogo(newLogo, settingsId)
-        } else if (currentLogo && logoDeleted) {
+        } else if (currentlyStoredLogo && logoDeleted) {
             // if there is a current logo stored in db, yet there is no logo in the form data, delete the current logo
-            await deleteLogo(currentLogo)
+            await deleteLogo(currentlyStoredLogo)
         }
         return json({status: 'success'}, {status: 200})
     } catch (error) {
@@ -301,7 +301,21 @@ export default function EmailTemplate() {
                                     As a thank-you, we’re offering a reward of up to [max reward] if you fill out this review form. It only takes a minute, and it means a lot to us!
                                     <br />
                                     <br />
-                                    [Link to review form]
+                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                        <path id="star1" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>
+                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                        <path id="star2" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>
+                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                        <path id="star3" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>
+                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                        <path id="star4" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>
+                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                        <path id="star5" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    </svg>
                                     <br />
                                     <br />
                                     Thank you for your support!

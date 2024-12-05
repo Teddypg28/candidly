@@ -159,6 +159,7 @@ model ReviewFormSettings {
 model ReviewRequest {
   id                Int       @id @default(autoincrement())
   store             String
+  createdAt         DateTime
   orderName         String
   orderId           BigInt
   name              String
