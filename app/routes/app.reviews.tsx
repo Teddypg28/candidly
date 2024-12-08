@@ -66,26 +66,25 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
-
-  const { session, admin } = await authenticate.admin(request)
-
-  const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, include: {media: true}})
-
-  const query = `query getProductTitle($id: ID!) {
-      product(id: $id) {
-        title
-    }
-  }`
-
-  const updatedReviews = await Promise.all(reviews.map(async (review) => {
-      const result = await admin.graphql(query, {variables: {id: review.productId}})
-      const productTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
-      return {...review, productTitle}
-  }))
-  const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
-
-  return json({reviews: updatedReviews, savedTableViews})
-
+  try {
+      const { session, admin } = await authenticate.admin(request)
+      const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, include: {media: true}})
+      const query = `query getProductTitle($id: ID!) {
+          product(id: $id) {
+            title
+        }
+      }`
+      const updatedReviews = await Promise.all(reviews.map(async (review) => {
+          const result = await admin.graphql(query, {variables: {id: review.productId}})
+          const productTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
+          return {...review, productTitle}
+      }))
+      const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
+      return json({reviews: updatedReviews, savedTableViews}, {status: 200})
+  } catch (error) {
+      console.log(error)
+      return json({reviews: [], savedTableViews: []}, {status: 400})
+  }
 }
 
 export default function Reviews() {
@@ -102,9 +101,7 @@ export default function Reviews() {
     const {mode, setMode} = useSetIndexFiltersMode()
 
     useEffect(() => {
-
         let exportCsvAnchor: HTMLAnchorElement
-
         if (fileData) {
             exportCsvAnchor = document.createElement('a')
             exportCsvAnchor.style.display = 'none'
@@ -114,20 +111,16 @@ export default function Reviews() {
             exportCsvAnchor.click()
             document.body.removeChild(exportCsvAnchor)
         }
-
         return () => {
             if (exportCsvAnchor) {
                 document.body.removeChild(exportCsvAnchor)
             }
             setFileData('')
         }
-
     }, [fileData])
 
     const filteredReviews = reviews.sort((a, b) => {
-
         if (indexTableState.sortSelected) {
-
             if (indexTableState.sortSelected[0] === 'date asc') {
                 return new Date(b.date).getTime() - new Date(a.date).getTime()
             } else if (indexTableState.sortSelected[0] === 'date desc') {
@@ -138,61 +131,47 @@ export default function Reviews() {
                 return a.rating - b.rating
             }
         }
-
         return 0
-
     }).filter(review => {
-
         return new Date(review.date).toLocaleDateString().includes(indexTableState.queryValue) ||
         review.body.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.title.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) 
         || review.productTitle.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.name.toLowerCase().includes(indexTableState.queryValue.toLowerCase())
-
     }).filter(review => {
-
         if (indexTableState.selectedProducts.length > 0) {
-
             return indexTableState.selectedProducts.includes(review.productTitle)
-
         }
-
         return review
-
     }).filter(review => {
-        
         if (indexTableState.selectedRatings.length > 0) {
-
             return indexTableState.selectedRatings.includes(review.rating.toString())
-
         }
-
+        return review
+    }).filter(review => {
+        if (indexTableState.selectedVisibility.length > 0) {
+            return indexTableState.selectedVisibility.includes(review.isPublished.toString())
+        }
         return review
     })
 
     const { handleSelectionChange, allResourcesSelected, selectedResources, removeSelectedResources } = useIndexResourceState(filteredReviews)
 
     const changeTabs = (index: number) => {
-
         if (index > 0) {
             setIndexTableState({...savedTableViews[index-1], selectedTab: index})
         } else {
             setIndexTableState({...initialReviewTableState})
         }
-
     }
 
     const indexTableMarkup = filteredReviews.map((review, index) => {
-
         const renderReviewBody = () => {
-
             const truncatedReviewBody = review.body.substring(0, 25)
-
             if (review.body.trim().length === truncatedReviewBody.length) {
                 return review.body.trim()
             } else {
                 return `${truncatedReviewBody}...`
             }
         }
-
         return (
             <IndexTable.Row key={index} selected={selectedResources.includes(review.id.toString())} id={review.id.toString()} position={index}>
                 <IndexTable.Cell>{new Date(review.date).toLocaleDateString()}</IndexTable.Cell>
@@ -232,6 +211,11 @@ export default function Reviews() {
         return {label: `${rating} ${rating === '1' ? 'Star' : 'Stars'}`, value: rating}
     })
 
+    const visibilityChoices = [
+        {label: 'Published', value: 'true'},
+        {label: 'Unpublished', value: 'false'}
+    ]
+
     const filters: IndexFiltersProps['filters'] = [
         {
             key: 'products', 
@@ -241,7 +225,7 @@ export default function Reviews() {
                 allowMultiple 
                 title='Product' 
                 titleHidden 
-                onChange={(chosenProducts) => setIndexTableState({...indexTableState, selectedProducts: chosenProducts})} 
+                onChange={(selectedProducts) => setIndexTableState({...indexTableState, selectedProducts})} 
                 choices={productNameChoices} 
                 selected={indexTableState.selectedProducts} /> 
             )
@@ -254,9 +238,22 @@ export default function Reviews() {
                 allowMultiple 
                 title='Ratings' 
                 titleHidden 
-                onChange={(chosenRatings) => setIndexTableState({...indexTableState, selectedRatings: chosenRatings})}
+                onChange={(selectedRatings) => setIndexTableState({...indexTableState, selectedRatings})}
                 choices={ratingsChoices} 
                 selected={indexTableState.selectedRatings} 
+                />
+            )
+        }, {
+            key: 'visibility',
+            label: 'Visibility',
+            filter: (
+                <ChoiceList 
+                allowMultiple 
+                title='Visibility' 
+                titleHidden 
+                onChange={(selectedVisibility) => setIndexTableState({...indexTableState, selectedVisibility})}
+                choices={visibilityChoices} 
+                selected={indexTableState.selectedVisibility} 
                 />
             )
         }
@@ -280,7 +277,7 @@ export default function Reviews() {
     const deleteView = (viewNameToDelete: string) => {
         submit(JSON.stringify({nameToDelete: viewNameToDelete, action: 'delete'}), {method: 'POST', encType: 'application/json'})
         setTimeout(() => {
-            setIndexTableState({...indexTableState, selectedTab: 0})
+            setIndexTableState(initialReviewTableState)
         }, 500);
     }
 
@@ -315,6 +312,16 @@ export default function Reviews() {
                 key: 'ratings', 
                 label: clarifyLabel('ratings', indexTableState.selectedRatings), 
                 onRemove: () => setIndexTableState({...indexTableState, selectedRatings: []})
+            }
+        )
+    }
+
+    if (indexTableState.selectedVisibility.length > 0) {
+        appliedFilters.push(
+            {
+                key: 'visibility', 
+                label: clarifyLabel('visibility', indexTableState.selectedVisibility), 
+                onRemove: () => setIndexTableState({...indexTableState, selectedVisibility: []})
             }
         )
     }
@@ -393,9 +400,7 @@ export default function Reviews() {
     }
 
     const importCsvFileReviews = async () => {
-
         if (importCsvFileState.files.length > 0 && importCsvFileState.products.length > 0) {
-
             const formData = new FormData()
             formData.append('reviews', importCsvFileState.files[0])
             formData.append('productId', importCsvFileState.products[0].id)
@@ -404,30 +409,21 @@ export default function Reviews() {
             const res = await response.json()
 
             if (res.ok) {
-
                 shopify.toast.show('Reviews successfully imported!', {duration: 3000})
                 setImportCsvFileState(initialImportCsvFileState)
                 navigate('.', {replace: true})
-
             } else {
-
                 shopify.toast.show('Error importing reviews', {duration: 3000})
-
             }
         } else {
-
             const errors: any = {}
-
             if (importCsvFileState.products.length === 0) {
                 errors.product = true
             } 
-
             if (importCsvFileState.files.length === 0) {
                 errors.file = true
             }
-
             setImportCsvFileState({...importCsvFileState, errors})
-
         }
     }
 
@@ -562,11 +558,16 @@ export default function Reviews() {
     )
 }
 
-const clarifyLabel = (key: string, value: any[]) => {
+const clarifyLabel = (key: string, values: any[]) => {
     if (key === 'ratings') {
-        return value.map(value => {
+        return values.map(value => {
             return `${value} ${value === '1' ? 'star' : 'stars'}`
         }).join(', ')
     }
-    return value.join(', ')
+    if (key === 'visibility') {
+        return values.map(value => {
+            return value === 'true' ? 'published' : 'unpublished'
+        }).join(', ')
+    }
+    return values.join(', ')
 }

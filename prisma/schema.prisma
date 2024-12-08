@@ -91,13 +91,14 @@ model ReviewFormQuestion {
 }
 
 model SavedReviewsTableViews {
-  id               Int      @id @default(autoincrement())
-  store            String
-  name             String
-  queryValue       String
-  sortSelected     String[]
-  selectedProducts String[]
-  selectedRatings  String[]
+  id                 Int      @id @default(autoincrement())
+  store              String
+  name               String
+  queryValue         String
+  sortSelected       String[]
+  selectedProducts   String[]
+  selectedRatings    String[]
+  selectedVisibility String[]
 }
 
 model SavedCustomQuestionTableView {

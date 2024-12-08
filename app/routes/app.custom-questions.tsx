@@ -205,7 +205,7 @@ const CustomQuestions = () => {
     const deleteView = (viewNameToDelete: string) => {
         submit(JSON.stringify({viewNameToDelete, action: 'delete'}), {method: 'POST', encType: 'application/json'})
         setTimeout(() => {
-            setIndexTableState({...indexTableState, selectedTab: 0})
+            setIndexTableState(initialCustomQuestionTableState)
         }, 500);
     }
 

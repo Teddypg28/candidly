@@ -3,19 +3,17 @@ import { SessionData } from "@remix-run/node"
 import db from '../db.server'
 
 export default async function importCsvFile(session: SessionData, data: FormData) {
-        
     const file = data.get('reviews') as Blob
-    const productId = data.get('productId')
 
+    const productId = data.get('productId')
     const text = await file.text()
 
+    // replace all carriage returns with empty strings, split where there is a new line and separate each item with an array
     const cleanedData = text.trim().replaceAll('\r', '').split('\n').map(row => row.split(','))
     const headings = cleanedData.shift() as string[]
-
     const reviews = cleanedData.map(row => {
         const reviewsDbObject: any = {}
         row.forEach((column, index) => {
-
             if (headings[index] === 'date') {
                 return reviewsDbObject[headings[index]] = new Date(column)
             }
@@ -23,14 +21,15 @@ export default async function importCsvFile(session: SessionData, data: FormData
                 return reviewsDbObject[headings[index]] = parseInt(column)
             }
             reviewsDbObject[headings[index]] = column
-
         })
+
+        // temporary before media upload functionality updated
+        delete reviewsDbObject['media']
+
         reviewsDbObject['productId'] = productId
         reviewsDbObject['store'] = session.shop
         reviewsDbObject['isPublished'] = false
         return reviewsDbObject
     })
-
     await db.productReview.createMany({data: reviews})
-
 } 

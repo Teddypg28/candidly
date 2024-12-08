@@ -37,8 +37,9 @@ document.querySelector('head').appendChild(richSnippetScriptTag)
 const reviewProductId = '{{product.id}}'
 
 let reviews = []
+let reviewData = {}
 
-let currentPage
+const avgRating = parseFloat('{{avg_rating}}')
 
 const reviewSettings = {
     formHeading: 'Tell Us What You Think',
@@ -76,20 +77,17 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
     document.querySelector('.mainReviewContainer').style.backgroundColor = reviewSettings.backgroundColor
 }).then(() => {
 
-    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}`, {headers: new Headers({"ngrok-skip-browser-warning": "28"})}).then(res => {
+    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=1&limit=5`).then(res => {
         return res.json()
     }).then(data => {
 
-        reviews = data.reviews.sort((a, b) => {
+        reviewData = data
+        reviewData.reviews = reviewData.reviews.sort((a, b) => {
             return new Date(b.date) - new Date(a.date)
         })
         
     }).then(() => {
-
-        if (reviews.length > 0) {
-
-            const avgRating = parseFloat('{{avg_rating}}')
-
+        if (reviewData.reviews.length > 0) {
             const navigationTag = document.createElement('a')
             navigationTag.style.textDecoration = 'none'
             navigationTag.style.color = 'black'
@@ -97,9 +95,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             navigationTag.style.alignItems = 'flex-start'
             navigationTag.style.fontSize = '16px'
 
-            const numOfReviewsContainer = document.createElement('div')
-            numOfReviewsContainer.textContent = `${reviews.length} ${reviews.length === 1 ? 'Review' : 'Reviews'}`
-            numOfReviewsContainer.style.marginLeft = '10px'
+            const totalNumReviewsContainer = document.createElement('div')
+            totalNumReviewsContainer.textContent = `${reviewData.totalReviews} ${reviewData.totalReviews === 1 ? 'Review' : 'Reviews'}`
+            totalNumReviewsContainer.style.marginLeft = '10px'
 
             let navigationTagHref
             const divs = document.querySelectorAll('div')
@@ -159,7 +157,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                 }
 
-            navigationTag.appendChild(numOfReviewsContainer)
+            navigationTag.appendChild(totalNumReviewsContainer)
 
             const priceContainer = document.querySelector('.price__container')
 
@@ -167,32 +165,16 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
         }
 
-        const totalReviews = reviews.length
-
         // START: RENDER REVIEWS FOR CURRENT PAGE
 
-        const setCurrentPage = (page) => {
-
-            const targetPostsPerPage = 5
-
-            currentPage = parseInt(page)
-
-            const startIndex = (currentPage - 1) * targetPostsPerPage
-            const isEnoughPostsToMeetTarget = totalReviews - startIndex >= 5
-            const endIndex = isEnoughPostsToMeetTarget ? (targetPostsPerPage * currentPage) - 1 : totalReviews - 1
-
-            const numOfPages = Math.ceil(totalReviews / targetPostsPerPage)
-
-            const renderNumberButtons = () => {
-
+        const setCurrentPage = (currentPage) => {
+            const numOfPages = reviewData.totalPages
+            const renderPageNumberBtns = () => {
                 const buttonMarkup = []
-                
                 const numOfTabsToShow = numOfPages >= 5 ? 5 : numOfPages
                 const middleIndex = Math.floor(5 / 2)
-
                 // See if current page is less than or equal to the middle page because
                 // no need to shift the page tabs for the middle and below pages
-
                 if (currentPage <= 5 - middleIndex) {
                     for (let i = 1; i<=numOfTabsToShow; i++) {
                         buttonMarkup.push(`<div data-page=${i} class="paginatorNumber">${i}</div>`)
@@ -208,42 +190,30 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                         }
                     }
                 }
-
                 return buttonMarkup.join('')
             }
 
             const renderPaginator = () => {
-
                 return (
-                    `
-                <div class='paginator'>
+                `<div class='paginator'>
                     <div class='paginatorBtn paginatorPrev'> < Prev </div>
-
                     <div class='paginatorNumbersContainer'>
-                        ${renderNumberButtons()}
+                        ${renderPageNumberBtns()}
                     </div>
-
                     <div class='paginatorBtn paginatorNext'> Next > </div>
-                
-                </div>
-                `
-                )
+                </div>`)
             }
 
             const renderSeparatorOrPaginator = (index) => {
-                if (index !== endIndex - startIndex) {
+                if (index !== reviewData.reviews.length - 1 && reviewData.reviews.length > 1) {
                     return "<div class='separator'> </div>"
                 }
-            
                 return renderPaginator()
             }
 
             const getStars = (stars) => {
-
                 let starMarkup = []
-
                 const emptyStars = 5 - stars
-
                 for (let i = 0; i<stars; i++) {
                     starMarkup.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
                                         <defs>
@@ -256,7 +226,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                     l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                     </svg>`)
                 }
-
                 for (let i = 0; i<emptyStars; i++) {
                     starMarkup.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
                                             <defs>
@@ -269,9 +238,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                         l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                         </svg>`)
                 }
-
                 return starMarkup.join('')
-        
             }
 
             const getDate = (reviewDate) => {
@@ -280,14 +247,10 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
             }
 
-            const reviewMarkup = reviews.slice(startIndex, endIndex + 1).map((review, index) => {
-
+            const reviewMarkup = reviewData.reviews.map((review, index) => {
                 const displayAnswers = () => {
-
                     if (review.customQuestionAnswers.length > 0) {
-
                         const answerData = {}
-
                         review.customQuestionAnswers.forEach(customQuestionAnswer => {
                             if (Object.keys(answerData).includes(customQuestionAnswer.label)) {
                                 answerData[customQuestionAnswer.label] = {...answerData[customQuestionAnswer.label], answers: [answerData[customQuestionAnswer.label].answers, customQuestionAnswer.value]}
@@ -295,14 +258,12 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                 answerData[customQuestionAnswer.label] = {display: customQuestionAnswer.display, answers: [customQuestionAnswer.value]}
                             }
                         })
-                    
                         const answers = Object.keys(answerData).map((label) => {
                             if (answerData[label].display === true) {
                                 return `<div> <strong>${label}:</strong> ${answerData[label].answers.join(', ')}</div>`
                             }
                             return ''
                         })
-
                         if (!answers.includes('')) {
                             if (window.screen.width <= 400) {
                                 return answers.join('')
@@ -318,7 +279,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     ${review.media.map((mediaItem, index) => {
                        return `<img key=${index} class="reviewMediaItem" src="${mediaItem.url}" />`
                     }).join('')}
-                </div>` : null
+                </div>` : ''
 
                 return (
                     `<div class='reviewContainer' key=${index}>
@@ -335,20 +296,22 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     ${renderSeparatorOrPaginator(index)}
                     `
                 )
-            }
-            )
+            })
+
+            const startIndex = (currentPage - 1) * reviewData.limit + 1
+            const endIndex = reviewData.totalPages === currentPage ? reviewData.totalReviews : currentPage * reviewData.limit
 
             document.getElementById('reviews').innerHTML = reviewMarkup.join('')
-            document.getElementById('reviewCount').textContent = `${startIndex + 1}-${endIndex + 1} of ${totalReviews} Reviews`
+            document.getElementById('reviewCount').textContent = `${startIndex}-${endIndex} of ${reviewData.totalReviews} ${reviewData.totalReviews === 1 ? 'Review' : 'Reviews'}`
 
             const renderMediaCarousel = (index, src) => {
                 // render the rest of the images apart of the review
-                const allImages = reviews[index].media.map((media, index) => {
-                        const border = media.url === src ? '1px solid lightgray' : '1px solid rgb(243, 243, 243)'
-                        return `<img data-key=${index} class="mediaItem" src="${media.url}" style="border: ${border}"  />`
-                    }).join('')
+                const allImages = reviewData.reviews[index].media.map((media, index) => {
+                    const border = media.url === src ? '1px solid lightgray' : '1px solid rgb(243, 243, 243)'
+                    return `<img data-key=${index} class="mediaItem" src="${media.url}" style="border: ${border}"  />`
+                }).join('')
                 // extract url value from each media object
-                const mediaUrls = reviews[index].media.map(mediaObj => mediaObj.url)
+                const mediaUrls = reviewData.reviews[index].media.map(mediaObj => mediaObj.url)
                 // find the index of the current url
                 const currentMediaItemIndex = mediaUrls.indexOf(src)
                 // render markup
@@ -361,13 +324,13 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                             <div class="mediaCarouselCardDataContainer">
                                 <img class="currentCarouselItem" src="${src}" />
                                 <div class="mediaCarouselReviewDetails"> 
-                                    <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${reviews[index].name}</div>
+                                    <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${reviewData.reviews[index].name}</div>
                                     <div style="display: flex; align-items: center; gap: 15px">
-                                        <div>${getStars(reviews[index].rating)}</div>
-                                        <p>${getDate(new Date(reviews[index].date))}</p>
+                                        <div>${getStars(reviewData.reviews[index].rating)}</div>
+                                        <p>${getDate(new Date(reviewData.reviews[index].date))}</p>
                                     </div>
-                                    <h2 class='reviewHeading' style="margin: 0; padding: 0">${reviews[index].title}</h2>
-                                    <p class='carouselReviewBody'>${reviews[index].body}</p>
+                                    <h2 class='reviewHeading' style="margin: 0; padding: 0">${reviewData.reviews[index].title}</h2>
+                                    <p class='carouselReviewBody'>${reviewData.reviews[index].body}</p>
                                 </div>
                             </div>
                             <div class="allMediaContainer">${allImages}</div>
@@ -384,7 +347,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 document.querySelectorAll('.mediaItem').forEach(mediaItem => {
                     mediaItem.addEventListener('click', () => {
                         const indexOfMediaItem = parseInt(mediaItem.dataset.key)
-                        renderMediaCarousel(index, reviews[index].media[indexOfMediaItem].url)
+                        renderMediaCarousel(index, reviewData.reviews[index].media[indexOfMediaItem].url)
                     })
                 })
                 // close media carousel button
@@ -393,12 +356,12 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 })
                 // if more images left to show, add event listener to forward arrow and brighten arrow color
                 if (currentMediaItemIndex < mediaUrls.length - 1) {
-                forwardCarouselArrow.style.fill = '#ffffff'
-                forwardCarouselArrow.style.cursor = 'pointer'
-                forwardCarouselArrow.addEventListener('click', () => {
-                    const nextMediaItemUrl = reviews[index].media[currentMediaItemIndex+1].url
-                    // render next media image
-                    renderMediaCarousel(index, nextMediaItemUrl)
+                    forwardCarouselArrow.style.fill = '#ffffff'
+                    forwardCarouselArrow.style.cursor = 'pointer'
+                    forwardCarouselArrow.addEventListener('click', () => {
+                        const nextMediaItemUrl = reviewData.reviews[index].media[currentMediaItemIndex+1].url
+                        // render next media image
+                        renderMediaCarousel(index, nextMediaItemUrl)
                 })
                 // else, do not add event listener and dim arrow color
                 } else {
@@ -414,7 +377,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     backwardCarouselArrow.style.fill = '#ffffff'
                     backwardCarouselArrow.style.cursor = 'pointer'
                     backwardCarouselArrow.addEventListener('click', () => {
-                        const prevMediaItemUrl = reviews[index].media[currentMediaItemIndex-1].url
+                        const prevMediaItemUrl = reviewData.reviews[index].media[currentMediaItemIndex-1].url
                         // render prev media image
                         renderMediaCarousel(index, prevMediaItemUrl)
                     })
@@ -423,7 +386,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             // add event listeners whenever review media item outside of carousel is clicked
             document.querySelectorAll('.reviewMediaItem').forEach(el => {
                 el.addEventListener('click', () => {
-                    const reviewDataIndex = reviews.findIndex(review => {
+                    const reviewDataIndex = reviewData.reviews.findIndex(review => {
                         const reviewMediaLinks = review.media.map(media => media.url)
                         return reviewMediaLinks.includes(el.src)
                     })
@@ -448,29 +411,34 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             nextPageBtn.addEventListener('click', () => {
                 if (currentPage + 1 <= numOfPages) {
-                    setCurrentPage(currentPage + 1)
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${currentPage+1}&limit=5`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)
+                        .then(() => setCurrentPage(currentPage + 1))
                 }
             })
 
             prevPageBtn.addEventListener('click', () => {
                 if (currentPage - 1 !== 0) {
-                    setCurrentPage(currentPage - 1)
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${currentPage-1}&limit=5`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)               
+                        .then(() => setCurrentPage(currentPage - 1))
                 }
             })
 
             const paginatorNumbers = document.querySelectorAll('.paginatorNumber')
-
-            paginatorNumbers.forEach(number => {
-
-                number.addEventListener('click', () => {
-                    setCurrentPage(number.dataset.page)
+            paginatorNumbers.forEach(el => {
+                el.addEventListener('click', () => {
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${parseInt(el.dataset.page)}&limit=5`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)               
+                        .then(() => setCurrentPage(parseInt(el.dataset.page)))
                 })
-
-                if (number.dataset.page === currentPage.toString()) {
-                    return number.classList.add('selected')
+                if (el.dataset.page === currentPage.toString()) {
+                    return el.classList.add('selected')
                 }
             })
-
         }
 
         // END: RENDER REVIEWS FOR CURRENT PAGE
@@ -480,13 +448,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         const reviewStatsMarkup = []
 
         for (let i = 5; i>0; i--) {
-
-            const arrayOfMatchingRatings = reviews.filter(review => {
-                return review.rating === i
-            })
-
-            const fillWidth = arrayOfMatchingRatings.length / totalReviews * 100
-
+            const numMatchingStarReviews = reviewData.starDistribution[i]
+            const fillWidth = numMatchingStarReviews / reviewData.totalReviews * 100
             reviewStatsMarkup.push(
                 `<div class='reviewBarContainer'>
                     <p>${i}</p>
@@ -494,21 +457,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     <div class='outerFillContainer'>
                         <div class='innerFillContainer' style="width: ${fillWidth}%; background-color: ${reviewSettings.primaryColor}"> </div>
                     </div>
-                    <p>${arrayOfMatchingRatings.length}</p>
+                    <p>${numMatchingStarReviews}</p>
                 </div>`
             )
-        }
-
-        const getAverageRating = () => {
-            
-            let totalRatingScore = 0
-
-            reviews.forEach(review => {
-                totalRatingScore += review.rating
-            })
-
-            return (totalRatingScore / totalReviews).toFixed(1)
-
         }
 
         document.querySelector('.mainReviewContainer').innerHTML = `
@@ -554,24 +505,20 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             </div>
         `
 
-        if (totalReviews > 0) {
-
+        if (reviewData.totalReviews > 0) {
             document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
             document.querySelector('.noReviews').classList.add('hidden')
             document.querySelector('.noReviewsMobile').classList.add('hidden')
 
             document.getElementById('reviewBarWrapper').innerHTML = reviewStatsMarkup.join('')
-            document.getElementById('averageCustomerReview').textContent = `${getAverageRating()} out of 5`
-            document.getElementById('totalCustomerReviews').textContent = `${totalReviews} customer ${totalReviews > 1 ? 'reviews' : 'review'}`
+            document.getElementById('averageCustomerReview').textContent = `${avgRating.toFixed(1)} out of 5`
+            document.getElementById('totalCustomerReviews').textContent = `${reviewData.totalReviews} customer ${reviewData.totalReviews > 1 ? 'reviews' : 'review'}`
 
             setCurrentPage(1)
-
         } else {
-
             document.querySelector('.hasReviewsWrapper').classList.add('hidden')
             document.querySelector('.noReviews').classList.remove('hidden')
             document.querySelector('.noReviewsMobile').classList.remove('hidden')
-
         }
 
         const writeReviewBtn = document.querySelector('.writeReviewBtn')
@@ -603,11 +550,9 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         const filterItems = Array.from(document.querySelectorAll('.sortByItem'))
 
         const closeSortByOptions = () => {
-
             areFilterOptionsVisible = false
             sortByItemsContainer.classList.add('hidden')
             chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
-
         }  
 
         const setCheckedFilter = (filterItems) => {
@@ -635,25 +580,25 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 setCheckedFilter(filterItems)
 
                 if (currentFilter === 'Lowest') {
-                    reviews = reviews.sort((a, b) => {
+                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
                         return a.rating - b.rating
                     })
                 } 
                 
                 if (currentFilter === 'Highest') {
-                    reviews = reviews.sort((a, b) => {
+                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
                         return b.rating - a.rating
                     })
                 }
 
                 if (currentFilter === 'Oldest') {
-                    reviews = reviews.sort((a, b) => {
+                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
                         return new Date(a.date) - new Date(b.date)
                     })
                 }
 
                 if (currentFilter === 'Newest') {
-                    reviews = reviews.sort((a, b) => {
+                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
                         return new Date(b.date) - new Date(a.date)
                     })
                 }

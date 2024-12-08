@@ -1,5 +1,5 @@
 import { IndexFiltersProps } from "@shopify/polaris"
-import { MutableRefObject, Ref } from "react"
+import { MutableRefObject } from "react"
 
 export const sampleReviewData = [
     ['title, body', 'name', 'email', 'rating', 'media', 'date', 'isPublished'],
@@ -114,7 +114,8 @@ export const initialReviewTableState: ReviewTableState = {
     selectedTab: 0,
     sortSelected: ['date asc'],
     selectedProducts: [],
-    selectedRatings: []
+    selectedRatings: [],
+    selectedVisibility: []
 }
 
 export const initialReviewRequestTableState: ReviewRequestTableState = {
@@ -145,6 +146,7 @@ export interface ReviewTableState {
     sortSelected: IndexFiltersProps['sortSelected'] 
     selectedProducts: string[]
     selectedRatings: string[]
+    selectedVisibility: string[]
     selectedTab: number
 }
 
