@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Button, Card, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
+import { BlockStack, Button, Card, DataTable, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
@@ -22,11 +22,11 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
 export default function Index() {
 
-    const settingsData = useLoaderData<typeof loader>()
+    const data = useLoaderData<typeof loader>()
 
     const [stepsDismissed, setStepsDismissed] = useState(false)
     const [dateRange, setDateRange] = useState('all')
-    const [analyticsData, setAnalyticsData] = useState(settingsData.analyticsData)
+    const [analyticsData, setAnalyticsData] = useState(data.analyticsData)
 
     useEffect(() => {
        const getAnalyticsData = async () => {
@@ -41,19 +41,19 @@ export default function Index() {
         {
             name: 'Visit the Settings Page', 
             description: 'Make any necessary changes to the default settings that are currently in place', 
-            complete: settingsData.appSettings,
+            complete: data.appSettings,
             url: '/app/settings/general'
         },
         {
             name: 'Customize Your Review Request Email Template', 
             description: 'Add a logo and configure how you want your email to look when you send review requests to customers', 
-            complete: settingsData.reviewRequestEmailSettings,
+            complete: data.reviewRequestEmailSettings,
             url: '/app/email-template'
         },
         {
             name: 'Customize Your Review Form', 
             description: 'Customize the look and messaging on the review form that your customers will fill out', 
-            complete: settingsData.reviewFormDesignSettings,
+            complete: data.reviewFormDesignSettings,
             url: '/app/review-form'
         }
     ]
@@ -145,8 +145,8 @@ export default function Index() {
                     </Card>
                 </>
                 }
-                <InlineStack align="space-between">
-                    <Text as="h1" variant="headingLg">Analytics</Text>
+                <InlineStack align="space-between" blockAlign="center">
+                    <Text as="h1" variant="headingLg">Review Analytics</Text>
                     <Select 
                     label="Date Range"
                     labelHidden 

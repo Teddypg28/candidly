@@ -12,6 +12,8 @@ export async function action({ request } : ActionFunctionArgs) {
                 
                 const customQuestionData = {...data.customQuestionAnswers}
                 delete data['customQuestionAnswers']
+                // temporary -- deal with media uploads
+                delete data['media']
 
                 const newReviewData = await db.productReview.create({data: {...data, store: session.shop, date: new Date(), isPublished: false}})
                 

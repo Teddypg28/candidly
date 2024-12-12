@@ -91,7 +91,7 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
             const worstProductId = worstProductData.avgRating === 5 || totalReviews.length === 1 ? null : worstProductData.productId 
             // use product ids and helper function to read the product names of the best/worst products
             const bestProductTitleHandle = await getProductName(bestProductId, admin)
-            const worstProductTitleHandle= worstProductId ? await getProductName(worstProductId, admin) : null
+            const worstProductTitleHandle = worstProductId ? await getProductName(worstProductId, admin) : null
             // create an array of objects with the data for each metric
             const analyticsData = [
                 {heading: 'Total Reviews', value: totalReviews.length, key: 'totalReviews'},

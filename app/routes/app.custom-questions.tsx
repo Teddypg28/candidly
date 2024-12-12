@@ -22,39 +22,23 @@ export const action = async ({request} : ActionFunctionArgs) => {
     if (state) {
         delete state['selectedTab']
     }
-
     if (action === 'update') {
-
         if (nameToUpdate) {
-
             await db.savedCustomQuestionTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: nameToUpdate}}}, data : { ...state, store: session.shop } })
-
         } else {
-
             await db.savedCustomQuestionTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: state.name}}}, data : { ...state, store: session.shop } })
-
         }
-        
     }
 
-    if (action === 'create') {
+    if (action === 'create') return await db.savedCustomQuestionTableView.create({data: {...state, store: session.shop}})
 
-        return await db.savedCustomQuestionTableView.create({data: {...state, store: session.shop}})
-
-    }
-
-    if (action === 'delete') {
-
-        return await db.savedCustomQuestionTableView.deleteMany({where: {store: {equals: session.shop}, AND: {name: {equals: data.viewNameToDelete}}}})
-
-    }
+    if (action === 'delete') return await db.savedCustomQuestionTableView.deleteMany({where: {store: {equals: session.shop}, AND: {name: {equals: data.viewNameToDelete}}}})
 
     if (action === 'deleteQuestions') {
         return await Promise.all(data.questionIdsToDelete.map(async (id: string) => {
             return await db.reviewFormQuestion.delete({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}})
         }))
     }
-
     return true
 }
 
@@ -63,7 +47,7 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
 
         const { session, admin } = await authenticate.admin(request)
 
-        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, omit: {store: true}})
+        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {AnswerChoiceSnapshot: true}, omit: {store: true}})
 
         const query = `query getProductTitle($id: ID!) {
             product(id: $id) {
@@ -71,28 +55,39 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
               }
         }`
 
-        const questionsWithProductTitles = await Promise.all(questions.map(async ({productIds, ...rest}) => {
+        const questionsWithProductTitles = await Promise.all(questions.map(async (question) => {
 
-            const productTitles = await Promise.all(productIds.map(async (id) => {
+            // get top answer for each question
+            const answersObject: {[key: string]: number} = {}
+            question.AnswerChoiceSnapshot.forEach(answerChoice => {
+                if (answersObject[answerChoice.value as keyof typeof answersObject]) {
+                    answersObject[answerChoice.value as keyof typeof answersObject] += 1
+                } else {
+                    answersObject[answerChoice.value as keyof typeof answersObject] = 1
+                }
+            })
+            const numAnswers = question.AnswerChoiceSnapshot.length
+            const topAnswer = numAnswers > 0 ? Object.keys(answersObject).reduce((prevValue, currentValue) => 
+                answersObject[currentValue] > answersObject[prevValue] ? currentValue : prevValue
+            ) : null
+
+            const productTitles = await Promise.all(question.productIds.map(async (id) => {
                 const res = await admin.graphql(query, {variables: {id}})
                 const data = await res.json()
                 return data.data.product?.title || 'Product Deleted'
             }))
-
-            return { productTitles, ...rest }
+            return { ...question, productTitles, numAnswers, topAnswer }
         }))
 
         const savedViews = await db.savedCustomQuestionTableView.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
 
-        return json({ questions, savedViews })
+        return json({ questions: questionsWithProductTitles, savedViews })
 
     } catch (error) {
-
         console.error(error)
-
+        return json({questions: [], savedViews: []}, {status: 400})
     }
 }
-
 
 const CustomQuestions = () => {
 
@@ -117,27 +112,20 @@ const CustomQuestions = () => {
         return question.title.toLowerCase().includes(indexTableState.queryValue.toLowerCase().trim())
     })
     .filter(question => {
-
         if (indexTableState.selectedProductConfiguration.includes('all products')) {
             return question.productConfiguration[0] === 'all'
         }
-
         if (indexTableState.selectedProductConfiguration.includes('select collections')) {
             return question.productConfiguration[0] === 'collections'
         }
-
         if (indexTableState.selectedProductConfiguration.includes('select products')) {
             return question.productConfiguration[0] === 'products'
         }
-
         return []
-        
     })
     .sort((a, b) => {
         if (indexTableState.sortSelected) {
-
             const sortValue = indexTableState.sortSelected[0]
-
             switch(sortValue) {
                 case 'numProducts asc':
                     return a.productIds.length - b.productIds.length
@@ -147,18 +135,27 @@ const CustomQuestions = () => {
                     return a.collectionIds.length - b.collectionIds.length
                 case 'numCollections desc':
                     return b.collectionIds.length - a.collectionIds.length
+                case 'numAnswers asc':
+                    return a.numAnswers - b.numAnswers
+                case 'numAnswers desc':
+                    return b.numAnswers - a.numAnswers
             }
         }
-
         return 0
     })
     .map((question, index: number) => {
         return (
             <IndexTable.Row selected={selectedResources.includes(question.id.toString())} position={index} id={question.id.toString()}>
-                <IndexTable.Cell><Link url={`/app/question/${question.id}`}>{question.title}</Link></IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Link url={`/app/question/${question.id}`}>{question.title}</Link>
+                </IndexTable.Cell>
                 <IndexTable.Cell>{question.answerType[0] === 'text' ? 'Text Field' : 'Radio Buttons'}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <CustomQuestionConfigurationDetails question={question} />
+                </IndexTable.Cell>
+                <IndexTable.Cell>{question.numAnswers}</IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Link url={`/app/customer-answers/${question.id}`}>{question.topAnswer}</Link>            
                 </IndexTable.Cell>
             </IndexTable.Row>
         )
@@ -180,14 +177,15 @@ const CustomQuestions = () => {
     ]
 
     const sortOptions: IndexFiltersProps['sortOptions'] = [
-        {label: 'Number of Select Collections', value: 'numCollections asc', directionLabel: 'Least to Most'},
-        {label: 'Number of Select Collections', value: 'numCollections desc', directionLabel: 'Most to Least'},
-        {label: 'Number of Select Products', value: 'numProducts asc', directionLabel: 'Least to Most'},
-        {label: 'Number of Select Products', value: 'numProducts desc', directionLabel: 'Most to Least'}
+        {label: 'Number of Configured Collections', value: 'numCollections asc', directionLabel: 'Least to Most'},
+        {label: 'Number of Configured Collections', value: 'numCollections desc', directionLabel: 'Most to Least'},
+        {label: 'Number of Configured Products', value: 'numProducts asc', directionLabel: 'Least to Most'},
+        {label: 'Number of Configured Products', value: 'numProducts desc', directionLabel: 'Most to Least'},
+        {label: 'Number of Customer Answers', value: 'numAnswers asc', directionLabel: 'Least to Most'},
+        {label: 'Number of Customer Answers', value: 'numAnswers desc', directionLabel: 'Most to Least'}
     ] 
 
     const createNewView = async (name: string) => {
-        
         submit(JSON.stringify({state: { ...indexTableState, name }, action: 'create'}), {method: 'POST', encType: 'application/json'})
         setIndexTableState({...indexTableState, selectedTab: savedViews.length + 1})                    
         return true
@@ -229,13 +227,11 @@ const CustomQuestions = () => {
     })
 
     const changeTabs = (index: number) => {
-
         if (index > 0) {
             setIndexTableState({...savedViews[index-1], selectedTab: index})
         } else {
             setIndexTableState(initialCustomQuestionTableState)
         }
-
     }
 
     const primaryAction: IndexFiltersProps['primaryAction'] = {
@@ -296,7 +292,7 @@ const CustomQuestions = () => {
                 />
                 <IndexTable
                 itemCount={IndexTableMarkup.length}
-                headings={[{title: 'Title'}, {title: 'Type'}, {title: 'Configuration'}]}
+                headings={[{title: 'Title'}, {title: 'Type'}, {title: 'Configuration'}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
                 selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
                 onSelectionChange={handleSelectionChange}
                 >

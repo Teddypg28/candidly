@@ -115,7 +115,7 @@ export const initialReviewTableState: ReviewTableState = {
     sortSelected: ['date asc'],
     selectedProducts: [],
     selectedRatings: [],
-    selectedVisibility: []
+    selectedVisibility: [],
 }
 
 export const initialReviewRequestTableState: ReviewRequestTableState = {
@@ -124,7 +124,7 @@ export const initialReviewRequestTableState: ReviewRequestTableState = {
     sortSelected: ['date desc'],
     selectedProductFilters: [],
     selectedFulfillmentFilters: [],
-    selectedReviewStatusFilters: []
+    selectedReviewStatusFilters: [],
 }
 
 export const initialCustomQuestionTableState: CustomQuestionTableState = {
@@ -143,11 +143,11 @@ export interface CustomQuestionTableState {
 
 export interface ReviewTableState {
     queryValue: string 
+    selectedTab: number
     sortSelected: IndexFiltersProps['sortSelected'] 
     selectedProducts: string[]
     selectedRatings: string[]
     selectedVisibility: string[]
-    selectedTab: number
 }
 
 export interface ReviewRequestTableState {

@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Badge, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode } from "@shopify/polaris";
+import { Badge, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, IndexTableProps, Link, Page, useSetIndexFiltersMode } from "@shopify/polaris";
 
 import db from '../db.server'
 
@@ -23,9 +23,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     // Retrieve all current orders if current orders aren't handled and store settings are set
     if (!currentOrdersStatus?.handled && appSettings) {
-
         const reviewRequestObjects: any = []
-
         const query = `{
             orders(first: 100) {
               nodes {
@@ -199,49 +197,30 @@ export default function ReviewRequests() {
     // STATE HANDLING
 
     const [indexTableState, setIndexTableState]= useState<ReviewRequestTableState>(initialReviewRequestTableState)
+    const [pageNumber, setPageNumber] = useState(1)
 
     // Filter reviews based on selected filters
-    const reviewRequestsAfterFiltering = reviewRequests.filter(request => {
-
+    let filteredReviewRequests = reviewRequests.filter(request => {
         return request.orderName.includes(indexTableState.queryValue.trim()) || 
                new Date(request.date).toLocaleDateString().includes(indexTableState.queryValue.trim())
-
     }).filter(request => {
-
         if (indexTableState.selectedProductFilters.length > 0) {
-
             return indexTableState.selectedProductFilters.includes(request.product)
-
         }
-
         return request
-
     }).filter(request => {
-
         if (indexTableState.selectedFulfillmentFilters.length > 0) {
-
             return indexTableState.selectedFulfillmentFilters.includes(request.fulfillmentStatus || 'pending')
-
         }
-
         return request
-
     }).filter(request => {
-
         if (indexTableState.selectedReviewStatusFilters.length > 0) {
-
             return indexTableState.selectedReviewStatusFilters.includes(request.reviewStatus)
-
         }
-
         return request
-
     }).sort((a, b) => {
-
         if (indexTableState.sortSelected) {
-
             const sortValue = indexTableState.sortSelected[0]
-
             switch(sortValue) {
                 case 'date asc':
                     return new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -252,16 +231,22 @@ export default function ReviewRequests() {
                 case 'numEmails desc':
                     return b.emailsSent - a.emailsSent
             }
-
         }
-
         return 0
-
     })
 
-    // APPLY OTHER FILTERS
+    const numReviewsToShow = 15
+    const numOfReviewPages = Math.ceil(filteredReviewRequests.length / numReviewsToShow)
+    filteredReviewRequests = filteredReviewRequests.slice((pageNumber - 1) * numReviewsToShow, pageNumber * numReviewsToShow)
 
-    const IndexTableMarkup = reviewRequestsAfterFiltering.map((reviewRequest, index) => {
+    const pagination: IndexTableProps['pagination'] = {
+        hasNext: pageNumber < numOfReviewPages, 
+        hasPrevious: pageNumber > 1, 
+        onNext: () => setPageNumber(pageNumber + 1),
+        onPrevious: () => setPageNumber(pageNumber - 1)
+    }
+
+    const IndexTableMarkup = filteredReviewRequests.map((reviewRequest, index) => {
 
         const storeName = reviewRequest.store.split('.myshopify')[0]
         const orderUrl = `https://admin.shopify.com/store/${storeName}/orders/${reviewRequest.orderId}`
@@ -386,12 +371,11 @@ export default function ReviewRequests() {
     const deleteView = (viewNameToDelete: string) => {
         submit(JSON.stringify({nameToDelete: viewNameToDelete, action: 'delete'}), {method: 'POST', encType: 'application/json'})
         setTimeout(() => {
-            setIndexTableState({...indexTableState, selectedTab: 0})
+            setIndexTableState(initialReviewRequestTableState)
         }, 500);
     }
     
     const tabs: IndexFiltersProps['tabs'] = ['All Review Requests', ...savedTableViews.map(view => view.name)].map((tabName, index) => {
-
         return {
             content: tabName, 
             id: `${tabName}-${index}`,
@@ -402,17 +386,14 @@ export default function ReviewRequests() {
                 {type: 'delete', onPrimaryAction: deleteView}
             ]
         }
-
     })
 
     const changeTabs = (index: number) => {
-
         if (index > 0) {
             setIndexTableState({...savedTableViews[index-1], selectedTab: index})
         } else {
             setIndexTableState({...initialReviewRequestTableState})
         }
-
     }
 
     const sortOptions: IndexFiltersProps['sortOptions'] = [
@@ -429,13 +410,9 @@ export default function ReviewRequests() {
 
     const cancelFilterChanges = () => {
         if (indexTableState.selectedTab > 0) {
-
             setIndexTableState({...savedTableViews[indexTableState.selectedTab - 1], selectedTab: indexTableState.selectedTab})
-
         } else {
-
             setIndexTableState(initialReviewRequestTableState)
-
         }
     }
 
@@ -482,9 +459,10 @@ export default function ReviewRequests() {
                 selected={indexTableState.selectedTab}
                 />
                 <IndexTable 
+                pagination={pagination}
                 selectable={false}
                 headings={[{title: 'Customer Name'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Products(s) Purchased'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
-                itemCount={reviewRequestsAfterFiltering.length}
+                itemCount={filteredReviewRequests.length}
                 >
                     {IndexTableMarkup}
                 </IndexTable>

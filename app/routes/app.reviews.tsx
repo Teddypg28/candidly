@@ -1,5 +1,6 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge, DropZone } from "@shopify/polaris";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge, DropZone, IndexTableProps } from "@shopify/polaris";
+import { ImageIcon} from '@shopify/polaris-icons';
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -93,8 +94,8 @@ export default function Reviews() {
 
     const [indexTableState, setIndexTableState] = useState<ReviewTableState>(initialReviewTableState)
     const [importCsvFileState, setImportCsvFileState] = useState<ImportCsvFileState>(initialImportCsvFileState)
-
     const [fileData, setFileData] = useState('')
+    const [pageNumber, setPageNumber] = useState(1)
     
     const submit = useSubmit()
     const navigate = useNavigate()
@@ -119,7 +120,7 @@ export default function Reviews() {
         }
     }, [fileData])
 
-    const filteredReviews = reviews.sort((a, b) => {
+    let filteredReviews = reviews.sort((a, b) => {
         if (indexTableState.sortSelected) {
             if (indexTableState.sortSelected[0] === 'date asc') {
                 return new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -161,6 +162,17 @@ export default function Reviews() {
         } else {
             setIndexTableState({...initialReviewTableState})
         }
+    }
+
+    const numReviewsToShow = 15
+    const numOfReviewPages = Math.ceil(filteredReviews.length / numReviewsToShow)
+    filteredReviews = filteredReviews.slice((pageNumber - 1) * numReviewsToShow, pageNumber * numReviewsToShow)
+
+    const pagination: IndexTableProps['pagination'] = {
+        hasNext: pageNumber < numOfReviewPages, 
+        hasPrevious: pageNumber > 1, 
+        onNext: () => setPageNumber(pageNumber + 1),
+        onPrevious: () => setPageNumber(pageNumber - 1)
     }
 
     const indexTableMarkup = filteredReviews.map((review, index) => {
@@ -344,20 +356,18 @@ export default function Reviews() {
     }
 
     const selectProductFile = async () => {
-
         const selectedProduct = await window.shopify.resourcePicker({
             type: 'product',
             action: 'select',
             multiple: false
         })
-
         if (selectedProduct) {
             setImportCsvFileState({
                 ...importCsvFileState, 
                 products: [
                     {
                         id: selectedProduct[0].id, 
-                        image: selectedProduct[0].images[0].originalSrc,
+                        image: selectedProduct[0].images.length > 0 ? selectedProduct[0].images[0].originalSrc : '',
                         title: selectedProduct[0].title
                     }
                 ]
@@ -366,24 +376,18 @@ export default function Reviews() {
     }
 
     const deleteSelectedReviews = useCallback(async () => {
-
         submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
-
     }, [selectedResources])
 
     const publishSelectedReviews = useCallback(async () => {
-
         submit(JSON.stringify({reviewIds: selectedResources, action: 'publishReviews'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
-
     }, [selectedResources])
 
     const unpublishSelectedReviews = useCallback(async () => {
-
         submit(JSON.stringify({reviewIds: selectedResources, action: 'unpublishReviews'}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
-
     }, [selectedResources])
 
     const exportAsCsv = () => {
@@ -457,7 +461,7 @@ export default function Reviews() {
 
                                     <InlineStack align="space-between">
                                         <InlineStack blockAlign="center" gap="150">
-                                            <Thumbnail alt="product image" source={importCsvFileState.products[0].image} />
+                                            <Thumbnail alt="product image" source={importCsvFileState.products[0].image || ImageIcon} />
                                             <Text as="h1" variant="bodyMd">{importCsvFileState.products[0].title}</Text>
                                         </InlineStack>
                                         <Button variant="plain" onClick={selectProductFile}>Change Product</Button>
@@ -533,6 +537,7 @@ export default function Reviews() {
                         selected={indexTableState.selectedTab}
                         />
                         <IndexTable
+                        pagination={pagination}
                         headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}]}
                         itemCount={filteredReviews.length}
                         onSelectionChange={handleSelectionChange}
