@@ -67,7 +67,7 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
                 }
             })
             const numAnswers = question.AnswerChoiceSnapshot.length
-            const topAnswer = numAnswers > 0 ? Object.keys(answersObject).reduce((prevValue, currentValue) => 
+            const topAnswer = numAnswers > 0 && question.answerType[0] === 'radio' ? Object.keys(answersObject).reduce((prevValue, currentValue) => 
                 answersObject[currentValue] > answersObject[prevValue] ? currentValue : prevValue
             ) : null
 
@@ -153,10 +153,10 @@ const CustomQuestions = () => {
                 <IndexTable.Cell>
                     <CustomQuestionConfigurationDetails question={question} />
                 </IndexTable.Cell>
-                <IndexTable.Cell>{question.numAnswers}</IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Link url={`/app/customer-answers/${question.id}`}>{question.topAnswer}</Link>            
+                    <Link url={`/app/customer-answers/${question.answerType[0]}/${question.id}`}>{question.numAnswers} {question.numAnswers === 1 ? 'answer' : 'answers'}</Link>
                 </IndexTable.Cell>
+                <IndexTable.Cell>{question.topAnswer}</IndexTable.Cell>
             </IndexTable.Row>
         )
     })

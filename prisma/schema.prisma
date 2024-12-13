@@ -37,7 +37,7 @@ model AnswerChoiceSnapshot {
   reviewId     Int
   review       ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   questionId   Int
-  question     ReviewFormQuestion @relation(fields: [questionId], references: [id])
+  question     ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   label        String
   value        String
   display      Boolean
@@ -49,6 +49,13 @@ model RadioAnswerChoice {
   value      String
   label      String
   display    Boolean
+  questionId Int
+  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model TextAnswer {
+  id         Int                @id @default(autoincrement())
+  value      String
   questionId Int
   question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
@@ -87,6 +94,7 @@ model ReviewFormQuestion {
   isRequired                String[]
   radioAnswerChoices        RadioAnswerChoice[]
   AnswerChoiceSnapshot      AnswerChoiceSnapshot[]
+  textAnswers               TextAnswer[]
   radioAllowMultipleAnswers String[]
   radioDisplayAnswer        String[]
   radioDisplayedAnswerLabel String
