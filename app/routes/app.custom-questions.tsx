@@ -13,7 +13,6 @@ import db from '../db.server'
 import CustomQuestionConfigurationDetails from "~/components/CustomQuestionConfigurationDetails";
 
 export const action = async ({request} : ActionFunctionArgs) => {
-
     const { session } = await authenticate.admin(request)
 
     const data = await request.json()
@@ -44,44 +43,34 @@ export const action = async ({request} : ActionFunctionArgs) => {
 
 export const loader = async ({request} : LoaderFunctionArgs) => {
     try {
+        const { session } = await authenticate.admin(request)
 
-        const { session, admin } = await authenticate.admin(request)
-
-        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {AnswerChoiceSnapshot: true}, omit: {store: true}})
-
-        const query = `query getProductTitle($id: ID!) {
-            product(id: $id) {
-              title
-              }
-        }`
-
-        const questionsWithProductTitles = await Promise.all(questions.map(async (question) => {
-
-            // get top answer for each question
-            const answersObject: {[key: string]: number} = {}
-            question.AnswerChoiceSnapshot.forEach(answerChoice => {
-                if (answersObject[answerChoice.value as keyof typeof answersObject]) {
-                    answersObject[answerChoice.value as keyof typeof answersObject] += 1
-                } else {
-                    answersObject[answerChoice.value as keyof typeof answersObject] = 1
-                }
-            })
-            const numAnswers = question.AnswerChoiceSnapshot.length
-            const topAnswer = numAnswers > 0 && question.answerType[0] === 'radio' ? Object.keys(answersObject).reduce((prevValue, currentValue) => 
-                answersObject[currentValue] > answersObject[prevValue] ? currentValue : prevValue
-            ) : null
-
-            const productTitles = await Promise.all(question.productIds.map(async (id) => {
-                const res = await admin.graphql(query, {variables: {id}})
-                const data = await res.json()
-                return data.data.product?.title || 'Product Deleted'
-            }))
-            return { ...question, productTitles, numAnswers, topAnswer }
-        }))
-
+        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true, textAnswers: true, answerChoiceSnapshots: true}, omit: {store: true}})
         const savedViews = await db.savedCustomQuestionTableView.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
 
-        return json({ questions: questionsWithProductTitles, savedViews })
+        const questionData = await Promise.all(questions.map(async (question) => {
+            if (question.answerType[0] === 'radio') {
+                const answersObject: {[key: string]: number} = {}
+                question.answerChoiceSnapshots.forEach(answerChoice => {
+                    if (answersObject[answerChoice.value as keyof typeof answersObject]) {
+                        answersObject[answerChoice.value as keyof typeof answersObject] += 1
+                    } else {
+                        answersObject[answerChoice.value as keyof typeof answersObject] = 1
+                    }
+                })
+                const numAnswers = question.answerChoiceSnapshots.length
+                const topAnswer = numAnswers > 0 && question.answerType[0] === 'radio' ? Object.keys(answersObject).reduce((prevValue, currentValue) => 
+                    answersObject[currentValue] > answersObject[prevValue] ? currentValue : prevValue
+                ) : null
+                return {...question, numAnswers, topAnswer}
+            } else {
+                const numAnswers = question.textAnswers.length
+                return {...question, numAnswers, topAnswer: null}
+            }
+        }))
+
+
+        return json({ questions: questionData, savedViews })
 
     } catch (error) {
         console.error(error)

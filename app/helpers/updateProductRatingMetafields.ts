@@ -13,7 +13,6 @@ export default async function updateProductRatingMetafields(productId: string, r
     const ratingMetafield = metafields.data.find((metafield: any) => metafield.owner_id === productIdNumber && metafield.key === 'rating')
 
     if (ratingMetafield) {
-
         // if it exists, that means rating count metafield also exists
         const ratingCountMetafield = metafields.data.find((metafield: any) => metafield.owner_id === productIdNumber && metafield.key === 'rating_count')
 
@@ -22,7 +21,7 @@ export default async function updateProductRatingMetafields(productId: string, r
             totalReviewsScore += review.rating
         })
 
-        const updatedAvgProductRating = Math.round((totalReviewsScore / totalReviews.length) * 2) / 2
+        const updatedAvgProductRating = (totalReviewsScore / totalReviews.length).toFixed(1) 
 
         const updatedRatingMetafield = new admin.rest.resources.Metafield({session: session});
         updatedRatingMetafield.namespace = "reviews";
@@ -30,7 +29,11 @@ export default async function updateProductRatingMetafields(productId: string, r
         updatedRatingMetafield.type = "rating";
         updatedRatingMetafield.product_id = productIdNumber;
         updatedRatingMetafield.id = ratingMetafield.id;
-        updatedRatingMetafield.value = JSON.stringify({value: updatedAvgProductRating, scale_min: 1.0, scale_max: 5.0});
+        updatedRatingMetafield.value = JSON.stringify({value: parseFloat(updatedAvgProductRating), scale_min: 1.0, scale_max: 5.0});
+
+        await updatedRatingMetafield.save({
+            update: true,
+        });
 
         const updatedRatingCountMetafield = new admin.rest.resources.Metafield({session: session});
         updatedRatingCountMetafield.namespace = "reviews";

@@ -1,4 +1,4 @@
-import { Banner, BlockStack, Button, Card, ChoiceList, DropZone, Image, InlineError, InlineStack, Label, Layout, Page, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, ChoiceList, DropZone, Image, InlineError, InlineStack, Label, Layout, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
 
@@ -11,7 +11,7 @@ import styles from '../styles/EmailTemplate.module.css'
 
 import { authenticate } from "~/shopify.server";
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { defaultReviewRequestEmailSettings, ReviewRequestEmailProductData, ReviewRequestEmailSettings } from "~/types/types";
 import { SaveBar } from "@shopify/app-bridge-react";
 
@@ -29,7 +29,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             if (key === "productDisplay") {
                 data[key] = [data[key]]
             } else if (key === "productIds") {
-                data[key] = data[key].split(',')
+                data[key] = data[key] === '' ? [] : data[key].split(',')
             }
         })
         const newLogo = data.newLogo
@@ -103,15 +103,84 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     return json({settings: defaultSettings, productData: [] as ReviewRequestEmailProductData[]})
 }
 
+const initialEmailCopy = 
+    <p>
+        We hope you’re absolutely loving your [product name]!
+        <br />
+        <br />
+        We’d be so grateful if you could take a moment to share your experience. Your feedback not only helps us improve but also guides others in making confident choices.
+        <br />
+        <br />
+        As a special thank-you, we’re offering a reward of up to [max reward] when you offer a quick rating. It’ll only take a minute of your time—and it would mean the world to us!
+        <br />
+        <br />
+        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+            <path id="star1" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+        </svg>
+        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+            <path id="star2" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+        </svg>
+        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+            <path id="star3" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+        </svg>
+        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+            <path id="star4" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+        </svg>
+        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+            <path id="star5" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+        </svg> 
+        <br />
+        <br />
+        Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
+        <br />
+        <br />
+        -[Your Company Name]
+    </p>
+
+const followUpEmailCopy = 
+<p>
+    We hope you’re doing well! We wanted to follow up on our previous email about your [product name] experience. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
+    <br />
+    <br />
+    Remember: Completing the quick review form takes just a minute, and as a thank-you, you’ll be eligible for a reward of up to [max reward]!
+    <br />
+    <br />
+    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path id="star1" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+    </svg>
+    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path id="star2" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+    </svg>
+    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path id="star3" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+    </svg>
+    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path id="star4" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+    </svg>
+    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path id="star5" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+    </svg>  
+    <br />
+    <br />
+    Thank you so much for your time and for being a valued part of our community.
+    <br />
+    <br />
+    -[Your Company Name]
+</p>
+
+
 export default function EmailTemplate() {
 
     const data = useLoaderData<typeof loader>()
 
     const [settings, setSettings] = useState<ReviewRequestEmailSettings>({...data.settings, logo: null})
+    const [emailCopyVersion, setEmailCopyVersion] = useState('Initial')
     const [productData, setProductData] = useState<ReviewRequestEmailProductData[]>(data.productData)
+    const [color, setColor] = useColor(settings.bannerBgColor)
+    
     const [productSelectionError, setProductSelectionError] = useState(false)
-    const [color, setColor] = useColor('black')
 
+    const cleanColor = color
     const cleanSettings = data.settings
     const cleanProductData = data.productData
 
@@ -121,6 +190,7 @@ export default function EmailTemplate() {
     const trashCanIconContainerRef = useRef<HTMLDivElement>()
 
     const submit = useSubmit()
+    const navigation = useNavigation()
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         if (acceptedFiles.length > 0) {
@@ -160,7 +230,7 @@ export default function EmailTemplate() {
 
     useEffect(() => {
         if (selectedFileContainerRef.current) {
-            selectedFileContainerRef.current.addEventListener('click', () => { setSettings(prevSettings => {return {...prevSettings, logo: null}}); console.log('clicked!') })
+            selectedFileContainerRef.current.addEventListener('click', () => {setSettings(prevSettings => {return {...prevSettings, logo: null}})})
             selectedFileContainerRef.current.addEventListener('mouseover', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'flex')
             selectedFileContainerRef.current.addEventListener('mouseleave', () => (trashCanIconContainerRef.current as HTMLDivElement).style.display = 'none')
         }
@@ -202,8 +272,8 @@ export default function EmailTemplate() {
         secondaryActions={[{content: 'Send Test Email'}]}
         >
             <SaveBar open={isFormDirty}>
-                <button variant="primary" onClick={handleSave}></button>
-                <button onClick={() => { setSettings(cleanSettings); setProductData(cleanProductData); setProductSelectionError(false) }}></button>
+                <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>
+                <button onClick={() => { setSettings(cleanSettings); setProductData(cleanProductData); setProductSelectionError(false); setColor(cleanColor)}}></button>
             </SaveBar>
             <Layout>
                 <Layout.Section variant="oneThird">
@@ -276,7 +346,15 @@ export default function EmailTemplate() {
                 <Layout.Section variant="oneHalf">
                     <Card>
                         <BlockStack gap={'200'}>
-                            <h2 style={{fontWeight: 'bold'}}>Email Preview</h2>
+                            <InlineStack blockAlign="center" align="space-between">
+                                <h2 style={{fontWeight: 'bold'}}>{emailCopyVersion} Email Preview</h2>
+                                <Pagination 
+                                hasNext={emailCopyVersion === 'Initial'} 
+                                hasPrevious={emailCopyVersion === 'Follow Up'}
+                                onNext={() => setEmailCopyVersion('Follow Up')}
+                                onPrevious={() => setEmailCopyVersion('Initial')}
+                                />
+                            </InlineStack>
                             <BlockStack gap='300'>
                                 <div className={styles.emailHeaderContainer} style={{backgroundColor: color.hex}}>
                                     <div className={styles.logoContainer}>
@@ -291,34 +369,10 @@ export default function EmailTemplate() {
                                     </div>
                                 </div>
                                 <BlockStack gap={'300'}>
-                                    <Text alignment="center" variant="headingLg" as="p">Hey [name],</Text>
-                                    <Text alignment="center" variant="headingXl" as="p">So...What do you think?</Text>
+                                    <Text alignment="center" variant="headingLg" as="p">Hey [Name],</Text>
                                 </BlockStack>
                                 <Text as="p" variant="bodyLg" alignment="center">
-                                    We hope you’re enjoying your [product name]! We’d love to hear your thoughts—your feedback helps us improve and helps others make confident decisions. 
-                                    <br />
-                                    <br />
-                                    As a thank-you, we’re offering a reward of up to [max reward] if you fill out this review form. It only takes a minute, and it means a lot to us!
-                                    <br />
-                                    <br />
-                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                        <path id="star1" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>
-                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                        <path id="star2" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>
-                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                        <path id="star3" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>
-                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                        <path id="star4" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>
-                                    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                        <path id="star5" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                                    </svg>
-                                    <br />
-                                    <br />
-                                    Thank you for your support!
+                                    {emailCopyVersion === "Initial" ? initialEmailCopy : followUpEmailCopy}                                    
                                 </Text>
                                 {
                                     settings.productDisplay[0] !== 'disabled' && 

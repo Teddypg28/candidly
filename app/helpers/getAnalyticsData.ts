@@ -88,7 +88,7 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
             // read the product ids for the best and worst products
             const bestProductId = avgProductRatings.sort((a, b) => a.avgRating - b.avgRating)[0].productId
             const worstProductData = avgProductRatings.sort((a, b) => b.avgRating - a.avgRating)[0]
-            const worstProductId = worstProductData.avgRating === 5 || totalReviews.length === 1 ? null : worstProductData.productId 
+            const worstProductId = worstProductData.avgRating === 5 || totalReviews.length === 1 || bestProductId === worstProductData.productId ? null : worstProductData.productId 
             // use product ids and helper function to read the product names of the best/worst products
             const bestProductTitleHandle = await getProductName(bestProductId, admin)
             const worstProductTitleHandle = worstProductId ? await getProductName(worstProductId, admin) : null

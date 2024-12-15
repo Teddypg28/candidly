@@ -79,14 +79,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
     fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=1&limit=5`).then(res => {
         return res.json()
-    }).then(data => {
-
-        reviewData = data
-        reviewData.reviews = reviewData.reviews.sort((a, b) => {
-            return new Date(b.date) - new Date(a.date)
-        })
-        
-    }).then(() => {
+    }).then(data => reviewData = data)
+      .then(() => {
         if (reviewData.reviews.length > 0) {
             const navigationTag = document.createElement('a')
             navigationTag.style.textDecoration = 'none'
@@ -112,11 +106,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             let starsLeft
             for (let i = 1; i<=5; i++) {
-
-                starsLeft = avgRating - i
-
-                if (starsLeft >= 0) {
-
+                starsLeft = (avgRating + 1) - i
+                if (starsLeft >= 1) {
                 navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
                                             <defs>
                                             <linearGradient id="grad-${i}">
@@ -128,8 +119,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                         l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                         </svg>`
 
-                } else if (i - 0.5 === avgRating) {
-
+                } else if (starsLeft > 0) {
                 navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
                                             <defs>
                                             <linearGradient id="grad-${i}">
@@ -142,7 +132,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                         </svg>`                                
 
                 } else {
-
                 navigationTag.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
                                                 <defs>
                                                 <linearGradient id="grad-${i}">
@@ -153,9 +142,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                                 <path fill="url(#grad-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
                                             l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                             </svg>`
-                }
-
-                }
+                }}
 
             navigationTag.appendChild(totalNumReviewsContainer)
 
@@ -249,13 +236,13 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             const reviewMarkup = reviewData.reviews.map((review, index) => {
                 const displayAnswers = () => {
-                    if (review.customQuestionAnswers.length > 0) {
+                    if (review.radioQuestionResponses.length > 0) {
                         const answerData = {}
-                        review.customQuestionAnswers.forEach(customQuestionAnswer => {
-                            if (Object.keys(answerData).includes(customQuestionAnswer.label)) {
-                                answerData[customQuestionAnswer.label] = {...answerData[customQuestionAnswer.label], answers: [answerData[customQuestionAnswer.label].answers, customQuestionAnswer.value]}
+                        review.radioQuestionResponses.forEach(radioQuestionResponse => {
+                            if (Object.keys(answerData).includes(radioQuestionResponse.label)) {
+                                answerData[radioQuestionResponse.label] = {...answerData[radioQuestionResponse.label], answers: [answerData[radioQuestionResponse.label].answers, radioQuestionResponse.value]}
                             } else {
-                                answerData[customQuestionAnswer.label] = {display: customQuestionAnswer.display, answers: [customQuestionAnswer.value]}
+                                answerData[radioQuestionResponse.label] = {display: radioQuestionResponse.display, answers: [radioQuestionResponse.value]}
                             }
                         })
                         const answers = Object.keys(answerData).map((label) => {
@@ -411,7 +398,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             nextPageBtn.addEventListener('click', () => {
                 if (currentPage + 1 <= numOfPages) {
-                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${currentPage+1}&limit=5`)
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${currentPage+1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
                         .then(() => setCurrentPage(currentPage + 1))
@@ -420,7 +407,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             prevPageBtn.addEventListener('click', () => {
                 if (currentPage - 1 !== 0) {
-                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${currentPage-1}&limit=5`)
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${currentPage-1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                         .then(res => res.json())
                         .then(data => reviewData = data)               
                         .then(() => setCurrentPage(currentPage - 1))
@@ -430,7 +417,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             const paginatorNumbers = document.querySelectorAll('.paginatorNumber')
             paginatorNumbers.forEach(el => {
                 el.addEventListener('click', () => {
-                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${parseInt(el.dataset.page)}&limit=5`)
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=${parseInt(el.dataset.page)}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                         .then(res => res.json())
                         .then(data => reviewData = data)               
                         .then(() => setCurrentPage(parseInt(el.dataset.page)))
@@ -468,25 +455,20 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 <h3 class='noReviewsMobile'>Be the first to write a review!</h3>
                 <div class='writeReviewBtn'>Write a review</div>
             </div>
-
             <div class='noReviews'>
                 <h3>Be the first to write a review!</h3>
             </div>
-
             <div class='hasReviewsWrapper'>
-
                 <div class='reviewStatsWrapper'>
                     <div class='reviewStatsContainer'>
                         <p>Average Customer Rating</p>
                         <h1 id='averageCustomerReview'></h1>
                         <p id='totalCustomerReviews'></h1>
                     </div>
-
                     <div class='reviewStatsContainer'>
                         <div id='reviewBarWrapper'></div>
                     </div>
                 </div>
-
                 <div class='flexContainer'>
                     <p id='reviewCount'></p>
                     <div class='sortByContainer'>
@@ -499,9 +481,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                         </div>
                     </div>
                 </div>
-
                 <div id='reviews'></div>
-
             </div>
         `
 
@@ -540,71 +520,62 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         // START: SORT BY FILTERS FUNCTIONALITY
 
         let areFilterOptionsVisible = false
-        let currentFilter = 'Newest'
+        let currentSortBy = 'Newest'
 
         const chevronIconContainer = document.querySelector('.chevronIconContainer')
         const sortByItemsContainer = document.querySelector('.sortByItemsContainer')
 
-        chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
+        chevronIconContainer.innerHTML = `Sort by: <strong>${currentSortBy}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
 
         const filterItems = Array.from(document.querySelectorAll('.sortByItem'))
 
         const closeSortByOptions = () => {
             areFilterOptionsVisible = false
             sortByItemsContainer.classList.add('hidden')
-            chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
+            chevronIconContainer.innerHTML = `Sort by: <strong>${currentSortBy}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-down fa-xs"></i>`
         }  
 
         const setCheckedFilter = (filterItems) => {
-
             filterItems.forEach(item => {
                 item.textContent = item.id
             })
-            
             const highlightedFilterItem = filterItems.find(item => {
-                return item.id.toLowerCase() === currentFilter.toLowerCase()
+                return item.id.toLowerCase() === currentSortBy.toLowerCase()
             })
-
             highlightedFilterItem.innerHTML += `<i class="check-icon fa-solid fa-check fa-xs" style="color: #000000;"></i>`
-
         }
 
         setCheckedFilter(filterItems)
 
         filterItems.forEach(item => {
-            item.addEventListener('click', () => {
-                
-                currentFilter = item.id
-
+            item.addEventListener('click', () => {          
+                currentSortBy = item.id
                 closeSortByOptions()
                 setCheckedFilter(filterItems)
-
-                if (currentFilter === 'Lowest') {
-                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
-                        return a.rating - b.rating
-                    })
+                if (currentSortBy === 'Lowest') {
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=lowest`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)
+                        .then(() => setCurrentPage(1))
                 } 
-                
-                if (currentFilter === 'Highest') {
-                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
-                        return b.rating - a.rating
-                    })
+                if (currentSortBy === 'Highest') {
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=highest`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)
+                        .then(() => setCurrentPage(1))
                 }
-
-                if (currentFilter === 'Oldest') {
-                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
-                        return new Date(a.date) - new Date(b.date)
-                    })
+                if (currentSortBy === 'Oldest') {
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=oldest`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)
+                        .then(() => setCurrentPage(1))
                 }
-
-                if (currentFilter === 'Newest') {
-                    reviewData.reviews = reviewData.reviews.sort((a, b) => {
-                        return new Date(b.date) - new Date(a.date)
-                    })
+                if (currentSortBy === 'Newest') {
+                    fetch(`https://blizzardbites.myshopify.com/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=newest`)
+                        .then(res => res.json())
+                        .then(data => reviewData = data)
+                        .then(() => setCurrentPage(1))
                 }
-
-                setCurrentPage(currentPage)
-
             })
         })
 
@@ -625,7 +596,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 
                 areFilterOptionsVisible = true
                 sortByItemsContainer.classList.remove('hidden')
-                chevronIconContainer.innerHTML = `Sort by: <strong>${currentFilter}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-up fa-xs"></i>`
+                chevronIconContainer.innerHTML = `Sort by: <strong>${currentSortBy}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-up fa-xs"></i>`
 
             } else {
                 
@@ -657,7 +628,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
         const handleUserInput = (event) => {
             if (event.target.name.includes('customQuestion')) {
-                userInputState['customQuestions'][event.target.name] = {...userInputState['customQuestions'][event.target.name], value: event.target.value}
+                userInputState['customQuestionAnswers'][event.target.name] = {...userInputState['customQuestionAnswers'][event.target.name], value: event.target.value}
             } else {
                 userInputState[event.target.name] = event.target.value
             } 
@@ -683,9 +654,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             const inputKeys = Object.keys(userInputStateCopy)
 
             for (let i = 0; i<inputKeys.length; i++) {
-
                 if (inputKeys[i] === 'customQuestionAnswers') {  
-
                     Object.keys(userInputStateCopy['customQuestionAnswers']).forEach(key => { 
                         if (userInputStateCopy['customQuestionAnswers'][key].type === 'text'){
                             if (userInputStateCopy['customQuestionAnswers'][key].value.trim() === '' && userInputStateCopy['customQuestionAnswers'][key].isRequired === 'true') {
@@ -697,14 +666,11 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                             }
                         }              
                     })
-
                 } else if (userInputStateCopy[inputKeys[i]].trim() === '') { 
                     errors.push({id: `${inputKeys[i]}Error`})
                 }
             }
-
             return errors
-
         }
 
         let addedFiles = []
@@ -758,33 +724,18 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
             const reviewFormStars = document.querySelectorAll('.reviewFormStar')
             reviewFormStars.forEach(reviewFormStar => {
-
                 const reviewFormStarRating = reviewFormStar.dataset.rating
-
                 const fillStars = (maxRating) => {
                     for (let i = 1; i<6; i++) {
-
                         if (i<=maxRating) {
                             document.querySelector(`.star-${i}`).style.fill = reviewSettings.primaryColor
                         } else {
                             document.querySelector(`.star-${i}`).style.fill = '#e8e8e8'
                         }
-
                     }
                 }
-
-                reviewFormStar.addEventListener('mouseover', () => {
-                    
-                    fillStars(reviewFormStarRating)
-
-                })
-
-                reviewFormStar.addEventListener('mouseleave', () => {
-
-                    fillStars(rating)
-                    
-                })
-
+                reviewFormStar.addEventListener('mouseover', () => fillStars(reviewFormStarRating))
+                reviewFormStar.addEventListener('mouseleave', () => fillStars(rating))
                 reviewFormStar.addEventListener('click', () => {
                     const reviewFormStarRating = reviewFormStar.dataset.rating
                     userRating = reviewFormStarRating
@@ -792,7 +743,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     renderStars(reviewFormStarRating)
                 })
             })
-
         }
 
         const reviewFormOverlay = document.createElement('div')
@@ -825,7 +775,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     <div class='reviewNameEmailContainer'>
                         <label for='reviewerEmail'>Your Email Address *</label>
                         <input class='reviewFormInput' type='email' name='email' id='reviewerEmail' />
-                        <p class='emailVerificationMessage'>This will be used to verify your review</p>
                         <p class='reviewFormValidationError hidden' id='emailError'>Email is required</p>
                     </div>
                 </div>
@@ -855,11 +804,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             // START: ADD CUSTOM QUESTIONS (IF ANY)
 
             const insertCustomQuestion = (question) => {
-
                 const customQuestionsContainer = document.querySelector('.customQuestionsContainer')
-
                 let questionMarkup
-
                 if (question.answerType[0] === 'text') {
                     questionMarkup = `
                          <div class='reviewFieldWrapper' style="width: 100%">
@@ -868,21 +814,13 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
                         </div>
                     `
-
                     customQuestionsContainer.innerHTML += questionMarkup
-
                     userInputState['customQuestionAnswers'][`customQuestion-${question.id}`] = {value: '', type: 'text', isRequired: question.isRequired[0]}
-
                 } else {
-
-                    questionMarkup = `<div style="display: flex; flex-direction: column" class='customQuestion-${question.id} customQuestionRadio'></div>`
-                    
+                    questionMarkup = `<div style="display: flex; flex-direction: column" class='customQuestion-${question.id} customQuestionRadio'></div>`          
                     customQuestionsContainer.innerHTML += questionMarkup
-
                     const questionMarkupContainer = document.querySelector(`.customQuestion-${question.id}`)
-
                     if (question.radioAllowMultipleAnswers[0] === 'true') {
-                        
                         const renderChoices = () => {
                             return question.radioAnswerChoices.map((choice, index) => {
                                 return (
@@ -892,7 +830,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                         </div>`
                                 )
                         }).join('')}
-
                         questionMarkupContainer.innerHTML+= `
                             <label for='multipleChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
                             <div id='multipleChoicesContainer-${question.id}' class="multipleChoicesContainer">
@@ -907,9 +844,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                 </div>
                             </div>
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>`                  
-
                     } else {
-
                         questionMarkupContainer.innerHTML+= `
                             <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
                             <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
@@ -918,14 +853,11 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
                         `
                         const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
-
                         question.radioAnswerChoices.forEach((choice) => {
                             answerChoicesContainer.innerHTML += `<option value="${choice.id}">${choice.value}</option>`
                         })
                     }
-                
                     userInputState['customQuestionAnswers'][`customQuestion-${question.id}`] = {value: [''], type: 'radio', isRequired: question.isRequired[0]}
-                
                 }
             }
 
@@ -951,23 +883,15 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     // MULTIPLE CHOICE
 
                     if (customQuestionMultipleChoices.length > 0) {
-
                         customQuestionMultipleChoices.forEach(dropdown => {
-
                             const questionId = dropdown.id.split('-')[1]
-
                             const dropdownTop = document.querySelector(`#dropdownTop-${questionId}`)
                             const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${questionId}`)
                             const chevronContainer = document.querySelector(`#chevronContainer-${questionId}`)
-
                             let isDropdownOpen = false
-
                             dropdownTop.addEventListener('click', () => {
-
                                 isDropdownOpen = !isDropdownOpen
-
                                 const closeDropdown = (e) => {
-
                                     if (
                                         e.target.classList.contains('checkbox') === false &&
                                         e.target.classList.contains('dropdownItem') === false
@@ -980,96 +904,58 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                         document.removeEventListener('click', closeDropdown)
 
                                     }
-
                                 }
-
                                 const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${questionId}`)
-
                                  if (dropdownItemsContainer.classList.contains('hidden')) {
-
                                     dropdownItemsContainer.classList.remove('hidden')
-                                    chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-up" style="color: #ffffff;"></i>'
-                                    
-                                } else {
-                                    
+                                    chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-up" style="color: #ffffff;"></i>'                              
+                                } else {                              
                                     dropdownItemsContainer.classList.add('hidden')
                                     chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #ffffff;"></i>'
-
                                 }
-
                                 if (isDropdownOpen) {
-
                                     setTimeout(() => document.addEventListener('click', closeDropdown), 100)
-
                                 }
-
                             })
-
                             document.querySelectorAll(`#dropdownQuestion${questionId}Item`).forEach(element => {
-
                                 element.addEventListener('click', (e) => {
-
                                     if (e.target.id === `dropdownQuestion${questionId}Item`) {
-
                                         if (e.target.children[0].classList.contains(`checked-${questionId}`)) {
-
                                             e.target.children[0].textContent = ' '
                                             e.target.children[0].classList.remove(`checked-${questionId}`)
-
                                         } else {
-
                                             e.target.children[0].textContent = '•'
                                             e.target.children[0].classList.add(`checked-${questionId}`)
-
                                         }
-
                                     } else {
-
                                         if (e.target.classList.contains(`checked-${questionId}`)) {
-
                                             e.target.textContent = ' '
                                             e.target.classList.remove(`checked-${questionId}`)
-
                                         } else {
-
                                             e.target.textContent = '•'
                                             e.target.classList.add(`checked-${questionId}`)
-
                                         }
-
                                     }
-
                                     const checkedNames = []
                                     const checkedAnswerIds = []
-
                                     document.querySelectorAll(`.checked-${questionId}`).forEach(checkedElement => {
                                         checkedNames.push(checkedElement.dataset.name)
                                         checkedAnswerIds.push(checkedElement.dataset.id)
                                     })
-
                                     const selectedAnswers = checkedNames.join(', ')
-
                                     if (checkedNames.length === 0) {
-
-                                        selectedOptionsContainer.textContent = 'Select'
-                                        
+                                        selectedOptionsContainer.textContent = 'Select'                             
                                     }
-
                                     else {
-
                                         selectedOptionsContainer.textContent = selectedAnswers
-
                                     }
-
                                     userInputState['customQuestionAnswers'][`customQuestion-${questionId}`] = {...userInputState['customQuestionAnswers'][`customQuestion-${question.id}`], value: checkedAnswerIds.length > 0 ? checkedAnswerIds : ['']}
-
                                 })
 
                             })
 
                         })
                     }
-
                     // END: CONFIGURE EVENT LISTENERS FOR DROPDOWNS (SINGLE CHOICE + MULTIPLE CHOICE)
                 })
             }

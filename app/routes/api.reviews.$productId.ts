@@ -1,5 +1,6 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
+
 import db from '../db.server'
 
 export async function loader({request, params} : LoaderFunctionArgs) {
@@ -11,12 +12,35 @@ export async function loader({request, params} : LoaderFunctionArgs) {
         
         try {
             
-            const totalReviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Product/${params.productId}`}, isPublished: {equals: true}}, include: {customQuestionAnswers: true, media: true}, omit: {productId: true}})
-    
+            let totalReviews = await db.productReview.findMany({where: { store: {equals: session.shop}, productId: {equals: `gid://shopify/Product/${params.productId}`}, isPublished: {equals: true}}, include: {radioQuestionResponses: true, media: true}, omit: {productId: true}})        
+
             const url = new URL(request.url)
             
             const pageParameter = url.searchParams.get('page')
             const limitParameter = url.searchParams.get('limit')
+            const sortParameter = url.searchParams.get('sort')
+
+            switch(sortParameter) {
+                case "oldest":
+                    totalReviews = totalReviews.sort((a, b) => {
+                        return new Date(a.date).getTime() - new Date(b.date).getTime()
+                    })
+                    break
+                case "highest":
+                    totalReviews = totalReviews.sort((a, b) => {
+                        return b.rating - a.rating
+                    })
+                    break
+                case "lowest":
+                    totalReviews = totalReviews.sort((a, b) => {
+                        return a.rating - b.rating
+                    }) 
+                    break
+                default:
+                    totalReviews = totalReviews.sort((a, b) => {
+                        return new Date(b.date).getTime() - new Date(a.date).getTime()
+                    })
+            }
 
             const limit = limitParameter ? parseInt(limitParameter) : 5
             const page = pageParameter ? parseInt(pageParameter) : 1

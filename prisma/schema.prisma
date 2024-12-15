@@ -56,23 +56,26 @@ model RadioAnswerChoice {
 model TextAnswer {
   id         Int                @id @default(autoincrement())
   value      String
+  reviewId   Int
+  review     ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   questionId Int
   question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model ProductReview {
-  id                    Int                    @id @default(autoincrement())
-  store                 String
-  productId             String
-  title                 String
-  body                  String
-  name                  String
-  email                 String?
-  rating                Int
-  media                 ProductReviewMedia[]
-  date                  DateTime
-  isPublished           Boolean
-  customQuestionAnswers AnswerChoiceSnapshot[]
+  id                     Int                    @id @default(autoincrement())
+  store                  String
+  productId              String
+  title                  String
+  body                   String
+  name                   String
+  email                  String?
+  rating                 Int
+  media                  ProductReviewMedia[]
+  date                   DateTime
+  isPublished            Boolean
+  radioQuestionResponses AnswerChoiceSnapshot[]
+  textQuestionResponses  TextAnswer[]
 }
 
 model ProductReviewMedia {
@@ -93,7 +96,7 @@ model ReviewFormQuestion {
   title                     String
   isRequired                String[]
   radioAnswerChoices        RadioAnswerChoice[]
-  AnswerChoiceSnapshot      AnswerChoiceSnapshot[]
+  answerChoiceSnapshots     AnswerChoiceSnapshot[]
   textAnswers               TextAnswer[]
   radioAllowMultipleAnswers String[]
   radioDisplayAnswer        String[]

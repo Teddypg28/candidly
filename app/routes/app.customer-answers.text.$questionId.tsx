@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Card, InlineGrid, Page, Text } from "@shopify/polaris";
+import { BlockStack, Card, Page, Text } from "@shopify/polaris";
 import db from '../db.server'
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { authenticate } from "~/shopify.server";
@@ -24,15 +24,13 @@ export default function CustomerAnswers() {
 
     const data = useLoaderData<typeof loader>()
     const nav = useNavigate()
-    
-    const AnswerOverviewMarkup = ['Total Customer Answers'].map((title, index) => {
-        return (
-            <Card key={index}>
-                <BlockStack gap={'300'}>
-                    <Text as="h3">{title}</Text>
-                    <Text as="h1" variant="headingLg">{data.answers.length}</Text>
-                </BlockStack>
-            </Card>
+
+    const AnswersMarkup = data.answers.map((answer, index) => {
+        return ( 
+            <BlockStack>
+                <Text as="p" key={index}>{answer.value}</Text> 
+                {index !== data.answers.length - 1 && <hr style={{height: '0.10px', width: '100%', border: 'none', margin: '10px 0px', backgroundColor: 'lightgray'}} />}
+            </BlockStack>
         )
     })
 
@@ -43,8 +41,8 @@ export default function CustomerAnswers() {
         >
             <BlockStack gap={'200'}>
                 <BlockStack gap={'100'}>
-                    <Text as="h1" variant="headingLg">Answer Breakdown</Text>
-                    <InlineGrid columns={1}>{AnswerOverviewMarkup}</InlineGrid>
+                    <Text as="h1" variant="headingLg">{data.answers.length} Answers</Text>
+                    <Card>{AnswersMarkup}</Card>
                 </BlockStack>
             </BlockStack>
         </Page>

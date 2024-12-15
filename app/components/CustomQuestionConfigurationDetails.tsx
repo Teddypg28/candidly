@@ -1,7 +1,7 @@
 import { Button, Text } from "@shopify/polaris";
-import { CustomReviewFormQuestion } from "~/types/types";
+import { ReviewFormQuestion } from "~/types/types";
 
-export default function CustomQuestionConfigurationDetails({question} : {question: CustomReviewFormQuestion}) {
+export default function CustomQuestionConfigurationDetails({question} : {question: ReviewFormQuestion}) {
 
     if (question.productConfiguration[0] === 'all') return <Text as="p" fontWeight="bold">All Products</Text>
 
