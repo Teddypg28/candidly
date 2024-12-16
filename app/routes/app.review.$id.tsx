@@ -16,7 +16,7 @@ import { ProductReview } from "~/types/types";
 import s3Client from "~/utils/s3Client";
 
 import { ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
-import uploadImageToS3 from "~/utils/uploadImageToS3";
+import uploadMedia from "~/helpers/uploadMedia";
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
@@ -95,23 +95,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         await updateCurrentFiles()
 
         if (newFileData.length > 0) {
-            // upload each new file logic
-            const results = await Promise.all(newFileData.map(async (file) => {
-                return await uploadImageToS3(file as File)
-            }))   
-            
-            await Promise.all(results.map(async (result) => {
-                if (result.$metadata.httpStatusCode === 200) {
-                    // create new product review media record
-                        await db.productReviewMedia.create({data: 
-                            {
-                                name: result.Location?.split('.com/')[1].split('-timestamp-separator-')[1] as string,
-                                url: result.Location as string,
-                                reviewId: updatedProductReview.id
-                            }
-                    })
-                }
-            }))
+            uploadMedia(newFileData as File[], updatedProductReview.id)
         }
 
         return json('success', {status: 200})

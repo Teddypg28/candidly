@@ -690,13 +690,19 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 userRating = '5'
 
             } else {
+                const formData = new FormData()
+            
+                addedFiles.forEach(file => formData.append("media", file))
+                formData.append('productId', `gid://shopify/Product/${reviewProductId}`)
+                formData.append('name', userInputState.name)
+                formData.append('rating', parseInt(userInputState.rating))
+                formData.append('title', userInputState.title)
+                formData.append('body', userInputState.body)
+                formData.append('email', userInputState.email)
+                formData.append('customQuestionAnswers', JSON.stringify(userInputState.customQuestionAnswers))
 
-                const data = {...userInputState, productId: `gid://shopify/Product/${reviewProductId}`, rating: parseInt(userRating), media: addedFiles.toString()}
-                
-                await fetch('https://blizzardbites.myshopify.com/apps/reviews/review/create', {method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)})
-
+                await fetch('https://blizzardbites.myshopify.com/apps/reviews/review/create', {method: 'POST', body: formData})
             }
-
         }
 
         const renderStars = (rating) => {
@@ -985,8 +991,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                 if (!addedFiles.find(uploadedFile => uploadedFile.name === file.name)) {
 
-                    // Push files to saved uploaded files array and update input element file list
-                    // since file list changes if user drags and drops multiple sets of files
+                    // Push files to saved uploaded files array and update input element file list since file list changes if user drags and drops multiple sets of files
 
                     addedFiles.push(file)
 

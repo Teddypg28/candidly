@@ -18,7 +18,7 @@ const getProductName = async (productId: string, admin: AdminApiContext) => {
 }
 
 export default async function getAnalyticsData(session: SessionParams, admin: AdminApiContext, dateRange: string) {
-    // initalize totalReviews object
+    // initialize totalReviews object
     let totalReviews: {
         id: number;
         store: string;
@@ -39,7 +39,6 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
             totalReviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
             break
         case 'today':
-            totalReviews = await db.productReview.findMany({where: {store: {equals: session.shop}, AND: {date: {gte: startOfDay(date)}}}})
             break
         case 'month':
             const oneMonthAgoDate = new Date()
@@ -57,6 +56,7 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
             date = yearAgoDate
             break
     }      
+        totalReviews = dateRange === 'all' ? totalReviews :  await db.productReview.findMany({where: {store: {equals: session.shop}, AND: {date: {gte: startOfDay(date)}}}})
         // read num of review request and num of review requests sent
         const totalReviewRequests = (await db.reviewRequest.findMany({where: {store: {equals: session.shop}, AND: {createdAt: {gte: startOfDay(date)}}}})).length
         const totalReviewRequestsSent = (await db.reviewRequest.findMany({where: {requestSentDate: {not: null}}})).length
