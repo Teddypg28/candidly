@@ -14,12 +14,10 @@ import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
 
 import s3Client from "~/utils/s3Client";
-
 import { ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import uploadMedia from "~/helpers/uploadMedia";
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
-
     try {
         const { session } = await authenticate.admin(request)
         const reviewId = params.id

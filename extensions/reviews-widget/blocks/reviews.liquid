@@ -292,6 +292,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             document.getElementById('reviewCount').textContent = `${startIndex}-${endIndex} of ${reviewData.totalReviews} ${reviewData.totalReviews === 1 ? 'Review' : 'Reviews'}`
 
             const renderMediaCarousel = (index, src) => {
+                document.body.style.overflow = 'hidden'
                 // render the rest of the images apart of the review
                 const allImages = reviewData.reviews[index].media.map((media, index) => {
                     const border = media.url === src ? '1px solid lightgray' : '1px solid rgb(243, 243, 243)'
@@ -339,6 +340,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                 })
                 // close media carousel button
                 closeMediaCarouselBtn.addEventListener('click', () => {
+                    document.body.style.overflow = ''
                     reviewFormOverlay.classList.add('hidden')
                 })
                 // if more images left to show, add event listener to forward arrow and brighten arrow color
@@ -580,30 +582,20 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         })
 
         chevronIconContainer.addEventListener('click', () => {
-
             if (!areFilterOptionsVisible) {
-
                 const closeSortByOptionsListenerFunction = () => {
-
                     closeSortByOptions()
                     document.removeEventListener('click', closeSortByOptionsListenerFunction)
-
                 }
-
                 setTimeout(() => {
                     document.addEventListener('click', closeSortByOptionsListenerFunction)
                 }, 100)
-                
                 areFilterOptionsVisible = true
                 sortByItemsContainer.classList.remove('hidden')
                 chevronIconContainer.innerHTML = `Sort by: <strong>${currentSortBy}</strong> &nbsp; <i id='down' class="fa-solid fa-chevron-up fa-xs"></i>`
-
             } else {
-                
                 closeSortByOptions()
-
             }
-
         })
 
         // END: SORT BY FILTERS FUNCTIONALITY
@@ -627,8 +619,8 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         const userInputState = { title: '', body: '', name: '', email: '', rating: userRating, customQuestionAnswers: {} }
 
         const handleUserInput = (event) => {
-            if (event.target.name.includes('customQuestion')) {
-                userInputState['customQuestionAnswers'][event.target.name] = {...userInputState['customQuestionAnswers'][event.target.name], value: event.target.value}
+            if (event.target.dataset.name && event.target.dataset.name.includes('customQuestion')) {
+                userInputState['customQuestionAnswers'][event.target.dataset.name] = {...userInputState['customQuestionAnswers'][event.target.dataset.name], value: event.target.value}
             } else {
                 userInputState[event.target.name] = event.target.value
             } 
@@ -648,8 +640,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             let errors = []
 
             const userInputStateCopy = {...userInputState}
-
-            delete userInputStateCopy['media']
 
             const inputKeys = Object.keys(userInputStateCopy)
 
@@ -676,32 +666,22 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         let addedFiles = []
 
         const handleFormSubmission = async (event) => {
-
+            event.preventDefault()
             const errors = isFormErrors()
-
             if (errors.length > 0) {
-
-                event.preventDefault()
-
                 errors.forEach(error => {
                     document.querySelector(`#${error.id}`).classList.remove('hidden')
                 })
-
                 userRating = '5'
-
             } else {
-                const formData = new FormData()
-            
+                const formData = new FormData(event.target)
+                formData.delete('oseid')
                 addedFiles.forEach(file => formData.append("media", file))
                 formData.append('productId', `gid://shopify/Product/${reviewProductId}`)
-                formData.append('name', userInputState.name)
                 formData.append('rating', parseInt(userInputState.rating))
-                formData.append('title', userInputState.title)
-                formData.append('body', userInputState.body)
-                formData.append('email', userInputState.email)
                 formData.append('customQuestionAnswers', JSON.stringify(userInputState.customQuestionAnswers))
-
-                await fetch('https://blizzardbites.myshopify.com/apps/reviews/review/create', {method: 'POST', body: formData})
+                await fetch(event.target.action, {method: 'POST', body: formData})
+                window.location.reload()
             }
         }
 
@@ -754,7 +734,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
         const reviewFormOverlay = document.createElement('div')
         reviewFormOverlay.className = 'hidden reviewFormOverlay'
         const reviewFormMarkup = `
-            <form class='reviewForm'>
+            <form class='reviewForm' action="https://blizzardbites.myshopify.com/apps/reviews/review/create" method="POST">
                 <div class='closeReviewFormBtn'>x</div>
                 <div class='reviewFormHeadingContainer'>
                     <h1>${reviewSettings.formHeading}</h1>
@@ -793,7 +773,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     <input type='file' id='uploadMediaBtn' class='uploadMediaBtn' accepts='image/*, video/*' multiple />
                 </div>
                 <p class='uploadError'></p>
-                <button class='submitReviewBtn' style='background-color: ${reviewSettings.primaryColor}'>Submit Review</button>
+                <button type="submit" class='submitReviewBtn' style='background-color: ${reviewSettings.primaryColor}'>Submit Review</button>
             </form>
         `
 
@@ -816,7 +796,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     questionMarkup = `
                          <div class='reviewFieldWrapper' style="width: 100%">
                             <label for='customQuestion-${question.id}'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
-                            <textarea class='reviewFormInput reviewFormTextArea' name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="Enter your response here"></textarea>
+                            <textarea class='reviewFormInput reviewFormTextArea' data-name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="Enter your response here"></textarea>
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
                         </div>
                     `
@@ -853,7 +833,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                     } else {
                         questionMarkupContainer.innerHTML+= `
                             <label for='answerChoicesContainer-${question.id}' class='customQuestionTitle'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
-                            <select name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
+                            <select data-name="customQuestion-${question.id}" class='customQuestionDropdown' id='answerChoicesContainer-${question.id}'>
                                 <option value="">Select one</option>
                             </select>
                             <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>
@@ -868,26 +848,18 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             }
 
             if (reviewSettings.customQuestions.length > 0) {
-
                 reviewSettings.customQuestions.forEach((question) => {
-                    
                     insertCustomQuestion(question)
-
                     const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
                     const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
-
                     // START: CONFIGURE EVENT LISTENERS FOR DROPDOWNS (SINGLE CHOICE + MULTIPLE CHOICE)
-
                     // SINGLE CHOICE
-
                     customQuestionDropdowns.forEach(dropdown => {
                         dropdown.addEventListener('change', (e) => {
-                            userInputState['customQuestionAnswers'][e.target.name] = {...userInputState['customQuestionAnswers'][e.target.name], value: [e.target.value]}
+                            userInputState['customQuestionAnswers'][e.target.dataset.name] = {...userInputState['customQuestionAnswers'][e.target.dataset.name], value: [e.target.value]}
                         })
                     })
-                    
                     // MULTIPLE CHOICE
-
                     if (customQuestionMultipleChoices.length > 0) {
                         customQuestionMultipleChoices.forEach(dropdown => {
                             const questionId = dropdown.id.split('-')[1]
@@ -959,7 +931,6 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                 })
 
                             })
-
                         })
                     }
                     // END: CONFIGURE EVENT LISTENERS FOR DROPDOWNS (SINGLE CHOICE + MULTIPLE CHOICE)
@@ -967,48 +938,31 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             }
 
             // END: ADD CUSTOM QUESTIONS (IF ANY)
-
             document.querySelectorAll('.reviewFormInput').forEach(input => {
                 input.addEventListener('input', handleUserInput)
             })
-
             // START: DRAG AND DROP UPLOAD FILE FUNCTIONALITY
-            
             const uploadMediaContainer = document.querySelector('.uploadMediaContainer')
             const uploadedMediaContainer = document.querySelector('.uploadedMediaContainer')
             const uploadMediaBtn = document.querySelector('.uploadMediaBtn')
             const uploadError = document.querySelector('.uploadError')
-
             const verifyFileType = (file) => {
-
                 if (file.type.split('/')[0] !== 'image' && file.type.split('/')[0] !== 'video') {
                     return uploadError.innerText = 'Only image or video files are allowed'
                 } 
-
                 uploadError.innerText = ''
-
                 // Verify no duplicate files are being added -- uses array to verify since file list changes if multiple drag and drops are used
-
                 if (!addedFiles.find(uploadedFile => uploadedFile.name === file.name)) {
-
                     // Push files to saved uploaded files array and update input element file list since file list changes if user drags and drops multiple sets of files
-
                     addedFiles.push(file)
-
                     const dt = new DataTransfer()
-
                     addedFiles.forEach(file => {
                         dt.items.add(file)
                     })
-
                     uploadMediaBtn.files = dt.files
-
                     const reader = new FileReader()
-
                     reader.readAsDataURL(file)
-
                     reader.onloadend = () => {
-
                         const imageContainer = document.createElement('figure')
                         imageContainer.className = 'uploadedImage'
 
@@ -1037,26 +991,20 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
 
                         removeUploadedMediaContainer.appendChild(trashCanIconContainer)
 
-                        removeUploadedMediaContainer.addEventListener('mouseover', () => {
-                            
+                        removeUploadedMediaContainer.addEventListener('mouseover', () => {                      
                             removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
                             trashCanIconContainer.classList.remove('hidden')
-
                         })
 
                         removeUploadedMediaContainer.addEventListener('mouseleave', () => {
-                            
                             removeUploadedMediaContainer.style.backgroundColor = 'transparent'
                             trashCanIconContainer.classList.add('hidden')
-
                         })
 
-                        removeUploadedMediaContainer.addEventListener('click', (e) => {
-                            
+                        removeUploadedMediaContainer.addEventListener('click', (e) => {                     
                             if (e.target.id.includes('deleteMedia')) {
-
                                 // Remove deleted file from file list
-                                                        
+                                                     
                                 const dt = new DataTransfer()
 
                                 const currentFiles = Array.from(uploadMediaBtn.files)
@@ -1074,13 +1022,11 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
                                 addedFiles = addedFiles.filter(uploadedFile => uploadedFile !== file)
 
                                 imageContainer.remove()
-
                             }
                         })
 
                         imageContainer.appendChild(removeUploadedMediaContainer)
                         uploadedMediaContainer.appendChild(imageContainer)
-
                     }
                 }
             }
@@ -1122,7 +1068,7 @@ fetch('https://blizzardbites.myshopify.com/apps/reviews/settings').then(data => 
             const closeReviewForm = () => {
                 reviewFormOverlay.classList.add('hidden')
                 document.body.style.overflow = 'scroll'
-                userRating = 5
+                userRating = '5'
             }
 
             const closeFormBtn = document.querySelector('.closeReviewFormBtn')

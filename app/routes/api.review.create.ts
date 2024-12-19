@@ -1,7 +1,6 @@
 import { ActionFunctionArgs, json } from "@remix-run/node"
 import { authenticate } from "~/shopify.server"
 import db from '../db.server'
-import uploadImageToS3 from "~/utils/uploadImageToS3"
 import uploadMedia from "~/helpers/uploadMedia"
 
 export async function action({ request } : ActionFunctionArgs) {
