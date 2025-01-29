@@ -255,3 +255,9 @@ export interface RewardState {
     good: Reward
     perfect: Reward
 }
+
+export interface EmailOrderData {
+    customerFirstName: string,
+    productName: string,
+    productImage: string
+}

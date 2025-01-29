@@ -3,7 +3,8 @@
     "env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "app/routes/api.product.$id"
+    "app/routes/api.product.$id",
+    "extensions/reviews-widget/assets/createReviewStars.js"
   ],
   "compilerOptions": {
     "lib": [

@@ -4,32 +4,19 @@ import { authenticate } from "~/shopify.server"
 import db from '../db.server'
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
-
     try {
-
-        let productId: any
-
-        if (params.productId) {
-            productId = parseInt(params.productId)
-        }
-    
         const { session } = await authenticate.public.appProxy(request)
-    
-        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session?.shop}}, include: {radioAnswerChoices: true}})
-
-        const eligibleQuestions: any = []
-        questions.forEach(question => {
+        const productId = parseInt(params.productId as string)
+        // fetch all questions connected to the store
+        const allQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session?.shop}}, include: {radioAnswerChoices: true}})
+        // only return questions that are configured for all products or for the given product ID
+        const configuredQuestions = allQuestions.filter(question => {
             if (question.productConfiguration[0] === 'all' || question.productIds.includes(`gid://shopify/Product/${productId}`)) {
-                eligibleQuestions.push(question)
+                return question
             }
         })
-        
-        return new Response(JSON.stringify({result: eligibleQuestions}), {status: 200})
-        
+        return new Response(JSON.stringify({result: configuredQuestions}), {status: 200})
     } catch (error) {
-
         return new Response(JSON.stringify({error}), {status: 500})
-        
     }
-
 }

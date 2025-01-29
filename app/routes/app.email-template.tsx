@@ -17,11 +17,19 @@ import { SaveBar } from "@shopify/app-bridge-react";
 
 import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
+import sendEmail from "~/helpers/sendEmail";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
         const formData = await request.formData()
+        if (formData.get('action') === "testEmail") {
+
+            const customQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
+
+            await sendEmail(customQuestions)
+            return true
+        } 
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
         // convert strings to array of strings to match db shape
@@ -267,9 +275,15 @@ export default function EmailTemplate() {
         }
     }
 
+    const sendTestEmail = () => { 
+        const formData = new FormData()
+        formData.append('action', 'testEmail')
+        submit(formData, {method: 'POST', encType: 'multipart/form-data'})
+    }
+
     return (
         <Page
-        secondaryActions={[{content: 'Send Test Email'}]}
+        secondaryActions={[{content: 'Send Test Email', onAction: sendTestEmail}]}
         >
             <SaveBar open={isFormDirty}>
                 <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>

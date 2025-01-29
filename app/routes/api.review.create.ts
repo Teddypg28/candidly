@@ -4,10 +4,8 @@ import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
 
 export async function action({ request } : ActionFunctionArgs) {
-
     try {            
             const { session, admin } = await authenticate.public.appProxy(request)
-        
             if (session && admin) {
                 const formData = await request.formData()
                 // grab all uploaded media and remove from formData object so that it won't interfere with product preview creation
