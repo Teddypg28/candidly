@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { BlockStack, Card, InlineGrid, InlineStack, Page, ProgressBar, Text } from "@shopify/polaris";
+import { BlockStack, Card, InlineGrid, Page, ProgressBar, Text } from "@shopify/polaris";
 import db from '../db.server'
 import { useLoaderData, useNavigate } from "@remix-run/react";
 
@@ -13,13 +13,9 @@ export async function loader({ params } : LoaderFunctionArgs) {
     const individualAnswerCountData: {[key: string]: number} = {}
     // add all current answer choices to the individualAnswerCountData Object
     question.radioAnswerChoices.forEach(answerChoice => {
-        if (individualAnswerCountData[answerChoice.value as keyof typeof individualAnswerCountData]) {
-            individualAnswerCountData[answerChoice.value as keyof typeof individualAnswerCountData] = 0
-        } else {
-            individualAnswerCountData[answerChoice.value as keyof typeof individualAnswerCountData] = 0
-        }
+        individualAnswerCountData[answerChoice.value as keyof typeof individualAnswerCountData] = 0
     })
-    // iterate through answerSnapshots (customer answers) and increment answer count, or add another key for missing choices that were previously edited
+    // iterate through answerSnapshots and increment answer count for matching answer choices, or add another key for choices not yet included (previous edited/deleted ones)
     answers.forEach(answer => {
         if (individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData]) {
             individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData] += 1
@@ -43,14 +39,17 @@ export default function CustomerAnswers() {
     const mostPopularAnswer = data.totalNumAnswers > 0 ? Object.keys(data.individualAnswerCountData).reduce((prevValue, currentValue) => 
         data.individualAnswerCountData[currentValue] > data.individualAnswerCountData[prevValue] ? currentValue : prevValue
     ) : null
+
     const leastPopularAnswer = data.totalNumAnswers > 1 ? Object.keys(data.individualAnswerCountData).reduce((prevValue, currentValue) => 
         data.individualAnswerCountData[currentValue] < data.individualAnswerCountData[prevValue] ? currentValue : prevValue
     ) : null
+
     const answerOverviewStats = [
         { title: 'Total Customer Answers', value: data.totalNumAnswers },
         { title: 'Most Popular Answer', value: mostPopularAnswer },
         { title: 'Least Popular Answer', value: leastPopularAnswer }
     ]
+
     const AnswerOverviewMarkup = answerOverviewStats.map((stat, index) => {
         return (
             <Card key={index}>
@@ -68,7 +67,7 @@ export default function CustomerAnswers() {
             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}} key={index}>
                 <p style={{width: '15%'}}>{key}</p>
                 <div style={{width: '70%'}}>
-                    <ProgressBar progress={(value/data.totalNumAnswers)*100} />
+                    <ProgressBar progress={(value/data.totalNumAnswers)*100 || 0} />
                 </div>
                 <p style={{width: '15%'}}>{value} {value === 1 ? "answer" : "answers"}</p>
             </div>

@@ -58,7 +58,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         // const result = await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})
         return json({message: 'success'}, {status: 200})
     } catch (error) {
-        console.log(error)
+        console.error(error)
         return json({message: 'error'}, {status: 400})
     }
 }
@@ -176,7 +176,7 @@ export default function Question() {
         const markup = state.radioAnswerChoices.map((answerChoice, index) => {
             const onChange = (value: string) => {
                 const answerChoicesCopy = [...state.radioAnswerChoices]
-                answerChoicesCopy[index].value = value
+                answerChoicesCopy[index] = {...answerChoicesCopy[index], value}
                 setState(prevState => {return {...prevState, radioAnswerChoices: answerChoicesCopy}})
             }
             return <TextField key={index} id={`choiceField-${index+1}`} onBlur={() => checkForAnswerChoiceErrors(index)} error={errors[`choiceField-${index+1}`] === true && answerChoice.value.trim() === ''} value={answerChoice.value} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${index+1}`} />

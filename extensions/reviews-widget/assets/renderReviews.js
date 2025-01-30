@@ -1,4 +1,4 @@
-// renders reviews or display no reviews message
+// renders review metadata and calls function to render the corresponding reviews - or displays "no reviews" message
 const renderReviews = () => {
     document.querySelector('.mainReviewContainer').innerHTML = `
             <div class='headingBtnContainer'>
@@ -120,5 +120,6 @@ const renderReviews = () => {
         document.getElementById('averageCustomerReview').textContent = `${avgRating.toFixed(1)} out of 5`
         document.getElementById('totalCustomerReviews').textContent = `${reviewData.totalReviews} customer ${reviewData.totalReviews > 1 ? 'reviews' : 'review'}`
 
+        // this function will then render the actual reviews, starting at page 1
         setCurrentPage(1, 'Newest')
 }

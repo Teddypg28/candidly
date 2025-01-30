@@ -180,6 +180,7 @@ const renderMediaCarousel = (index, src) => {
     }
 }
 
+// renders the reviews for a given page
 const setCurrentPage = (currentPage, currentSortBy) => {
     const numOfPages = reviewData.totalPages
 
