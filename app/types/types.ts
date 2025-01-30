@@ -40,7 +40,7 @@ export const initialImportCsvFileState: ImportCsvFileState = {
 
 export const initialQuestionState: ReviewFormQuestion = {
     productConfiguration: ['all'],
-    answerType: ['text'],
+    answerType: ['radio'],
     productIds: [],
     collectionIds: [],
     radioAllowMultipleAnswers: ['false'],

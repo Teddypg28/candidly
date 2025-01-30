@@ -138,7 +138,7 @@ const CustomQuestions = () => {
                 <IndexTable.Cell>
                     <Link url={`/app/question/${question.id}`}>{question.title}</Link>
                 </IndexTable.Cell>
-                <IndexTable.Cell>{question.answerType[0] === 'text' ? 'Text Field' : 'Radio Buttons'}</IndexTable.Cell>
+                {/* <IndexTable.Cell>{question.answerType[0] === 'text' ? 'Text Field' : 'Radio Buttons'}</IndexTable.Cell> */}
                 <IndexTable.Cell>
                     <CustomQuestionConfigurationDetails question={question} />
                 </IndexTable.Cell>
@@ -281,7 +281,7 @@ const CustomQuestions = () => {
                 />
                 <IndexTable
                 itemCount={IndexTableMarkup.length}
-                headings={[{title: 'Title'}, {title: 'Type'}, {title: 'Configuration'}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
+                headings={[{title: 'Title'}, {title: 'Configuration'}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
                 selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
                 onSelectionChange={handleSelectionChange}
                 >

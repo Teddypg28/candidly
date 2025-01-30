@@ -35,7 +35,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             return redirect(`/app/question/${question.id}`)
         }
 
-        // update logic
+        // update question logic
         const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: Number(params.id)}}, include: {radioAnswerChoices: true}})
         
         if (question) {
@@ -68,17 +68,11 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     const { admin, redirect } = await authenticate.admin(request)
     
     try {
-
         if (params.id === 'new') {
-
             return json({initialQuestionState, initialProductDataState: [], initialCollectionDataState: []})
-
         } else {
-
             const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: parseInt(params.id as any)}}, include: {radioAnswerChoices: true}, omit: {id: true}})
-
             if (result !== null) {
-
                 const productData = await fetchProductInfo(admin, result.productIds)
                 const collectionData = await fetchCollectionInfo(admin, result.collectionIds)
 
@@ -96,20 +90,14 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                 }    
 
                 return json({initialQuestionState, initialProductDataState: productData, initialCollectionDataState: collectionData})
-
             } else {
-
                 return redirect('/app/custom-questions')
-
             }
         } 
 
     } catch (error) {
-
         console.error(error)
-
     }
-
 }
 
 export default function Question() {
@@ -184,21 +172,41 @@ export default function Question() {
     }
 
     const renderAnswerChoices = () => {
-        const markup  = []
 
-        for (let i = 0; i<state.radioAnswerChoices.length; i++) {
+        const markup = state.radioAnswerChoices.map((answerChoice, index) => {
             const onChange = (value: string) => {
                 const answerChoicesCopy = [...state.radioAnswerChoices]
-                answerChoicesCopy[i].value = value
+                answerChoicesCopy[index].value = value
                 setState(prevState => {return {...prevState, radioAnswerChoices: answerChoicesCopy}})
             }
-            markup.push( <TextField id={`choiceField-${i+1}`} onBlur={() => checkForAnswerChoiceErrors(i)} error={errors[`choiceField-${i+1}`] === true && state.radioAnswerChoices[i].value.trim() === ''} value={state.radioAnswerChoices[i].value} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${i+1}`} /> )
-        }
+            return <TextField key={index} id={`choiceField-${index+1}`} onBlur={() => checkForAnswerChoiceErrors(index)} error={errors[`choiceField-${index+1}`] === true && answerChoice.value.trim() === ''} value={answerChoice.value} label='' autoComplete="off" onChange={onChange} placeholder={`Enter Answer Choice ${index+1}`} />
+        })
+
         const removeAnswerChoice = () => {
             const answerChoicesCopy = [...state.radioAnswerChoices]
             answerChoicesCopy.pop()
+
+            const errorsCopy = {...errors}
+            delete errorsCopy[`choiceField-${answerChoicesCopy.length+1}`]
+
+            if (answerChoicesCopy.filter(choice => choice.value === '').length === 0) {
+                setErrors({...errorsCopy, answerChoices: false})
+            } else {
+                setErrors(errorsCopy)
+            }
+
             setState(prevState => {return {...prevState, radioAnswerChoices: answerChoicesCopy}})
         }
+
+        const addAnswerChoice = () => {
+            const newAnswerChoice = {
+                value: '', 
+                display: state.radioDisplayAnswer[0] === 'true' ? true : false,
+                label: state.radioDisplayedAnswerLabel
+            }
+            setState(prevState => {return {...prevState, radioAnswerChoices: [...state.radioAnswerChoices, newAnswerChoice]}})
+        }
+
         const useProductVariantsAsChoices = () => {
             const radioAnswerChoices = selectedProductsState[0].variants.map((variant) => {
                 return {
@@ -209,15 +217,11 @@ export default function Question() {
             })
             setState(prevState => {return {...prevState, radioAnswerChoices}})
         }
-        const newAnswerChoice = {
-            value: '', 
-            display: state.radioDisplayAnswer[0] === 'true' ? true : false,
-            label: state.radioDisplayedAnswerLabel
-        }
+
         markup.push(
             <BlockStack gap='100'>
                 <InlineStack gap='200'>
-                    <Button onClick={() => setState(prevState => {return {...prevState, radioAnswerChoices: [...state.radioAnswerChoices, newAnswerChoice]}})}>Add Choice</Button>
+                    <Button onClick={addAnswerChoice}>Add Choice</Button>
                     <Button disabled={state.radioAnswerChoices.length === 2} onClick={removeAnswerChoice}>Remove Choice</Button>
                     <InlineStack>
                         <Button disabled={state.productIds.length !== 1} onClick={useProductVariantsAsChoices} variant="plain">Use product variants as choices</Button>
@@ -225,6 +229,7 @@ export default function Question() {
                 </InlineStack>
             </BlockStack>
         )
+
         return markup
     }
 
@@ -258,7 +263,6 @@ export default function Question() {
     }
 
     const checkForTextFieldError = (stateKeyName: keyof ReviewFormQuestion) => {
-
         if (state[stateKeyName]?.toString().trim() === '') {
             setErrors(prevErrors => {return {...prevErrors, [stateKeyName as keyof CustomQuestionFormError]: true}})
             return true
@@ -451,15 +455,14 @@ export default function Question() {
                                 />
                                 { errors['title'] && state.title.trim() === '' && <InlineError message='Title required' fieldID={'questionTitle'} /> }
                             </BlockStack>
-                            <BlockStack>
+                            {/* <BlockStack>
                                 <ChoiceList 
                                 selected={state.answerType} 
                                 onChange={(value) => setState({...state, answerType: value})}
                                 title='Answer Type' 
                                 choices={[{label: 'Text Field', value: 'text'}, {label: 'Multiple Choice', value: 'radio'}]} 
                                 />
-                            </BlockStack>
-                            {state.answerType[0] === 'radio' && 
+                            </BlockStack> */}
                             <BlockStack gap={'100'}>
                                 <Label id="answerChoices">Answer Choices</Label>
                                 <BlockStack gap={'300'}>
@@ -468,7 +471,6 @@ export default function Question() {
                                      <InlineError fieldID="answerChoices" message="Answer choices must not be blank" />}
                                 </BlockStack>
                             </BlockStack>
-                            }
                         </BlockStack>
                     </Card>
                 </Layout.Section>
