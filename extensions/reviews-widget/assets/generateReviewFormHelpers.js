@@ -219,210 +219,210 @@ const generateReviewFormMarkup = () => {
     `
     document.body.appendChild(reviewFormOverlay)
 
-    const writeReviewBtn = document.querySelector('.writeReviewBtn')
+    // const writeReviewBtn = document.querySelector('.writeReviewBtn')
 
-    writeReviewBtn.addEventListener('mouseover', () => {
-        writeReviewBtn.style.backgroundColor = reviewSettings.primaryColor
-        writeReviewBtn.style.borderColor = reviewSettings.primaryColor
-        writeReviewBtn.style.color = 'white'
-    })
+    // writeReviewBtn.addEventListener('mouseover', () => {
+    //     writeReviewBtn.style.backgroundColor = reviewSettings.primaryColor
+    //     writeReviewBtn.style.borderColor = reviewSettings.primaryColor
+    //     writeReviewBtn.style.color = 'white'
+    // })
 
-    writeReviewBtn.addEventListener('mouseleave', () => {
-        writeReviewBtn.style.backgroundColor = reviewSettings.backgroundColor
-        writeReviewBtn.style.borderColor = 'black'
-        writeReviewBtn.style.color = 'black'
-    })
+    // writeReviewBtn.addEventListener('mouseleave', () => {
+    //     writeReviewBtn.style.backgroundColor = reviewSettings.backgroundColor
+    //     writeReviewBtn.style.borderColor = 'black'
+    //     writeReviewBtn.style.color = 'black'
+    // })
 
-    writeReviewBtn.addEventListener('click', () => {
-        const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
-        reviewFormOverlay.innerHTML = reviewFormMarkup
-        reviewFormOverlay.classList.remove('hidden')
-        document.querySelector('.reviewForm').addEventListener('submit', handleFormSubmission)
-        // insert custom questions
-        if (reviewSettings.customQuestions.length > 0) {
-            reviewSettings.customQuestions.forEach((question) => {
-                insertCustomQuestion(question)
-                const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
-                const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
-                // add event listeners to single choice dropdowns
-                customQuestionDropdowns.forEach(dropdown => {
-                    dropdown.addEventListener('change', (e) => {
-                        userInputState['customQuestionAnswers'][e.target.dataset.name] = {...userInputState['customQuestionAnswers'][e.target.dataset.name], value: [e.target.value]}
-                    })
-                })
-                // add event listeners to multiple choise dropdowns
-                if (customQuestionMultipleChoices.length > 0) {
-                    customQuestionMultipleChoices.forEach(dropdown => {
-                        const questionId = dropdown.id.split('-')[1]
-                        const dropdownTop = document.querySelector(`#dropdownTop-${questionId}`)
-                        const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${questionId}`)
-                        const chevronContainer = document.querySelector(`#chevronContainer-${questionId}`)
-                        let isDropdownOpen = false
-                        dropdownTop.addEventListener('click', () => {
-                            isDropdownOpen = !isDropdownOpen
-                            const closeDropdown = (e) => {
-                                if (e.target.classList.contains('checkbox') === false && e.target.classList.contains('dropdownItem') === false) {
-                                    dropdownItemsContainer.classList.add('hidden')
-                                    chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #ffffff;"></i>'
-                                    isDropdownOpen = false
-                                    document.removeEventListener('click', closeDropdown)
-                                }
-                            }
-                            const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${questionId}`)
-                                if (dropdownItemsContainer.classList.contains('hidden')) {
-                                dropdownItemsContainer.classList.remove('hidden')
-                                chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-up" style="color: #ffffff;"></i>'                              
-                            } else {                              
-                                dropdownItemsContainer.classList.add('hidden')
-                                chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #ffffff;"></i>'
-                            }
-                            if (isDropdownOpen) {
-                                setTimeout(() => document.addEventListener('click', closeDropdown), 100)
-                            }
-                        })
-                        document.querySelectorAll(`#dropdownQuestion${questionId}Item`).forEach(element => {
-                            element.addEventListener('click', (e) => {
-                                if (e.target.id === `dropdownQuestion${questionId}Item`) {
-                                    if (e.target.children[0].classList.contains(`checked-${questionId}`)) {
-                                        e.target.children[0].textContent = ' '
-                                        e.target.children[0].classList.remove(`checked-${questionId}`)
-                                    } else {
-                                        e.target.children[0].textContent = '•'
-                                        e.target.children[0].classList.add(`checked-${questionId}`)
-                                    }
-                                } else {
-                                    if (e.target.classList.contains(`checked-${questionId}`)) {
-                                        e.target.textContent = ' '
-                                        e.target.classList.remove(`checked-${questionId}`)
-                                    } else {
-                                        e.target.textContent = '•'
-                                        e.target.classList.add(`checked-${questionId}`)
-                                    }
-                                }
-                                const checkedNames = []
-                                const checkedAnswerIds = []
-                                document.querySelectorAll(`.checked-${questionId}`).forEach(checkedElement => {
-                                    checkedNames.push(checkedElement.dataset.name)
-                                    checkedAnswerIds.push(checkedElement.dataset.id)
-                                })
-                                const selectedAnswers = checkedNames.join(', ')
-                                if (checkedNames.length === 0) {
-                                    selectedOptionsContainer.textContent = 'Select'                             
-                                }
-                                else {
-                                    selectedOptionsContainer.textContent = selectedAnswers
-                                }
-                                userInputState['customQuestionAnswers'][`customQuestion-${questionId}`] = {...userInputState['customQuestionAnswers'][`customQuestion-${question.id}`], value: checkedAnswerIds.length > 0 ? checkedAnswerIds : ['']}
-                            })
-                        })
-                    })
-                }
-            })
-        }
+    // writeReviewBtn.addEventListener('click', () => {
+    //     const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
+    //     reviewFormOverlay.innerHTML = reviewFormMarkup
+    //     reviewFormOverlay.classList.remove('hidden')
+    //     document.querySelector('.reviewForm').addEventListener('submit', handleFormSubmission)
+    //     // insert custom questions
+    //     if (reviewSettings.customQuestions.length > 0) {
+    //         reviewSettings.customQuestions.forEach((question) => {
+    //             insertCustomQuestion(question)
+    //             const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
+    //             const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
+    //             // add event listeners to single choice dropdowns
+    //             customQuestionDropdowns.forEach(dropdown => {
+    //                 dropdown.addEventListener('change', (e) => {
+    //                     userInputState['customQuestionAnswers'][e.target.dataset.name] = {...userInputState['customQuestionAnswers'][e.target.dataset.name], value: [e.target.value]}
+    //                 })
+    //             })
+    //             // add event listeners to multiple choise dropdowns
+    //             if (customQuestionMultipleChoices.length > 0) {
+    //                 customQuestionMultipleChoices.forEach(dropdown => {
+    //                     const questionId = dropdown.id.split('-')[1]
+    //                     const dropdownTop = document.querySelector(`#dropdownTop-${questionId}`)
+    //                     const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${questionId}`)
+    //                     const chevronContainer = document.querySelector(`#chevronContainer-${questionId}`)
+    //                     let isDropdownOpen = false
+    //                     dropdownTop.addEventListener('click', () => {
+    //                         isDropdownOpen = !isDropdownOpen
+    //                         const closeDropdown = (e) => {
+    //                             if (e.target.classList.contains('checkbox') === false && e.target.classList.contains('dropdownItem') === false) {
+    //                                 dropdownItemsContainer.classList.add('hidden')
+    //                                 chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #ffffff;"></i>'
+    //                                 isDropdownOpen = false
+    //                                 document.removeEventListener('click', closeDropdown)
+    //                             }
+    //                         }
+    //                         const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${questionId}`)
+    //                             if (dropdownItemsContainer.classList.contains('hidden')) {
+    //                             dropdownItemsContainer.classList.remove('hidden')
+    //                             chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-up" style="color: #ffffff;"></i>'                              
+    //                         } else {                              
+    //                             dropdownItemsContainer.classList.add('hidden')
+    //                             chevronContainer.innerHTML = '<i class="fa-solid fa-chevron-down" style="color: #ffffff;"></i>'
+    //                         }
+    //                         if (isDropdownOpen) {
+    //                             setTimeout(() => document.addEventListener('click', closeDropdown), 100)
+    //                         }
+    //                     })
+    //                     document.querySelectorAll(`#dropdownQuestion${questionId}Item`).forEach(element => {
+    //                         element.addEventListener('click', (e) => {
+    //                             if (e.target.id === `dropdownQuestion${questionId}Item`) {
+    //                                 if (e.target.children[0].classList.contains(`checked-${questionId}`)) {
+    //                                     e.target.children[0].textContent = ' '
+    //                                     e.target.children[0].classList.remove(`checked-${questionId}`)
+    //                                 } else {
+    //                                     e.target.children[0].textContent = '•'
+    //                                     e.target.children[0].classList.add(`checked-${questionId}`)
+    //                                 }
+    //                             } else {
+    //                                 if (e.target.classList.contains(`checked-${questionId}`)) {
+    //                                     e.target.textContent = ' '
+    //                                     e.target.classList.remove(`checked-${questionId}`)
+    //                                 } else {
+    //                                     e.target.textContent = '•'
+    //                                     e.target.classList.add(`checked-${questionId}`)
+    //                                 }
+    //                             }
+    //                             const checkedNames = []
+    //                             const checkedAnswerIds = []
+    //                             document.querySelectorAll(`.checked-${questionId}`).forEach(checkedElement => {
+    //                                 checkedNames.push(checkedElement.dataset.name)
+    //                                 checkedAnswerIds.push(checkedElement.dataset.id)
+    //                             })
+    //                             const selectedAnswers = checkedNames.join(', ')
+    //                             if (checkedNames.length === 0) {
+    //                                 selectedOptionsContainer.textContent = 'Select'                             
+    //                             }
+    //                             else {
+    //                                 selectedOptionsContainer.textContent = selectedAnswers
+    //                             }
+    //                             userInputState['customQuestionAnswers'][`customQuestion-${questionId}`] = {...userInputState['customQuestionAnswers'][`customQuestion-${question.id}`], value: checkedAnswerIds.length > 0 ? checkedAnswerIds : ['']}
+    //                         })
+    //                     })
+    //                 })
+    //             }
+    //         })
+    //     }
 
-        document.querySelectorAll('.reviewFormInput').forEach(input => {
-            input.addEventListener('input', handleUserInput)
-        })
+    //     document.querySelectorAll('.reviewFormInput').forEach(input => {
+    //         input.addEventListener('input', handleUserInput)
+    //     })
         
-        // add drag and drop functionality
-        const uploadMediaContainer = document.querySelector('.uploadMediaContainer')
-        const uploadedMediaContainer = document.querySelector('.uploadedMediaContainer')
-        const uploadMediaBtn = document.querySelector('.uploadMediaBtn')
-        const uploadError = document.querySelector('.uploadError')
-        const verifyFileType = (file) => {
-            if (file.type.split('/')[0] !== 'image' && file.type.split('/')[0] !== 'video') {
-                return uploadError.innerText = 'Only image or video files are allowed'
-            } 
-            uploadError.innerText = ''
-            // verify no duplicate files are being added -- uses array to verify since file list changes if multiple drag and drops are used
-            if (!addedFiles.find(uploadedFile => uploadedFile.name === file.name)) {
-                // push files to saved uploaded files array and update input element file list since file list changes if user drags and drops multiple sets of files
-                addedFiles.push(file)
-                const dt = new DataTransfer()
-                addedFiles.forEach(file => {
-                    dt.items.add(file)
-                })
-                uploadMediaBtn.files = dt.files
-                const reader = new FileReader()
-                reader.readAsDataURL(file)
-                reader.onloadend = () => {
-                    const imageContainer = document.createElement('figure')
-                    imageContainer.className = 'uploadedImage'
+    //     // add drag and drop functionality
+    //     const uploadMediaContainer = document.querySelector('.uploadMediaContainer')
+    //     const uploadedMediaContainer = document.querySelector('.uploadedMediaContainer')
+    //     const uploadMediaBtn = document.querySelector('.uploadMediaBtn')
+    //     const uploadError = document.querySelector('.uploadError')
+    //     const verifyFileType = (file) => {
+    //         if (file.type.split('/')[0] !== 'image' && file.type.split('/')[0] !== 'video') {
+    //             return uploadError.innerText = 'Only image or video files are allowed'
+    //         } 
+    //         uploadError.innerText = ''
+    //         // verify no duplicate files are being added -- uses array to verify since file list changes if multiple drag and drops are used
+    //         if (!addedFiles.find(uploadedFile => uploadedFile.name === file.name)) {
+    //             // push files to saved uploaded files array and update input element file list since file list changes if user drags and drops multiple sets of files
+    //             addedFiles.push(file)
+    //             const dt = new DataTransfer()
+    //             addedFiles.forEach(file => {
+    //                 dt.items.add(file)
+    //             })
+    //             uploadMediaBtn.files = dt.files
+    //             const reader = new FileReader()
+    //             reader.readAsDataURL(file)
+    //             reader.onloadend = () => {
+    //                 const imageContainer = document.createElement('figure')
+    //                 imageContainer.className = 'uploadedImage'
 
-                    const img = document.createElement('img')
-                    img.src = reader.result
+    //                 const img = document.createElement('img')
+    //                 img.src = reader.result
 
-                    imageContainer.appendChild(img)
-                    imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+    //                 imageContainer.appendChild(img)
+    //                 imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
 
-                    const removeUploadedMediaContainer = document.createElement('div')
-                    removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
-                    removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
-                    removeUploadedMediaContainer.dataset.fileName = file.name
+    //                 const removeUploadedMediaContainer = document.createElement('div')
+    //                 removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
+    //                 removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
+    //                 removeUploadedMediaContainer.dataset.fileName = file.name
 
-                    const trashCanIconContainer = document.createElement('div')
-                    trashCanIconContainer.className = "removeUploadedMedia hidden"
-                    trashCanIconContainer.dataset.fileName = file.name
+    //                 const trashCanIconContainer = document.createElement('div')
+    //                 trashCanIconContainer.className = "removeUploadedMedia hidden"
+    //                 trashCanIconContainer.dataset.fileName = file.name
 
-                    const trashCanIcon = document.createElement('i')
-                    trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
-                    trashCanIcon.id = "deleteMedia"
-                    trashCanIcon.dataset.fileName = file.name
-                    trashCanIcon.style.color = "#ffffff"
+    //                 const trashCanIcon = document.createElement('i')
+    //                 trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
+    //                 trashCanIcon.id = "deleteMedia"
+    //                 trashCanIcon.dataset.fileName = file.name
+    //                 trashCanIcon.style.color = "#ffffff"
 
-                    trashCanIconContainer.appendChild(trashCanIcon)
+    //                 trashCanIconContainer.appendChild(trashCanIcon)
 
-                    removeUploadedMediaContainer.appendChild(trashCanIconContainer)
+    //                 removeUploadedMediaContainer.appendChild(trashCanIconContainer)
 
-                    removeUploadedMediaContainer.addEventListener('mouseover', () => {                      
-                        removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
-                        trashCanIconContainer.classList.remove('hidden')
-                    })
+    //                 removeUploadedMediaContainer.addEventListener('mouseover', () => {                      
+    //                     removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
+    //                     trashCanIconContainer.classList.remove('hidden')
+    //                 })
 
-                    removeUploadedMediaContainer.addEventListener('mouseleave', () => {
-                        removeUploadedMediaContainer.style.backgroundColor = 'transparent'
-                        trashCanIconContainer.classList.add('hidden')
-                    })
+    //                 removeUploadedMediaContainer.addEventListener('mouseleave', () => {
+    //                     removeUploadedMediaContainer.style.backgroundColor = 'transparent'
+    //                     trashCanIconContainer.classList.add('hidden')
+    //                 })
 
-                    removeUploadedMediaContainer.addEventListener('click', (e) => {                     
-                        if (e.target.id.includes('deleteMedia')) {
-                            // remove deleted file from file list  
-                            const dt = new DataTransfer()
-                            const currentFiles = Array.from(uploadMediaBtn.files)
-                            currentFiles.forEach(file => {
-                                if (file.name !== e.target.dataset.fileName) {
-                                    dt.items.add(file)
-                                }
-                            })
-                            uploadMediaBtn.files = dt.files
-                            // remove deleted files from saved uploaded files array
-                            addedFiles = addedFiles.filter(uploadedFile => uploadedFile !== file)
-                            imageContainer.remove()
-                        }
-                    })
+    //                 removeUploadedMediaContainer.addEventListener('click', (e) => {                     
+    //                     if (e.target.id.includes('deleteMedia')) {
+    //                         // remove deleted file from file list  
+    //                         const dt = new DataTransfer()
+    //                         const currentFiles = Array.from(uploadMediaBtn.files)
+    //                         currentFiles.forEach(file => {
+    //                             if (file.name !== e.target.dataset.fileName) {
+    //                                 dt.items.add(file)
+    //                             }
+    //                         })
+    //                         uploadMediaBtn.files = dt.files
+    //                         // remove deleted files from saved uploaded files array
+    //                         addedFiles = addedFiles.filter(uploadedFile => uploadedFile !== file)
+    //                         imageContainer.remove()
+    //                     }
+    //                 })
 
-                    imageContainer.appendChild(removeUploadedMediaContainer)
-                    uploadedMediaContainer.appendChild(imageContainer)
-                }
-            }
-        }
+    //                 imageContainer.appendChild(removeUploadedMediaContainer)
+    //                 uploadedMediaContainer.appendChild(imageContainer)
+    //             }
+    //         }
+    //     }
 
-        const active = () => uploadMediaContainer.style.border = `2px dotted ${reviewSettings.primaryColor}`
-        const inactive = () => uploadMediaContainer.style.border = '2px dotted lightgray'
+    //     const active = () => uploadMediaContainer.style.border = `2px dotted ${reviewSettings.primaryColor}`
+    //     const inactive = () => uploadMediaContainer.style.border = '2px dotted lightgray'
 
-        ['dragenter', 'dragover'].forEach(event => uploadMediaContainer.addEventListener(event, active));
-        ['dragleave', 'drop'].forEach(event => uploadMediaContainer.addEventListener(event, inactive));
+    //     ['dragenter', 'dragover'].forEach(event => uploadMediaContainer.addEventListener(event, active));
+    //     ['dragleave', 'drop'].forEach(event => uploadMediaContainer.addEventListener(event, inactive));
 
-        uploadMediaBtn.addEventListener('change', () => {
-            Array.from(uploadMediaBtn.files).forEach(verifyFileType)
-        })
+    //     uploadMediaBtn.addEventListener('change', () => {
+    //         Array.from(uploadMediaBtn.files).forEach(verifyFileType)
+    //     })
 
-        // render initial stars
-        renderStars(userRating)
-        document.body.style.overflow = 'hidden'
+    //     // render initial stars
+    //     renderStars(userRating)
+    //     document.body.style.overflow = 'hidden'
 
-        // close review form 
-        const closeFormBtn = document.querySelector('.closeReviewFormBtn')
-        closeFormBtn.addEventListener('click', closeReviewForm)
-    })
+    //     // close review form 
+    //     const closeFormBtn = document.querySelector('.closeReviewFormBtn')
+    //     closeFormBtn.addEventListener('click', closeReviewForm)
+    // })
 }

@@ -91,6 +91,11 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     margin-bottom: 10px;
 }
 
+.heading {
+    margin-bottom: 10px;
+    padding: 0px;
+}
+
 .headingBtnContainer {
     align-items: center;
     display: flex;

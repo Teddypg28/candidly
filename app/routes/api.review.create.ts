@@ -18,7 +18,10 @@ export async function action({ request } : ActionFunctionArgs) {
                 // remove it from main data object, so that review can be created
                 delete data['customQuestionAnswers']
                 delete data['media']
-                const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session.shop, date: new Date(), isPublished: false}})
+                // fetch store settings to check auto publishing rules
+                const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+                const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
+                const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session.shop, date: new Date(), isPublished}})
                 // upload media images
                 if (uploadedMedia.length > 0) {
                    await uploadMedia(uploadedMedia, newReview.id)

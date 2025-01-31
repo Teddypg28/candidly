@@ -20,16 +20,19 @@ import uploadLogo from "~/utils/uploadLogo";
 import sendEmail from "~/helpers/sendEmail";
 import InitialEmailTemplate from "~/components/emailTemplates/InitialEmailTemplate";
 import FollowUpEmailTemplate from "~/components/emailTemplates/FollowUpEmailTemplate";
+import generateEmailHtml from "~/helpers/generateEmailHtml";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
         const formData = await request.formData()
+
         if (formData.get('action') === "testEmail") {
-
-            const customQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
-
-            // await sendEmail(customQuestions)
+            const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+            if (appSettings) {
+                const emailHtml = generateEmailHtml("initial", appSettings.companyName, null, {customerFirstName: "Teddy", productName: "Blizzard Bites", productImage: ""})
+                await sendEmail(emailHtml, 'mrgiftr@gmail.com', appSettings.primaryEmail)
+            }
             return true
         } 
         // convert form data to regular javascript object
@@ -231,143 +234,152 @@ export default function EmailTemplate() {
                 <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>
                 <button onClick={() => { setSettings(cleanSettings); setProductData(cleanProductData); setProductSelectionError(false); setColor(cleanColor)}}></button>
             </SaveBar>
-            <Layout>
-                <Layout.Section variant="oneThird">
-                    <Card>
-                        <BlockStack gap='300'>
-                            <DropZone 
-                            onDrop={handleDrop} 
-                            allowMultiple={false} 
-                            id="bannerLogo" 
-                            accept="image/*" 
-                            label='Banner Logo' 
-                            overlayText="Drop to Upload">
-                                {settings.logo ? 
-                                <div ref={(element: HTMLDivElement) => selectedFileContainerRef.current = element} className={styles.uploadedMedia}>
-                                    <Thumbnail
-                                    size="medium"
-                                    alt={settings.logo.name}
-                                    source={settings.logo.url}
-                                    />
-                                    <BlockStack gap='100'>
-                                        <Text as="h1" variant="headingMd">{settings.logo.name}</Text>
-                                    </BlockStack>
-                                    <div ref={(element: HTMLDivElement) => trashCanIconContainerRef.current = element} className={styles.trashCanIconContainer}> 
-                                        <FontAwesomeIcon icon={faTrashCan} color="white" size="3x" />
-                                    </div>
-                                </div> 
-                                :
-                                fileUploadBtn  
-                            }
-                            </DropZone>
-                            <BlockStack gap='100'>
-                                <Label id="colorPicker">Banner Background Color</Label>
-                                <ColorPicker
-                                key='colorPicker'
-                                height={150}
-                                color={color} 
-                                onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color.hex}}); setColor(color) }} 
-                                />
-                            </BlockStack>
-                            {/* <ChoiceList 
-                            title='Recommended Products Display'
-                            onChange={(productDisplay) => setSettings(prevSettings => {return {...prevSettings, productDisplay}})}
-                            selected={settings.productDisplay}
-                            choices={[
-                                {
-                                    label: 'Disable',
-                                    value: 'disabled'
-                                },
-                                {
-                                    label: 'Random Products',
-                                    value: 'random'
-                                }, 
-                                {
-                                    label: 'Select Products',
-                                    value: 'select',
-                                    renderChildren: (isSelected) => {
-                                        return isSelected && (
-                                            <InlineStack gap={'200'} blockAlign="center">
-                                                <Button onClick={selectProducts}>{productData.length > 0 ? 'Change Products' : 'Select Products'}</Button> 
-                                                <Text as="p" fontWeight="bold">{productData.length}/3 Products</Text>
-                                            </InlineStack>
-                                        )
-                                    },
-                                }
-                            ]}
-                            /> */}
-                        </BlockStack>
-                    </Card>
-                </Layout.Section>
-                <Layout.Section variant="oneHalf">
-                    <Card>
-                        <BlockStack gap={'200'}>
-                            <InlineStack blockAlign="center" align="space-between">
-                                <h2 style={{fontWeight: 'bold'}}>{emailCopyVersion} Email Preview</h2>
-                                <Pagination 
-                                hasNext={emailCopyVersion === 'Initial'} 
-                                hasPrevious={emailCopyVersion === 'Follow Up'}
-                                onNext={() => setEmailCopyVersion('Follow Up')}
-                                onPrevious={() => setEmailCopyVersion('Initial')}
-                                />
-                            </InlineStack>
+            <BlockStack gap='200'>
+                <Banner 
+                tone="info"
+                title="Note: Reward Configuration"
+                >
+                    If no rewards are configured, each email will not contain the sentences about earning a max reward
+                </Banner>
+                <Layout>
+                    <Layout.Section variant="oneThird">
+                        <Card>
                             <BlockStack gap='300'>
-                                <div className={styles.emailHeaderContainer} style={{backgroundColor: color.hex}}>
-                                    <div className={styles.logoContainer}>
-                                        {settings.logo && 
-                                            <Image 
-                                            height={50} 
-                                            width={50} 
-                                            source={settings.logo.url} 
-                                            alt={settings.logo.name} 
-                                            />
-                                        }
-                                    </div>
-                                </div>
-                                <BlockStack gap={'300'}>
-                                    <Text alignment="center" variant="headingLg" as="p">Hey [Name],</Text>
-                                </BlockStack>
-                                <Text as="p" variant="bodyLg" alignment="center">
-                                    {emailCopyVersion === "Initial" ? initialEmailTemplate : followUpEmailTemplate}                                    
-                                </Text>
-                                {
-                                    settings.productDisplay[0] !== 'disabled' && 
-                                    <>
-                                        <hr className={styles.separator} />
-                                        <h2 style={{fontWeight: 'bold', fontSize: '18px'}}>Top Picks for You</h2>
-                                        {settings.productDisplay[0] === 'random' ?
-                                        <Banner tone="info">
-                                            3 random products will be displayed here
-                                        </Banner>
-                                        :
-                                        <InlineStack gap={'600'}>
-                                            {
-                                            productData.length > 0 ? productData.map((product, index) => {
-                                                return (
-                                                    <div key={index} style={{width: '100px'}}>
-                                                        <div className={styles.productImageContainer}>
-                                                            {product.image ? <img style={{objectFit: 'cover'}} height={'100%'} width={'100%'} src={product.image} /> : <ImageIcon height={'100%'} width={'100%'} />}
-                                                        </div>
-                                                        <p style={{fontSize: '10px', textAlign: 'center'}}>{product.title}</p>
-                                                        <button onClick={() => window.open(`https://${settings.store}/products/${product.handle}`)} className={styles.shopNowBtn}>Shop Now</button>
-                                                    </div>
-                                                )
-                                            })
-                                            :
-                                                <BlockStack>
-                                                    <div id="productSelection">Select which products to display</div>
-                                                    {productSelectionError && <InlineError fieldID="productSelection" message="Please select at least 1 product" />}
-                                                </BlockStack>
-                                            }
-                                        </InlineStack>
-                                        }
-                                    </>
+                                <DropZone 
+                                onDrop={handleDrop} 
+                                allowMultiple={false} 
+                                id="bannerLogo" 
+                                accept="image/*" 
+                                label='Banner Logo' 
+                                overlayText="Drop to Upload">
+                                    {settings.logo ? 
+                                    <div ref={(element: HTMLDivElement) => selectedFileContainerRef.current = element} className={styles.uploadedMedia}>
+                                        <Thumbnail
+                                        size="medium"
+                                        alt={settings.logo.name}
+                                        source={settings.logo.url}
+                                        />
+                                        <BlockStack gap='100'>
+                                            <Text as="h1" variant="headingMd">{settings.logo.name}</Text>
+                                        </BlockStack>
+                                        <div ref={(element: HTMLDivElement) => trashCanIconContainerRef.current = element} className={styles.trashCanIconContainer}> 
+                                            <FontAwesomeIcon icon={faTrashCan} color="white" size="3x" />
+                                        </div>
+                                    </div> 
+                                    :
+                                    fileUploadBtn  
                                 }
+                                </DropZone>
+                                <BlockStack gap='100'>
+                                    <Label id="colorPicker">Banner Background Color</Label>
+                                    <ColorPicker
+                                    key='colorPicker'
+                                    height={150}
+                                    color={color} 
+                                    onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color.hex}}); setColor(color) }} 
+                                    />
+                                </BlockStack>
+                                {/* <ChoiceList 
+                                title='Recommended Products Display'
+                                onChange={(productDisplay) => setSettings(prevSettings => {return {...prevSettings, productDisplay}})}
+                                selected={settings.productDisplay}
+                                choices={[
+                                    {
+                                        label: 'Disable',
+                                        value: 'disabled'
+                                    },
+                                    {
+                                        label: 'Random Products',
+                                        value: 'random'
+                                    }, 
+                                    {
+                                        label: 'Select Products',
+                                        value: 'select',
+                                        renderChildren: (isSelected) => {
+                                            return isSelected && (
+                                                <InlineStack gap={'200'} blockAlign="center">
+                                                    <Button onClick={selectProducts}>{productData.length > 0 ? 'Change Products' : 'Select Products'}</Button> 
+                                                    <Text as="p" fontWeight="bold">{productData.length}/3 Products</Text>
+                                                </InlineStack>
+                                            )
+                                        },
+                                    }
+                                ]}
+                                /> */}
                             </BlockStack>
-                        </BlockStack>
-                    </Card>
-                </Layout.Section>
-            </Layout>
+                        </Card>
+                    </Layout.Section>
+                    <Layout.Section variant="oneHalf">
+                        <Card>
+                            <BlockStack gap={'200'}>
+                                <InlineStack blockAlign="center" align="space-between">
+                                    <h2 style={{fontWeight: 'bold'}}>{emailCopyVersion} Email Preview</h2>
+                                    <Pagination 
+                                    hasNext={emailCopyVersion === 'Initial'} 
+                                    hasPrevious={emailCopyVersion === 'Follow Up'}
+                                    onNext={() => setEmailCopyVersion('Follow Up')}
+                                    onPrevious={() => setEmailCopyVersion('Initial')}
+                                    />
+                                </InlineStack>
+                                <BlockStack gap='300'>
+                                    <div className={styles.emailHeaderContainer} style={{backgroundColor: color.hex}}>
+                                        <div className={styles.logoContainer}>
+                                            {settings.logo && 
+                                                <Image 
+                                                draggable={false}
+                                                height={50} 
+                                                width={50} 
+                                                source={settings.logo.url} 
+                                                alt={settings.logo.name} 
+                                                />
+                                            }
+                                        </div>
+                                    </div>
+                                    <BlockStack gap={'300'}>
+                                        <Text alignment="center" variant="headingLg" as="p">Hey [Name],</Text>
+                                    </BlockStack>
+                                    <Text as="p" variant="bodyLg" alignment="center">
+                                        {emailCopyVersion === "Initial" ? initialEmailTemplate : followUpEmailTemplate}                                    
+                                    </Text>
+                                    {
+                                        settings.productDisplay[0] !== 'disabled' && 
+                                        <>
+                                            <hr className={styles.separator} />
+                                            <h2 style={{fontWeight: 'bold', fontSize: '18px'}}>Top Picks for You</h2>
+                                            {settings.productDisplay[0] === 'random' ?
+                                            <Banner tone="info">
+                                                3 random products will be displayed here
+                                            </Banner>
+                                            :
+                                            <InlineStack gap={'600'}>
+                                                {
+                                                productData.length > 0 ? productData.map((product, index) => {
+                                                    return (
+                                                        <div key={index} style={{width: '100px'}}>
+                                                            <div className={styles.productImageContainer}>
+                                                                {product.image ? <img style={{objectFit: 'cover'}} height={'100%'} width={'100%'} src={product.image} /> : <ImageIcon height={'100%'} width={'100%'} />}
+                                                            </div>
+                                                            <p style={{fontSize: '10px', textAlign: 'center'}}>{product.title}</p>
+                                                            <button onClick={() => window.open(`https://${settings.store}/products/${product.handle}`)} className={styles.shopNowBtn}>Shop Now</button>
+                                                        </div>
+                                                    )
+                                                })
+                                                :
+                                                    <BlockStack>
+                                                        <div id="productSelection">Select which products to display</div>
+                                                        {productSelectionError && <InlineError fieldID="productSelection" message="Please select at least 1 product" />}
+                                                    </BlockStack>
+                                                }
+                                            </InlineStack>
+                                            }
+                                        </>
+                                    }
+                                </BlockStack>
+                            </BlockStack>
+                        </Card>
+                    </Layout.Section>
+                </Layout>
+            </BlockStack>
         </Page>
     )
 }

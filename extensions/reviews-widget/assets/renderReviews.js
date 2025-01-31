@@ -4,10 +4,9 @@ const renderReviews = () => {
             <div class='headingBtnContainer'>
                 <h1 class='heading'>Customer Reviews</h1>
                 <h3 class='noReviewsMobile'>Be the first to write a review!</h3>
-                <div class='writeReviewBtn'>Write a review</div>
             </div>
             <div class='noReviews'>
-                <h3>Be the first to write a review!</h3>
+                <h3>This product currently has no reviews</h3>
             </div>
             <div class='hasReviewsWrapper'>
                 <div class='reviewStatsWrapper'>

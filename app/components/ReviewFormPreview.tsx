@@ -321,11 +321,11 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                         <div className={styles.reviewNameEmailWrapper} style={{gap: '10px'}}>
                             <div className={styles.reviewNameEmailContainer}>
                                 <label>Your First Name *</label>
-                                <input type='name' name='name' />
+                                <input placeholder="Automatically Inserted First Name" disabled type='name' name='name' />
                             </div>
                             <div className={styles.reviewNameEmailContainer}>
                                 <label>Your Email Address *</label>
-                                <input type='email' name='email' />
+                                <input placeholder="Automatically Inserted Email" disabled type='email' name='email' />
                             </div>
                         </div>
                         <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>

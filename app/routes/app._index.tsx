@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Button, Card, DataTable, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
+import { BlockStack, Button, Card, InlineGrid, InlineStack, Page, ProgressBar, Select, Text } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
