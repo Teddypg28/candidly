@@ -15,15 +15,29 @@ import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimi
 import GeneralSettings from "~/components/settings/GeneralSettings";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
-    const { session } = await authenticate.admin(request)
+    const { session, admin } = await authenticate.admin(request)
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
     if (appSettings) return {...appSettings, path: params.path}
+
+    // fetch store owner email and set it as primary email
+    const getEmailQuery = `
+        query getStoreEmail {
+        shop {
+          email
+        }
+      }`
+    const res = await admin.graphql(getEmailQuery)
+    const data = await res.json()
+    const primaryEmail = data.data.shop.email
+
     const defaultSettings = {
         store: session.shop,
         autoPublishReviews: ['false'],
         minReviewRating: 4, 
         firstReviewRequest: 10,
-        secondReviewRequest: 5
+        secondReviewRequest: 5,
+        primaryEmail,
+        companyName: session.shop.split('.')[0]
     }
     const initializedSettings = await db.appSettings.create({data: defaultSettings})
     return {...initializedSettings, path: params.path}

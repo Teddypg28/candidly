@@ -141,6 +141,8 @@ model AppSettings {
   minReviewRating     Int
   firstReviewRequest  Int
   secondReviewRequest Int
+  primaryEmail        String
+  companyName         String
 }
 
 model ReviewRequestEmailLogo {

@@ -134,7 +134,7 @@ const CustomQuestions = () => {
     })
     .map((question, index: number) => {
         return (
-            <IndexTable.Row selected={selectedResources.includes(question.id.toString())} position={index} id={question.id.toString()}>
+            <IndexTable.Row key={index} selected={selectedResources.includes(question.id.toString())} position={index} id={question.id.toString()}>
                 <IndexTable.Cell>
                     <Link url={`/app/question/${question.id}`}>{question.title}</Link>
                 </IndexTable.Cell>

@@ -11,17 +11,12 @@ export async function loader({ params } : LoaderFunctionArgs) {
 
     const answers = await db.answerChoiceSnapshot.findMany({where: {questionId: {equals: questionId}}})
     const individualAnswerCountData: {[key: string]: number} = {}
-    // add all current answer choices to the individualAnswerCountData Object
-    question.radioAnswerChoices.forEach(answerChoice => {
-        individualAnswerCountData[answerChoice.value as keyof typeof individualAnswerCountData] = 0
-    })
-    // iterate through answerSnapshots and increment answer count for matching answer choices, or add another key for choices not yet included (previous edited/deleted ones)
+    // iterate through answerSnapshots and increment answer count for matching answer choices
     answers.forEach(answer => {
-        if (individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData]) {
-            individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData] += 1
-        } else {
-            individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData] = 1
-        }
+        if (!individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData]) {
+            individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData] = 0
+        } 
+        individualAnswerCountData[answer.value as keyof typeof individualAnswerCountData] += 1
     })
 
     return json({
@@ -84,7 +79,7 @@ export default function CustomerAnswers() {
                     <Text as="h1" variant="headingLg">Answer Breakdown</Text>
                     <InlineGrid columns={3} gap={'200'}>{AnswerOverviewMarkup}</InlineGrid>
                     <Card>
-                        <BlockStack gap={'300'}>{NumAnswersMarkup}</BlockStack>
+                        <BlockStack gap={'300'}>{NumAnswersMarkup.length > 0 ? NumAnswersMarkup : 'No Answers Yet'}</BlockStack>
                     </Card>
                 </BlockStack>
             </BlockStack>

@@ -50,7 +50,7 @@ div, h1, h2, h3, h4, p, input, textarea, button {
 
 .customQuestionsContainer {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 10px
 }
 

@@ -24,9 +24,10 @@ export default function SettingsTabs({store, path}: SettingsTab) {
                     <Text as="p">{store}</Text>
                 </div>
                 <div style={{padding: '10px', display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                    { settingTabs.map((tab: any) => {
+                    { settingTabs.map((tab: any, index) => {
                         return (
                             <div 
+                            key={index}
                             onClick={() => { nav(`/app/settings/${tab.path}`)}} 
                             style={{backgroundColor: path === tab.path.toLowerCase() ? 'rgb(230, 230, 230)' : 'white'}} 
                             className={styles.tabContainer}

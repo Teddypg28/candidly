@@ -6,17 +6,12 @@ import db from '../db.server'
 import { authenticate } from "~/shopify.server"
 
 export const loader = async ({ request } : ActionFunctionArgs) => {
-
     const { session } = await authenticate.admin(request)
-
     return await db.reward.findMany({where: {store: {equals: session.shop}}, include: {limitedEligibleProducts: true, subpar: true, good: true, perfect: true}})
-
 }
 
 export default function Rewards() {
-
     const rewards = useLoaderData<typeof loader>()
-
     const IndexTableRows = rewards.map((reward, index) => {
         return (
             <IndexTable.Row position={index} key={index} id={index.toString()}>

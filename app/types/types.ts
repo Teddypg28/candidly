@@ -1,5 +1,5 @@
 import { IndexFiltersProps } from "@shopify/polaris"
-import { MutableRefObject } from "react"
+import { MutableRefObject, SetStateAction } from "react"
 
 export const sampleReviewData = [
     ['title, body', 'name', 'email', 'rating', 'media', 'date', 'isPublished'],
@@ -211,6 +211,8 @@ export interface AppSettings {
     minReviewRating: number 
     firstReviewRequest: number
     secondReviewRequest: number
+    companyName: string
+    primaryEmail: string
 }
 
 export interface ReviewRequestEmailSettings {
@@ -233,7 +235,7 @@ export interface ReviewRequestEmailProductData {
 
 export interface SettingsPageProps {
     state: AppSettings
-    setState: (value: AppSettings) => void
+    setState: React.Dispatch<React.SetStateAction<AppSettings>>
     errors: MutableRefObject<string[]>
 }
 

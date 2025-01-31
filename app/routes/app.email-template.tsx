@@ -1,4 +1,4 @@
-import { Banner, BlockStack, Button, Card, ChoiceList, DropZone, Image, InlineError, InlineStack, Label, Layout, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
 
@@ -18,6 +18,8 @@ import { SaveBar } from "@shopify/app-bridge-react";
 import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
 import sendEmail from "~/helpers/sendEmail";
+import InitialEmailTemplate from "~/components/emailTemplates/InitialEmailTemplate";
+import FollowUpEmailTemplate from "~/components/emailTemplates/FollowUpEmailTemplate";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
@@ -27,7 +29,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
             const customQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
 
-            await sendEmail(customQuestions)
+            // await sendEmail(customQuestions)
             return true
         } 
         // convert form data to regular javascript object
@@ -82,6 +84,9 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         omit: {id: true}, 
         include: {logo: {omit: {reviewRequestEmailSettingsId: true, id: true}}}
     })
+    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    const companyName = appSettings?.companyName
+
     if (settings) {
         const productData = await Promise.all(settings.productIds.map(async (productId) => {
             const query = `query getProductData($id: ID!) {
@@ -105,81 +110,18 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
                 handle: data.data.product.handle as string
             }
         }))        
-        return json({settings, productData})
+        return json({settings: {...settings, companyName}, productData})
     }
     const defaultSettings = await db.reviewRequestEmailSettings.create({data: {...defaultReviewRequestEmailSettings, logo: undefined, store: session.shop}, include: {logo: {omit: {id: true, reviewRequestEmailSettingsId: true}}}})
-    return json({settings: defaultSettings, productData: [] as ReviewRequestEmailProductData[]})
+    return json({settings: {...defaultSettings, companyName}, productData: [] as ReviewRequestEmailProductData[]})
 }
-
-const initialEmailCopy = 
-    <p>
-        We hope you’re absolutely loving your [product name]!
-        <br />
-        <br />
-        We’d be so grateful if you could take a moment to share your experience. Your feedback not only helps us improve but also guides others in making confident choices.
-        <br />
-        <br />
-        As a special thank-you, we’re offering a reward of up to [max reward] when you offer a quick rating. It’ll only take a minute of your time—and it would mean the world to us!
-        <br />
-        <br />
-        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-            <path id="star1" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-        </svg>
-        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-            <path id="star2" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-        </svg>
-        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-            <path id="star3" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-        </svg>
-        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-            <path id="star4" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-        </svg>
-        <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-            <path id="star5" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-        </svg> 
-        <br />
-        <br />
-        Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
-        <br />
-        <br />
-        -[Your Company Name]
-    </p>
-
-const followUpEmailCopy = 
-<p>
-    We hope you’re doing well! We wanted to follow up on our previous email about your [product name] experience. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
-    <br />
-    <br />
-    Remember: Completing the quick review form takes just a minute, and as a thank-you, you’ll be eligible for a reward of up to [max reward]!
-    <br />
-    <br />
-    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path id="star1" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-    </svg>
-    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path id="star2" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-    </svg>
-    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path id="star3" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-    </svg>
-    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path id="star4" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-    </svg>
-    <svg style={{height: '40px', width: '40px', cursor: 'pointer'}} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-        <path id="star5" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-    </svg>  
-    <br />
-    <br />
-    Thank you so much for your time and for being a valued part of our community.
-    <br />
-    <br />
-    -[Your Company Name]
-</p>
-
 
 export default function EmailTemplate() {
 
     const data = useLoaderData<typeof loader>()
+
+    const initialEmailTemplate = <InitialEmailTemplate companyName={data.settings.companyName} />
+    const followUpEmailTemplate = <FollowUpEmailTemplate companyName={data.settings.companyName} />
 
     const [settings, setSettings] = useState<ReviewRequestEmailSettings>({...data.settings, logo: null})
     const [emailCopyVersion, setEmailCopyVersion] = useState('Initial')
@@ -327,7 +269,7 @@ export default function EmailTemplate() {
                                 onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color.hex}}); setColor(color) }} 
                                 />
                             </BlockStack>
-                            <ChoiceList 
+                            {/* <ChoiceList 
                             title='Recommended Products Display'
                             onChange={(productDisplay) => setSettings(prevSettings => {return {...prevSettings, productDisplay}})}
                             selected={settings.productDisplay}
@@ -353,7 +295,7 @@ export default function EmailTemplate() {
                                     },
                                 }
                             ]}
-                            />
+                            /> */}
                         </BlockStack>
                     </Card>
                 </Layout.Section>
@@ -386,7 +328,7 @@ export default function EmailTemplate() {
                                     <Text alignment="center" variant="headingLg" as="p">Hey [Name],</Text>
                                 </BlockStack>
                                 <Text as="p" variant="bodyLg" alignment="center">
-                                    {emailCopyVersion === "Initial" ? initialEmailCopy : followUpEmailCopy}                                    
+                                    {emailCopyVersion === "Initial" ? initialEmailTemplate : followUpEmailTemplate}                                    
                                 </Text>
                                 {
                                     settings.productDisplay[0] !== 'disabled' && 

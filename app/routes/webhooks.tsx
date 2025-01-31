@@ -26,11 +26,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session) {
 
           const data = {
-            date: new Date(payload.created_at),
+            createdAt: new Date(payload.created_at),
             orderName: payload.name,
             orderId: payload.id,
             store: session.shop,
             email: payload.customer.email,
+            name: payload.customer.first_name,
             fulfillmentStatus: payload.fulfillment_status
           }
   
@@ -49,10 +50,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (storeSettings) {
   
           const daysAfterOrder = storeSettings.firstReviewRequest
-          const requestDate = new Date(payload.created_at)
-          requestDate.setDate(requestDate.getDate() + daysAfterOrder)
+          const requestSentDate = new Date(payload.created_at)
+          requestSentDate.setDate(requestSentDate.getDate() + daysAfterOrder)
 
-          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, requestDate}})
+          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, requestSentDate}})
   
         }
 

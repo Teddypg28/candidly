@@ -33,7 +33,7 @@ export default function App() {
         <Link to="/app/custom-questions">Custom Questions</Link>
         <Link to="/app/review-form">Review Form Design</Link>
         <Link to="/app/email-template">Email Template Design</Link>
-        <Link to="/app/settings/billing">Settings</Link>
+        <Link to="/app/settings/general">Settings</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
