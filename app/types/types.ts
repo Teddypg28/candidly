@@ -28,7 +28,35 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     logo: null,
     bannerBgColor: 'black',
     productDisplay: ['disabled'],
-    productIds: []
+    productIds: [],
+    companyName: undefined,
+    initialEmailBody: (
+        `Hey {{first_name}},
+    
+        We hope you’re absolutely loving your {{product_name}}!
+        
+        We’d be so grateful if you could take a moment to share your experience. Your feedback not only helps us improve but also guides others in making confident choices.
+        
+        As a special thank-you, we’re offering a reward of up to [max reward] when you offer a quick rating. It’ll only take a minute of your time—and it would mean the world to us!
+
+        {{stars}}
+        Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
+        
+        - {{companyName}}`
+    ),
+    followUpEmailBody: (
+        `
+            We hope you’re doing well! We wanted to follow up on our previous email about your [product name] experience. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
+
+            Remember: Completing the quick review form takes just a minute, and as a thank-you, you’ll be eligible for a reward of up to {{maxReward}}!
+
+            {{stars}}
+
+            Thank you so much for your time and for being a valued part of our community.
+
+            - {{companyName}}
+        `
+    )
 }
 
 export const initialImportCsvFileState: ImportCsvFileState = {
@@ -107,6 +135,11 @@ export interface CustomQuestionFormError {
 
 export interface CustomReviewFormAnswerOption {
     [key: string]: any
+}
+
+export interface EmailCompanyData {
+    name: string, 
+    logo: string | null
 }
 
 export const initialReviewTableState: ReviewTableState = {
@@ -216,15 +249,18 @@ export interface AppSettings {
 }
 
 export interface ReviewRequestEmailSettings {
-    store: string,
-    bannerBgColor: string,
+    store: string
+    bannerBgColor: string
     logo: {
         name: string,
         url: string,
         file?: File
-    } | null,
-    productDisplay: string[],
+    } | null
+    productDisplay: string[]
     productIds: string[]
+    companyName?: string
+    initialEmailBody: string
+    followUpEmailBody: string
 }
 
 export interface ReviewRequestEmailProductData {

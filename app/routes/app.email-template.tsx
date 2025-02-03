@@ -1,4 +1,4 @@
-import { Banner, BlockStack, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 import { ColorPicker, useColor } from "react-color-palette";
 
@@ -18,23 +18,29 @@ import { SaveBar } from "@shopify/app-bridge-react";
 import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
 import sendEmail from "~/helpers/sendEmail";
-import InitialEmailTemplate from "~/components/emailTemplates/InitialEmailTemplate";
-import FollowUpEmailTemplate from "~/components/emailTemplates/FollowUpEmailTemplate";
+
 import generateEmailHtml from "~/helpers/generateEmailHtml";
+import generateEmailTsx from "~/helpers/email/generateEmailTsx";
+import standardizeLineBreaks from "~/helpers/standardizeLineBreaks";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
         const formData = await request.formData()
 
-        if (formData.get('action') === "testEmail") {
-            const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
-            if (appSettings) {
-                const emailHtml = generateEmailHtml("initial", appSettings.companyName, null, {customerFirstName: "Teddy", productName: "Blizzard Bites", productImage: ""})
-                await sendEmail(emailHtml, 'mrgiftr@gmail.com', appSettings.primaryEmail)
-            }
-            return true
-        } 
+        // if (formData.get('action') === "testEmail") {
+        //     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+        //     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}, include: {logo: true}})
+        //     if (appSettings) {
+        //         const emailHeaderLogo = reviewRequestEmailSettings && reviewRequestEmailSettings.logo ? reviewRequestEmailSettings.logo.url : null
+        //         const emailCompanyData = {name: appSettings.companyName, logo: emailHeaderLogo} 
+        //         const emailOrderData = {customerFirstName: "Teddy", productName: "Blizzard Bites", productImage: ""}
+        //         const emailHtml = generateEmailHtml("initial",  null, emailCompanyData, emailOrderData)
+        //         await sendEmail(emailHtml, 'mrgiftr@gmail.com', appSettings.primaryEmail)
+        //     }
+        //     return true
+        // } 
+        
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
         // convert strings to array of strings to match db shape
@@ -50,6 +56,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         // remove logo properties from object to properly update/create records
         delete data['newLogo']
         delete data['currentLogo']
+        delete data['companyName']
         // see if settings already exist -- determines whether update or create is needed
         let settingsId
         const currentSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
@@ -76,6 +83,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         }
         return json({status: 'success'}, {status: 200})
     } catch (error) {
+        console.log(error)
         return json({status: error}, {status: 400})
     }
 }
@@ -112,10 +120,15 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
                 image: data.data.product.featuredMedia ? data.data.product.featuredMedia.preview.image.url as string : null,
                 handle: data.data.product.handle as string
             }
-        }))        
+        }))       
+        
+        // convert each email body to consistent line break format
+        standardizeLineBreaks(settings)
         return json({settings: {...settings, companyName}, productData})
     }
     const defaultSettings = await db.reviewRequestEmailSettings.create({data: {...defaultReviewRequestEmailSettings, logo: undefined, store: session.shop}, include: {logo: {omit: {id: true, reviewRequestEmailSettingsId: true}}}})
+    // convert each email body to consistent line break format
+    standardizeLineBreaks(defaultSettings)
     return json({settings: {...defaultSettings, companyName}, productData: [] as ReviewRequestEmailProductData[]})
 }
 
@@ -123,18 +136,22 @@ export default function EmailTemplate() {
 
     const data = useLoaderData<typeof loader>()
 
-    const initialEmailTemplate = <InitialEmailTemplate companyName={data.settings.companyName} />
-    const followUpEmailTemplate = <FollowUpEmailTemplate companyName={data.settings.companyName} />
-
-    const [settings, setSettings] = useState<ReviewRequestEmailSettings>({...data.settings, logo: null})
+    const [settings, setSettings] = useState<ReviewRequestEmailSettings>({...data.settings})
     const [emailCopyVersion, setEmailCopyVersion] = useState('Initial')
     const [productData, setProductData] = useState<ReviewRequestEmailProductData[]>(data.productData)
     const [color, setColor] = useColor(settings.bannerBgColor)
+
+    // modal states
+    const [emailEditModalOpen, setEmailEditModalOpen] = useState(false)
+    const [dynamicVariableTipsModalOpen, setDynamicVariableTipsModalOpen] = useState(false)
+
+    const [emailBody, setEmailBody] = useState(data.settings.initialEmailBody)
     
     const [productSelectionError, setProductSelectionError] = useState(false)
 
     const cleanColor = color
     const cleanSettings = data.settings
+
     const cleanProductData = data.productData
 
     const isFormDirty = JSON.stringify(settings) !== JSON.stringify(cleanSettings)
@@ -226,21 +243,66 @@ export default function EmailTemplate() {
         submit(formData, {method: 'POST', encType: 'multipart/form-data'})
     }
 
+    const editEmail = (e: any) => {
+        if (emailCopyVersion == "Initial") {
+            setSettings({...settings, initialEmailBody: e.target.value})
+            setEmailBody(e.target.value)
+        } else {
+            setSettings({...settings, followUpEmailBody: e.target.value})
+            setEmailBody(e.target.value)
+        }
+    }
+
+    const revertChanges = () => {
+        setSettings(cleanSettings)
+        setProductData(cleanProductData);
+        setProductSelectionError(false)
+        setColor(cleanColor)
+        if (emailCopyVersion === "Initial") {
+            setEmailBody(cleanSettings.initialEmailBody)
+        } else {
+            setEmailBody(cleanSettings.followUpEmailBody)
+        }
+    }
+
     return (
-        <Page
-        secondaryActions={[{content: 'Send Test Email', onAction: sendTestEmail}]}
-        >
+        <Page>
             <SaveBar open={isFormDirty}>
                 <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>
-                <button onClick={() => { setSettings(cleanSettings); setProductData(cleanProductData); setProductSelectionError(false); setColor(cleanColor)}}></button>
+                <button onClick={revertChanges}></button>
             </SaveBar>
+            <Modal 
+            open={emailEditModalOpen} 
+            title={`Edit ${emailCopyVersion} Email`} 
+            onClose={() => setEmailEditModalOpen(false)}
+            primaryAction={{content: 'Dynamic Variables', onAction: () => setDynamicVariableTipsModalOpen(true)}}
+            >
+                <textarea value={emailBody} onChange={editEmail} style={{resize: 'none', padding: '10px', width: '100%', height: '100vh'}} />
+            </Modal>
+            <Modal 
+            open={dynamicVariableTipsModalOpen}
+            onClose={() => setDynamicVariableTipsModalOpen(false)}
+            title="Dynamic Variables"
+            >
+                <Card>
+                    <Text as="p" variant="bodyMd">
+                        <strong>{`{{stars}}`}</strong> - required; replaced with the clickable stars that link to the review form
+                        <br />
+                        <br />
+                        <strong>{`{{firstName}}`}</strong> - optional; replaced with the customer's first name
+                        <br />
+                        <br />
+                        <strong>{`{{companyName}}`}</strong> - optional; replaced with your company's name, as specified in the general settings
+                        <br />
+                        <br />
+                        <strong>{`{{productName}}`}</strong> - optional; replaced with the name of the product for which the review request is for
+                        <br />
+                        <br />
+                        <strong>{`{{maxReward}}`}</strong> - optional; replaced with the max reward that you are offering
+                    </Text>
+                </Card>
+            </Modal>
             <BlockStack gap='200'>
-                <Banner 
-                tone="info"
-                title="Note: Reward Configuration"
-                >
-                    If no rewards are configured, each email will not contain the sentences about earning a max reward
-                </Banner>
                 <Layout>
                     <Layout.Section variant="oneThird">
                         <Card>
@@ -313,12 +375,15 @@ export default function EmailTemplate() {
                         <Card>
                             <BlockStack gap={'200'}>
                                 <InlineStack blockAlign="center" align="space-between">
-                                    <h2 style={{fontWeight: 'bold'}}>{emailCopyVersion} Email Preview</h2>
+                                    <InlineStack gap='400'>
+                                        <h2 style={{fontWeight: 'bold'}}>{emailCopyVersion} Email Preview</h2>
+                                        <Button variant="plain" onClick={() => setEmailEditModalOpen(true)}>Edit Email</Button>
+                                    </InlineStack>
                                     <Pagination 
                                     hasNext={emailCopyVersion === 'Initial'} 
                                     hasPrevious={emailCopyVersion === 'Follow Up'}
-                                    onNext={() => setEmailCopyVersion('Follow Up')}
-                                    onPrevious={() => setEmailCopyVersion('Initial')}
+                                    onNext={() => { setEmailCopyVersion('Follow Up'); setEmailBody(data.settings.followUpEmailBody) }}
+                                    onPrevious={() => { setEmailCopyVersion('Initial'); setEmailBody(data.settings.initialEmailBody) }}
                                     />
                                 </InlineStack>
                                 <BlockStack gap='300'>
@@ -335,13 +400,8 @@ export default function EmailTemplate() {
                                             }
                                         </div>
                                     </div>
-                                    <BlockStack gap={'300'}>
-                                        <Text alignment="center" variant="headingLg" as="p">Hey [Name],</Text>
-                                    </BlockStack>
-                                    <Text as="p" variant="bodyLg" alignment="center">
-                                        {emailCopyVersion === "Initial" ? initialEmailTemplate : followUpEmailTemplate}                                    
-                                    </Text>
-                                    {
+                                    <div dangerouslySetInnerHTML={{__html: generateEmailTsx('Initial', emailBody, settings)}}></div>
+                                    {/* {
                                         settings.productDisplay[0] !== 'disabled' && 
                                         <>
                                             <hr className={styles.separator} />
@@ -373,7 +433,7 @@ export default function EmailTemplate() {
                                             </InlineStack>
                                             }
                                         </>
-                                    }
+                                    } */}
                                 </BlockStack>
                             </BlockStack>
                         </Card>

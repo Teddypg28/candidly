@@ -154,12 +154,14 @@ model ReviewRequestEmailLogo {
 }
 
 model ReviewRequestEmailSettings {
-  id             Int                     @id @default(autoincrement())
-  store          String
-  bannerBgColor  String
-  logo           ReviewRequestEmailLogo?
-  productDisplay String[]
-  productIds     String[]
+  id                Int                     @id @default(autoincrement())
+  store             String
+  bannerBgColor     String
+  logo              ReviewRequestEmailLogo?
+  productDisplay    String[]
+  productIds        String[]
+  initialEmailBody  String
+  followUpEmailBody String
 }
 
 model ReviewFormSettings {
