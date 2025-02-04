@@ -1,10 +1,8 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
-import generateEmailHtml from './generateEmailHtml';
 
-export default async function sendEmail(html: string, toAddress: string, fromAddress: string) {
+export default async function sendEmail(emailMarkup: string, toAddress: string, fromAddress: string) {
 
     /*
-
     1) at 6:00 pm EST, search db for review request records with send date matching current date
     2) check if rewards exist
     3) if rewards exist:
@@ -12,8 +10,7 @@ export default async function sendEmail(html: string, toAddress: string, fromAdd
        else:
         - generate no rewards email html
     4) send email
-
-    */
+    */  
 
     const sesClient = new SESClient({
         region: process.env.AWS_REGION as string,
@@ -33,7 +30,7 @@ export default async function sendEmail(html: string, toAddress: string, fromAdd
           Body: {
             Html: {
               Charset: 'UTF-8',
-              Data: html
+              Data: emailMarkup
             },
           },
           Subject: {

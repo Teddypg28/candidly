@@ -19,27 +19,23 @@ import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
 import sendEmail from "~/helpers/sendEmail";
 
-import generateEmailHtml from "~/helpers/generateEmailHtml";
-import generateEmailTsx from "~/helpers/email/generateEmailTsx";
+import generateEmailMarkup from "~/helpers/email/generateEmailMarkup";
 import standardizeLineBreaks from "~/helpers/standardizeLineBreaks";
+import generateEmailBody from "~/helpers/email/generateEmailBody";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
         const formData = await request.formData()
 
-        // if (formData.get('action') === "testEmail") {
-        //     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
-        //     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}, include: {logo: true}})
-        //     if (appSettings) {
-        //         const emailHeaderLogo = reviewRequestEmailSettings && reviewRequestEmailSettings.logo ? reviewRequestEmailSettings.logo.url : null
-        //         const emailCompanyData = {name: appSettings.companyName, logo: emailHeaderLogo} 
-        //         const emailOrderData = {customerFirstName: "Teddy", productName: "Blizzard Bites", productImage: ""}
-        //         const emailHtml = generateEmailHtml("initial",  null, emailCompanyData, emailOrderData)
-        //         await sendEmail(emailHtml, 'mrgiftr@gmail.com', appSettings.primaryEmail)
-        //     }
-        //     return true
-        // } 
+        if (formData.get('action') === "testEmail") {
+            const emailMarkup = formData.get('emailMarkup') as string
+            const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+            if (appSettings) {
+                await sendEmail(emailMarkup, 'mrgiftr@gmail.com', appSettings.primaryEmail)
+            }
+            return true
+        } 
         
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
@@ -147,7 +143,8 @@ export default function EmailTemplate() {
 
     const [emailBody, setEmailBody] = useState(data.settings.initialEmailBody)
     
-    const [productSelectionError, setProductSelectionError] = useState(false)
+    // const [productSelectionError, setProductSelectionError] = useState(false)
+    const [errors, setErrors] = useState<any>({})
 
     const cleanColor = color
     const cleanSettings = data.settings
@@ -170,9 +167,9 @@ export default function EmailTemplate() {
     }
 
     const handleSave = () => { 
-        if (settings.productDisplay[0] === 'select' && settings.productIds.length === 0) {
-            return setProductSelectionError(true)
-        }
+
+        if (Object.keys(errors).length > 0) return
+        
         const formData = new FormData()
         Object.keys(settings).forEach(key => {
             if (key === "productDisplay" || key === "productIds") {
@@ -240,6 +237,7 @@ export default function EmailTemplate() {
     const sendTestEmail = () => { 
         const formData = new FormData()
         formData.append('action', 'testEmail')
+        formData.append('emailMarkup', generateEmailMarkup(emailBody, settings))
         submit(formData, {method: 'POST', encType: 'multipart/form-data'})
     }
 
@@ -256,7 +254,7 @@ export default function EmailTemplate() {
     const revertChanges = () => {
         setSettings(cleanSettings)
         setProductData(cleanProductData);
-        setProductSelectionError(false)
+        // setProductSelectionError(false)
         setColor(cleanColor)
         if (emailCopyVersion === "Initial") {
             setEmailBody(cleanSettings.initialEmailBody)
@@ -265,8 +263,19 @@ export default function EmailTemplate() {
         }
     }
 
+    const checkForRequiredVariable = (e: React.FocusEvent<HTMLTextAreaElement, Element>) => {
+        if (!e.target.value.includes('{{stars}}')) {
+            return setErrors({...errors, emailBody: true})
+        }
+        const currentErrors = {...errors}
+        delete currentErrors['emailBody']
+        setErrors(currentErrors)
+    }
+
     return (
-        <Page>
+        <Page
+        primaryAction={{content: 'Send Test Email', onAction: sendTestEmail}}
+        >
             <SaveBar open={isFormDirty}>
                 <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>
                 <button onClick={revertChanges}></button>
@@ -277,7 +286,14 @@ export default function EmailTemplate() {
             onClose={() => setEmailEditModalOpen(false)}
             primaryAction={{content: 'Dynamic Variables', onAction: () => setDynamicVariableTipsModalOpen(true)}}
             >
-                <textarea value={emailBody} onChange={editEmail} style={{resize: 'none', padding: '10px', width: '100%', height: '100vh'}} />
+                <textarea 
+                id={`${emailCopyVersion}Body`} 
+                value={emailBody} 
+                style={{resize: 'none', outline: 'none', padding: '10px', width: '100%', height: '100vh'}} 
+                onChange={editEmail} 
+                onBlur={checkForRequiredVariable}
+                />
+                {errors['emailBody'] && <InlineError message="{{stars}} variable must be included in the email body" fieldID={`${emailCopyVersion}Body`} />}
             </Modal>
             <Modal 
             open={dynamicVariableTipsModalOpen}
@@ -400,7 +416,7 @@ export default function EmailTemplate() {
                                             }
                                         </div>
                                     </div>
-                                    <div dangerouslySetInnerHTML={{__html: generateEmailTsx('Initial', emailBody, settings)}}></div>
+                                    <div dangerouslySetInnerHTML={{__html: generateEmailBody(emailBody, settings)}}></div>
                                     {/* {
                                         settings.productDisplay[0] !== 'disabled' && 
                                         <>
