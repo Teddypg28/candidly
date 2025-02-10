@@ -1,18 +1,23 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { Banner, BlockStack, Card, Label, Layout, Page, TextField } from "@shopify/polaris";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
 
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 
-import { ColorPicker, IColor, useColor } from 'react-color-palette'
-import "react-color-palette/css"
+import { HexColorPicker, HexColorInput } from 'react-colorful'
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import { defaultReviewFormSettings } from "~/types/types";
 import fetchRewardTiers from "~/helpers/fetchRewardTiers";
+
+export async function action({ request } : ActionFunctionArgs) {
+    const data = await request.json()
+    await db.reviewFormSettings.update({where: {id: data.id}, data: {...data}}) 
+    return true
+}
 
 export async function loader({ request } : LoaderFunctionArgs) {
     const { session } = await authenticate.admin(request)
@@ -20,31 +25,32 @@ export async function loader({ request } : LoaderFunctionArgs) {
     const rewardTiers = await fetchRewardTiers(session.shop)
 
     if (reviewFormSettings) {
-        return json({...reviewFormSettings, rewards: rewardTiers})
+        return json({settings: reviewFormSettings, rewards: rewardTiers})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {...defaultReviewFormSettings, store: session.shop}})
 
-    return json({...defaultSettings, rewards: rewardTiers})
+    return json({settings: defaultSettings, rewards: rewardTiers})
 }
 
 export default function ReviewForm() {
 
     const data = useLoaderData<typeof loader>()
 
-    const [settingsState, setSettingsState] = useState(data)
-    const cleanState = data
-
-    const [color, setColor] = useColor(settingsState.primaryFormColor)
-    const [cleanColor, setCleanColor] = useState(color)
+    const [settingsState, setSettingsState] = useState(data.settings)
+    const cleanState = data.settings
 
     const isFormDirty = JSON.stringify(cleanState) !== JSON.stringify(settingsState)
+
+    const submit = useSubmit()
+
+    const saveChanges = () => submit(JSON.stringify(settingsState), {method: 'POST', encType: 'application/json'})
 
     return (
 
         <Page>
             <SaveBar open={isFormDirty}>
-                <button variant={'primary'}></button>
-                <button onClick={() => { setSettingsState(cleanState); setColor(cleanColor) }}></button>
+                <button variant={'primary'} onClick={saveChanges}></button>
+                <button onClick={() => { setSettingsState(cleanState) }}></button>
             </SaveBar>
             <BlockStack gap='200'>
                 <Banner 
@@ -78,16 +84,20 @@ export default function ReviewForm() {
                                 label='Review Placeholder' 
                                 autoComplete="off" />
                                 <Label id="primaryFormColor">Primary Form Color</Label>
-                                <ColorPicker
-                                height={150}
-                                color={color} 
-                                onChange={(color: IColor) => { setSettingsState(prevSettingsState => {return {...prevSettingsState, primaryFormColor: color.hex}}); setColor(color)}} />
+                                <HexColorPicker
+                                color={settingsState.primaryFormColor} 
+                                onChange={(color) => { setSettingsState(prevSettingsState => {return {...prevSettingsState, primaryFormColor: color}})}} 
+                                />
+                                <HexColorInput 
+                                color={settingsState.primaryFormColor} 
+                                onChange={(color) => { setSettingsState(prevSettingsState => {return {...prevSettingsState, primaryFormColor: color}})}}
+                                />
                             </BlockStack>
                         </Card>
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
                         <ReviewFormPreview 
-                        rewards={settingsState.rewards}
+                        rewards={data.rewards}
                         heading={settingsState.heading}
                         subheading={settingsState.subheading}
                         headlinePlaceholder={settingsState.headlinePlaceholder}

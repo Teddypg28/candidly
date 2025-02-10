@@ -1,10 +1,11 @@
 import { Banner, BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
-import { ColorPicker, useColor } from "react-color-palette";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { ImageIcon } from '@shopify/polaris-icons';
+
+import { HexColorPicker, HexColorInput } from 'react-colorful'
 
 import db from '../db.server'
 import styles from '../styles/EmailTemplate.module.css'
@@ -121,10 +122,9 @@ export default function EmailTemplate() {
 
     const data = useLoaderData<typeof loader>()
 
-    const [settings, setSettings] = useState<ReviewRequestEmailSettings>({...data.settings})
+    const [settings, setSettings] = useState<ReviewRequestEmailSettings>(data.settings)
     const [emailCopyVersion, setEmailCopyVersion] = useState('Initial')
     const [productData, setProductData] = useState<ReviewRequestEmailProductData[]>(data.productData)
-    const [color, setColor] = useColor(settings.bannerBgColor)
 
     // modal states
     const [emailEditModalOpen, setEmailEditModalOpen] = useState(false)
@@ -135,9 +135,7 @@ export default function EmailTemplate() {
     // const [productSelectionError, setProductSelectionError] = useState(false)
     const [errors, setErrors] = useState<any>({})
 
-    const cleanColor = color
     const cleanSettings = data.settings
-
     const cleanProductData = data.productData
 
     const isFormDirty = JSON.stringify(settings) !== JSON.stringify(cleanSettings)
@@ -251,7 +249,6 @@ export default function EmailTemplate() {
         setSettings(cleanSettings)
         setProductData(cleanProductData);
         // setProductSelectionError(false)
-        setColor(cleanColor)
         if (emailCopyVersion === "Initial") {
             setEmailBody(cleanSettings.initialEmailBody)
         } else {
@@ -346,11 +343,14 @@ export default function EmailTemplate() {
                                 </DropZone>
                                 <BlockStack gap='100'>
                                     <Label id="colorPicker">Banner Background Color</Label>
-                                    <ColorPicker
+                                    <HexColorPicker
                                     key='colorPicker'
-                                    height={150}
-                                    color={color} 
-                                    onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color.hex}}); setColor(color) }} 
+                                    color={settings.bannerBgColor} 
+                                    onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color}})}} 
+                                    />
+                                    <HexColorInput
+                                    color={settings.bannerBgColor} 
+                                    onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color}})}} 
                                     />
                                 </BlockStack>
                                 {/* <ChoiceList 
@@ -399,7 +399,7 @@ export default function EmailTemplate() {
                                     />
                                 </InlineStack>
                                 <BlockStack gap='300'>
-                                    <div className={styles.emailHeaderContainer} style={{backgroundColor: color.hex}}>
+                                    <div className={styles.emailHeaderContainer} style={{backgroundColor: settings.bannerBgColor}}>
                                         <div className={styles.logoContainer}>
                                             {settings.logo && 
                                                 <Image 
