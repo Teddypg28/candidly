@@ -5,13 +5,14 @@ import { useEffect, useRef, useState } from "react"
 
 interface Props {
     heading: string,
-    subheading: string,
-    headlinePlaceholder: string,
-    reviewPlaceholder: string,
+    subheading: string
+    headlinePlaceholder: string
+    reviewPlaceholder: string
     primaryColor: string
+    rewards: string[]
 }
 
-const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor } : Props ) => {
+const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor, rewards } : Props ) => {
 
     const [reviewBody, setReviewBody] = useState('')
     const [reviewHeadline, setReviewHeadline] = useState('')
@@ -73,7 +74,6 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
     }
 
     const reviewScoreTier = Math.floor((reviewHeadlineTier + reviewBodyTier + uploadedMediaTier) / 3)
-    const rewards = ['No Reward', '40% Off', 'Buy 2, Get 1 Free']
 
     const renderStars = (rating: number) => {
         for (let i = 1; i<=5; i++) {

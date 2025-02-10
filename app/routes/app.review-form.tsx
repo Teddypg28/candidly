@@ -12,15 +12,19 @@ import "react-color-palette/css"
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import { defaultReviewFormSettings } from "~/types/types";
+import fetchRewardTiers from "~/helpers/fetchRewardTiers";
 
 export async function loader({ request } : LoaderFunctionArgs) {
     const { session } = await authenticate.admin(request)
     const reviewFormSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
+    const rewardTiers = await fetchRewardTiers(session.shop)
+
     if (reviewFormSettings) {
-        return json(reviewFormSettings)
+        return json({...reviewFormSettings, rewards: rewardTiers})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {...defaultReviewFormSettings, store: session.shop}})
-    return json(defaultSettings)
+
+    return json({...defaultSettings, rewards: rewardTiers})
 }
 
 export default function ReviewForm() {
@@ -83,6 +87,7 @@ export default function ReviewForm() {
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
                         <ReviewFormPreview 
+                        rewards={settingsState.rewards}
                         heading={settingsState.heading}
                         subheading={settingsState.subheading}
                         headlinePlaceholder={settingsState.headlinePlaceholder}
