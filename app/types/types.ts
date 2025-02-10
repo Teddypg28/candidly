@@ -337,7 +337,9 @@ export interface SelectedProduct_Reward {
     id: string
     title: string
     totalVariants: number
-    images?: any
+    images: {
+        originalSrc: string
+    }[]
     variants: {
         title: string
     }[]

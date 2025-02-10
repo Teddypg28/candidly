@@ -3,7 +3,7 @@ import { ImageIcon } from "@shopify/polaris-icons";
 
 import { useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
-import { Reward as RewardStateReward, RewardState, initialRewardState, SelectedProduct_Reward } from "~/types/types";
+import { Reward as RewardStateReward, RewardState, initialRewardState, SelectedProduct_Reward, ExcludedProduct } from "~/types/types";
 import { Reward as RewardShape } from "@prisma/client";
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
@@ -24,10 +24,19 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     await Promise.all(['subpar', 'good', 'perfect'].map(async (reviewType) => {
         // grab the excluded products (if any) from request data
-        const excludedProducts = payload[reviewType].excludedProducts
+        const excludedProducts = payload[reviewType].excludedProducts as ExcludedProduct[]
         delete payload[reviewType]['excludedProducts']
         // update reward setting
-        await db.rewardSetting.update({where: {id: currentReward[`${reviewType}Id` as keyof typeof Reward]}, data: {...payload[reviewType]}})
+        const updatedRewardSetting = await db.rewardSetting.update({where: {id: currentReward[`${reviewType}Id` as keyof typeof Reward]}, data: {...payload[reviewType]}})
+        // delete db records of excluded products that are no longer in the updated data
+        const currentDbRecords = await db.excludedProduct.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
+        // updated data showing just the ids of the products
+        const updatedExcludedProductIds = excludedProducts.map(product => product.productId)
+        await Promise.all(currentDbRecords.map(async (currentDbRecord) => {
+            if (!updatedExcludedProductIds.includes(currentDbRecord.productId)) {
+                await db.excludedProduct.delete({where: {id: currentDbRecord.id}})
+            }
+        }))
         // update excludedProducts linked to the rewardSetting
         await Promise.all(excludedProducts.map(async (excludedProduct: any) => {
             if (!excludedProduct.id) {
@@ -48,16 +57,16 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
         include: 
             {
-                subpar: {include: {excludedProducts: true}}, 
-                good: {include: {excludedProducts: true}},
-                perfect: {include: {excludedProducts: true}}
+                subpar: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}}, 
+                good: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}},
+                perfect: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}}
             },
         omit: {
                 subparId: true,
                 goodId: true, 
                 perfectId: true, 
                 store: true,
-                id: true,
+                id: true
             }
         })
 
@@ -80,9 +89,16 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             perfect: {create: {...perfect, excludedProducts: {create: perfect.excludedProducts}}}
         },
         include: {
-            subpar: {include: {excludedProducts: true}},
-            good: {include: {excludedProducts: true}},
-            perfect: {include: {excludedProducts: true}}
+            subpar: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}},
+            good: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}},
+            perfect: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}}
+        },
+        omit: {
+            subparId: true,
+            goodId: true, 
+            perfectId: true, 
+            store: true,
+            id: true
         }   
     })  
     return {rewardSettings: initializedRewardSettings, selectedProducts: {subpar: [], good: [], perfect: []}}
@@ -96,7 +112,7 @@ export default function Reward() {
 
     const [currentTab, setCurrentTab] = useState('subpar')
     const [rewardState, setRewardState] = useState<RewardState>(data.rewardSettings)
-    const [cleanRewardState, setCleanRewardState] = useState<RewardState>(data.rewardSettings)
+    const cleanRewardState = data.rewardSettings
 
     const isStateDirty = JSON.stringify(rewardState) !== JSON.stringify(cleanRewardState)
 
@@ -139,12 +155,12 @@ export default function Reward() {
     }
 
     const saveChanges = () => {
-        submit(JSON.stringify({rewardState}), {method: 'POST', encType: 'application/json'})
+        submit(JSON.stringify(rewardState), {method: 'POST', encType: 'application/json'})
     }
 
-    const removeSelectedProduct = (productId: string) => {
-        const updatedRewardState = rewardState[currentTab as keyof typeof rewardState].excludedProducts?.filter((product: any) => product.productId !== productId)
+    const removeExcludedProduct = (productId: string) => {
         const updatedSelectedProducts = selectedProducts[currentTab as keyof typeof selectedProducts].filter((product: any) => product.id !== productId)
+        const updatedRewardState = rewardState[currentTab as keyof typeof rewardState].excludedProducts.filter((product: any) => product.productId !== productId)
 
         setSelectedProducts({...selectedProducts, [currentTab]: updatedSelectedProducts})
         setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], excludedProducts: updatedRewardState}})
@@ -224,7 +240,7 @@ export default function Reward() {
                                                             return variant.title
                                                         }).join(', ')}
                                                         </Text>
-                                                        <Button onClick={() => removeSelectedProduct(product.id)} variant="primary" tone="critical">Remove Product</Button>
+                                                        <Button onClick={() => removeExcludedProduct(product.id)} variant="primary" tone="critical">Remove Product</Button>
                                                     </InlineStack>
                                                 </BlockStack>
                                             </InlineStack>
