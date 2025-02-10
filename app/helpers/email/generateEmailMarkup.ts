@@ -1,17 +1,17 @@
-import { ReviewRequestEmailSettings } from "~/types/types"
+import { ReviewRequestEmailData } from "~/types/types"
 import generateEmailBody from "./generateEmailBody"
 
-export default function generateEmailMarkup(emailBody: string, settings: ReviewRequestEmailSettings) {
+export default function generateEmailMarkup(emailBody: string, data: ReviewRequestEmailData) {
 
-    const updatedEmailBody = generateEmailBody(emailBody, settings)
+    const updatedEmailBody = generateEmailBody(emailBody, data)
 
     const completeMarkup = 
     `<div style="background-color: rgb(248, 248, 248); padding: 10px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">
-        <div style="width: 60%; margin: auto; background-color: white; height: fit-content">
-        <table style="background-color: ${settings.bannerBgColor}; height: 70px; width: 100%">
+        <div style="max-width: 600px; margin: auto; background-color: white; height: fit-content">
+        <table style="background-color: ${data.bannerBgColor}; height: 70px; width: 100%">
             <tr>
             <td>
-                <img draggable="false" style="width: 50px; height: 50px; display: block; margin: auto" src=${settings.logo?.url} alt="company-logo">
+                ${data.logo ? `<img draggable="false" style="width: 50px; height: 50px; display: block; margin: auto" src=${data.logo.url} alt="company-logo">` : ''}
             </td>
             </tr>
         </table>

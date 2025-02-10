@@ -1,69 +1,244 @@
-import { ActionFunctionArgs } from "@remix-run/node"
-import { useLoaderData, useNavigate } from "@remix-run/react"
-import { Badge, Card, EmptyState, IndexTable, Link, Page } from "@shopify/polaris"
+import { BlockStack, Button, Card, InlineStack, Layout, Page, Text, Thumbnail } from "@shopify/polaris";
+import { ImageIcon } from "@shopify/polaris-icons";
+
+import { useState } from "react";
+import RewardChoice from "~/components/RewardChoice";
+import { Reward as RewardStateReward, RewardState, initialRewardState, SelectedProduct_Reward } from "~/types/types";
+import { Reward as RewardShape } from "@prisma/client";
+
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { authenticate } from "~/shopify.server";
+import { useLoaderData, useSubmit } from "@remix-run/react";
+import { SaveBar } from "@shopify/app-bridge-react";
 
 import db from '../db.server'
-import { authenticate } from "~/shopify.server"
+import fetchSelectedProductData from "~/helpers/fetchSelectedProductData";
 
-export const loader = async ({ request } : ActionFunctionArgs) => {
+export const action = async ({ request } : ActionFunctionArgs) => {
+
     const { session } = await authenticate.admin(request)
-    return await db.reward.findMany({where: {store: {equals: session.shop}}, include: {limitedEligibleProducts: true, subpar: true, good: true, perfect: true}})
+
+    const payload = await request.json()
+
+    const currentReward = await db.reward.findFirst({where: {store: {equals: session.shop}}}) as RewardShape
+
+    await Promise.all(['subpar', 'good', 'perfect'].map(async (reviewType) => {
+        // grab the excluded products (if any) from request data
+        const excludedProducts = payload[reviewType].excludedProducts
+        delete payload[reviewType]['excludedProducts']
+        // update reward setting
+        await db.rewardSetting.update({where: {id: currentReward[`${reviewType}Id` as keyof typeof Reward]}, data: {...payload[reviewType]}})
+        // update excludedProducts linked to the rewardSetting
+        await Promise.all(excludedProducts.map(async (excludedProduct: any) => {
+            if (!excludedProduct.id) {
+                await db.excludedProduct.create({data: {productId: excludedProduct.productId, variantIds: excludedProduct.variantIds, rewardSettingId: payload[reviewType].id}})
+            } else {
+                await db.excludedProduct.update({where: {id: excludedProduct.id}, data: {productId: excludedProduct.productId, variantIds: excludedProduct.variantIds}})
+            }
+        }))
+    }))
+    
+    return true
 }
 
-export default function Rewards() {
-    const rewards = useLoaderData<typeof loader>()
-    const IndexTableRows = rewards.map((reward, index) => {
-        return (
-            <IndexTable.Row position={index} key={index} id={index.toString()}>
-                <IndexTable.Cell>
-                    <Link url={`/app/reward/${reward.id}`}>{reward.id}</Link>
-                </IndexTable.Cell>
-                <IndexTable.Cell>{reward.subpar.selectedRewardType}</IndexTable.Cell>
-                <IndexTable.Cell>{reward.good.selectedRewardType}</IndexTable.Cell>
-                <IndexTable.Cell>{reward.perfect.selectedRewardType}</IndexTable.Cell>
-                <IndexTable.Cell>{reward.limitedEligibleProducts.length > 0 ? reward.limitedEligibleProducts.length : 'All'}</IndexTable.Cell>
-                <IndexTable.Cell>
-                    <Badge tone="critical">False</Badge>
-                </IndexTable.Cell>
-            </IndexTable.Row>
-        )
+export const loader = async ({ request } : LoaderFunctionArgs) => {
+    const { session, admin } = await authenticate.admin(request)
+
+    // fetch rewardSettings for store
+    const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
+        include: 
+            {
+                subpar: {include: {excludedProducts: true}}, 
+                good: {include: {excludedProducts: true}},
+                perfect: {include: {excludedProducts: true}}
+            },
+        omit: {
+                subparId: true,
+                goodId: true, 
+                perfectId: true, 
+                store: true,
+                id: true,
+            }
+        })
+
+    // if rewardSettings exist already, return them
+    if (rewardSettings) {
+        const selectedProducts = await fetchSelectedProductData(rewardSettings, admin)
+        return {rewardSettings, selectedProducts}
+    }
+
+    // initialize them in the db with default values
+    const perfect = initialRewardState
+    const good = initialRewardState
+    const subpar = initialRewardState
+
+    const initializedRewardSettings = await db.reward.create({data: 
+        {
+            store: session.shop, 
+            subpar: {create: {...subpar, excludedProducts: {create: subpar.excludedProducts}}}, 
+            good: {create: {...good, excludedProducts: {create: good.excludedProducts}}}, 
+            perfect: {create: {...perfect, excludedProducts: {create: perfect.excludedProducts}}}
+        },
+        include: {
+            subpar: {include: {excludedProducts: true}},
+            good: {include: {excludedProducts: true}},
+            perfect: {include: {excludedProducts: true}}
+        }   
+    })  
+    return {rewardSettings: initializedRewardSettings, selectedProducts: {subpar: [], good: [], perfect: []}}
+}
+
+export default function Reward() {
+
+    const data = useLoaderData<typeof loader>()
+
+    const submit = useSubmit()
+
+    const [currentTab, setCurrentTab] = useState('subpar')
+    const [rewardState, setRewardState] = useState<RewardState>(data.rewardSettings)
+    const [cleanRewardState, setCleanRewardState] = useState<RewardState>(data.rewardSettings)
+
+    const isStateDirty = JSON.stringify(rewardState) !== JSON.stringify(cleanRewardState)
+
+    const [selectedProducts, setSelectedProducts] = useState<{
+        subpar: SelectedProduct_Reward[];
+        good: SelectedProduct_Reward[];
+        perfect: SelectedProduct_Reward[];
+    }>(data.selectedProducts)
+
+    const [cleanSelectedProducts, setCleanSelectedProducts] = useState<{
+        subpar: SelectedProduct_Reward[];
+        good: SelectedProduct_Reward[];
+        perfect: SelectedProduct_Reward[];
+    }>(data.selectedProducts)
+
+    const NaNDetected = Object.keys(rewardState[currentTab as keyof RewardState]).find(key => {
+        const keys = ['fixedAmount', 'percentageAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount', 'bogoDiscountAmount']
+        if (keys.includes(key) && isNaN(rewardState[currentTab as keyof RewardState][key as keyof RewardStateReward] as number)) {
+            return key
+        }
     })
 
-    const nav = useNavigate()
+    const selectProducts = async () => {
+        const products = await window.shopify.resourcePicker({
+            type: 'product',
+            action: 'select',
+            multiple: true
+        })
+
+        if (products) {
+            setSelectedProducts({...selectedProducts, [currentTab]: products})
+            const excludedProductData = products.map(product => {
+                return {
+                    productId: product.id, 
+                    variantIds: product.variants.map(variant => variant.id)
+                }
+            })
+            setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], excludedProducts: excludedProductData}})
+        }
+    }
+
+    const saveChanges = () => {
+        submit(JSON.stringify({rewardState}), {method: 'POST', encType: 'application/json'})
+    }
+
+    const removeSelectedProduct = (productId: string) => {
+        const updatedRewardState = rewardState[currentTab as keyof typeof rewardState].excludedProducts?.filter((product: any) => product.productId !== productId)
+        const updatedSelectedProducts = selectedProducts[currentTab as keyof typeof selectedProducts].filter((product: any) => product.id !== productId)
+
+        setSelectedProducts({...selectedProducts, [currentTab]: updatedSelectedProducts})
+        setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], excludedProducts: updatedRewardState}})
+    }
 
     return (
+
         <Page
         title="Review Rewards"
-        subtitle={rewards.length > 0 ? 'Here are all of your current review rewards' : ''}
+        subtitle="Create reward tiers to incentivize customers to write awesome reviews for your products"
         >
-            <Card>
-                {rewards.length > 0 ?
-                
-                <IndexTable
-                headings={[
-                    {title: 'Reward ID'}, 
-                    {title: 'Subpar Tier Reward'}, 
-                    {title: 'Good Tier Reward'}, 
-                    {title: 'Perfect Tier Reward'}, 
-                    {title: 'Number of Products'},
-                    {title: 'Activated'}
-                ]} 
-                itemCount={rewards.length} 
-                >
-                    {IndexTableRows}
-                </IndexTable>
+            <SaveBar 
+            open={isStateDirty} 
+            >
+                <button variant={'primary'} onClick={saveChanges}></button>
+                <button onClick={() => { setRewardState(cleanRewardState); setSelectedProducts(cleanSelectedProducts)}}></button>
+            </SaveBar>
+            <Layout>
+                <Layout.Section variant="oneHalf">
+                    <Card>
+                        <BlockStack gap={'200'}>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                                <button 
+                                disabled={NaNDetected !== undefined}
+                                style={{border: 'none', backgroundColor: currentTab === 'subpar' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '5px 8px'}}
+                                onClick={() => setCurrentTab('subpar')}
+                                >
+                                    Subpar Review
+                                </button>
+                                <button 
+                                disabled={NaNDetected !== undefined}
+                                style={{border: 'none', backgroundColor: currentTab === 'good' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '5px 8px'}}
+                                onClick={() => setCurrentTab('good')}
+                                >
+                                    Good Review
+                                </button>
+                                <button 
+                                disabled={NaNDetected !== undefined}
+                                style={{border: 'none', backgroundColor: currentTab === 'perfect' ? 'rgb(230, 230, 230)' : 'white', cursor: 'pointer', borderRadius: '5px', padding: '5px 8px'}}
+                                onClick={() => setCurrentTab('perfect')}
+                                >
+                                    Perfect Review
+                                </button>
+                            </div>
+                            <RewardChoice type={currentTab} state={rewardState} setState={setRewardState} />
+                        </BlockStack>
+                    </Card>
+                </Layout.Section>
+                {rewardState[currentTab as keyof RewardState].selectedRewardType !== 'none' && 
+                <Layout.Section variant="oneThird">
+                    <Card>
+                        <BlockStack gap={'300'}>
+                            <BlockStack gap={'150'}>
+                                <Text as="h1" fontWeight="bold">Exclude Products</Text>
+                                <Text as="p" tone="caution">
+                                    For any products that you choose to exclude, customers will not be able to use the reward when purchasing it.
+                                </Text>
+                            </BlockStack>
+                            <InlineStack>
+                                <Button variant={'primary'} onClick={selectProducts}>Select Products</Button>
+                            </InlineStack>
+                            
+                            {selectedProducts[currentTab as keyof typeof selectedProducts].length > 0 && 
+                            <BlockStack gap={'200'}>
+                                {selectedProducts[currentTab as keyof typeof selectedProducts].map((product: any, index: number) => {
 
-                :
-                
-                <EmptyState
-                action={{content: 'Create Your First Reward', onAction: () => nav('/app/reward/new')}}
-                heading="You Haven't Created Any Rewards Yet"
-                footerContent="Rewards will incentivize your customers to leave quality reviews"
-                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                />
-                }
-            </Card>
+                                    const productImage = product.images.length > 0 ? product.images[0].originalSrc : ImageIcon
+
+                                    return (
+                                        <>
+                                            <InlineStack key={index} gap={'200'} blockAlign="center">
+                                                <Thumbnail size="large" alt="product image" source={productImage} />
+                                                <BlockStack>
+                                                    <Text fontWeight="bold" as="p">{product.title}</Text>
+                                                    <InlineStack gap={'200'}>
+                                                        <Text as="p">Variants: {product.totalVariants === product.variants.length ? 'All' : product.variants.map((variant: any) => {
+                                                            return variant.title
+                                                        }).join(', ')}
+                                                        </Text>
+                                                        <Button onClick={() => removeSelectedProduct(product.id)} variant="primary" tone="critical">Remove Product</Button>
+                                                    </InlineStack>
+                                                </BlockStack>
+                                            </InlineStack>
+                                            {index !== selectedProducts[currentTab as keyof typeof selectedProducts].length - 1 && <hr style={{width: '100%', backgroundColor: 'lightgray', height: '0.5px', border: 'none'}} />}
+                                        </>
+                                    )
+                                })}
+                            </BlockStack>
+                            }
+                        </BlockStack>
+                    </Card>
+                </Layout.Section>
+            }
+            </Layout>
         </Page>
     )
-
 }

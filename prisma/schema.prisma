@@ -188,30 +188,29 @@ model ReviewRequest {
   emailsSent        Int       @default(0)
 }
 
-model EligibleProduct {
-  id         Int      @id @default(autoincrement())
-  productId  String
-  variantIds String[]
-  rewardId   Int
-  reward     Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+model ExcludedProduct {
+  id              Int           @id @default(autoincrement())
+  productId       String
+  variantIds      String[]
+  rewardSettingId Int
+  reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
 }
 
 model Reward {
-  id                      Int               @id @default(autoincrement())
-  limitedEligibleProducts EligibleProduct[]
-  store                   String
+  id    Int    @id @default(autoincrement())
+  store String
 
   subparId  Int @unique
   goodId    Int @unique
   perfectId Int @unique
 
-  subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id], onDelete: Cascade)
-  good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id], onDelete: Cascade)
-  perfect RewardSetting @relation("PerfectReward", fields: [perfectId], references: [id], onDelete: Cascade)
+  subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id])
+  good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id])
+  perfect RewardSetting @relation("PerfectReward", fields: [perfectId], references: [id])
 }
 
 model RewardSetting {
-  id                       Int    @id @default(autoincrement())
+  id                       Int               @id @default(autoincrement())
   selectedRewardType       String
   fixedAmount              Int
   percentageAmount         Int
@@ -222,6 +221,7 @@ model RewardSetting {
   minPurchaseType          String
   minPurchaseDollarValue   Int
   minPurchaseQuantityValue Int
+  excludedProducts         ExcludedProduct[]
 
   subparReward  Reward? @relation("SubparReward")
   goodReward    Reward? @relation("GoodReward")

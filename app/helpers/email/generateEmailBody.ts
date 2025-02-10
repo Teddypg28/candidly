@@ -1,9 +1,12 @@
-import { ReviewRequestEmailSettings } from "~/types/types";
+import { ReviewRequestEmailData } from "~/types/types";
 
-export default function generateEmailBody(emailBody: string, settings: ReviewRequestEmailSettings) {
+export default function generateEmailBody(emailBody: string, data: ReviewRequestEmailData) {
 
     const dynamicVariableData: any = {
-        companyName: settings.companyName,
+        firstName: data.firstName,
+        companyName: data.companyName,
+        productName: '',
+        maxReward: data.maxReward,
         stars: (
             `<div style="display: flex; justify-content: center; width: fit-content; gap: 5px; margin: 0px auto; padding: 0px">
                 <a style="font-size: 35px; text-decoration: none" id="1-star">

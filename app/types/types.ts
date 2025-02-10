@@ -1,5 +1,19 @@
 import { IndexFiltersProps } from "@shopify/polaris"
-import { MutableRefObject, SetStateAction } from "react"
+import { MutableRefObject } from "react"
+
+export const initialRewardState: Reward = {
+    selectedRewardType: 'none', 
+    fixedAmount: 10, 
+    percentageAmount: 10, 
+    bogoRewardType: "free", 
+    bogoPurchaseAmount: 1, 
+    bogoReceiveAmount: 1, 
+    bogoDiscountAmount: 1, 
+    minPurchaseType: 'none', 
+    minPurchaseDollarValue: 1, 
+    minPurchaseQuantityValue: 1,
+    excludedProducts: []
+}
 
 export const sampleReviewData = [
     ['title, body', 'name', 'email', 'rating', 'media', 'date', 'isPublished'],
@@ -248,6 +262,19 @@ export interface AppSettings {
     primaryEmail: string
 }
 
+export interface ReviewRequestEmailData {
+    reviewRequestId?: number,
+    bannerBgColor: string, 
+    logo: {
+        name: string,
+        url: string,
+        file?: File
+    } | null,
+    firstName?: string,
+    companyName?: string,
+    maxReward?: string
+}
+
 export interface ReviewRequestEmailSettings {
     store: string
     bannerBgColor: string
@@ -275,6 +302,11 @@ export interface SettingsPageProps {
     errors: MutableRefObject<string[]>
 }
 
+export interface ExcludedProduct {
+    productId: string,
+    variantIds: string[]
+}
+
 export interface Reward {
     selectedRewardType: string
     fixedAmount: number
@@ -286,16 +318,27 @@ export interface Reward {
     minPurchaseType: string
     minPurchaseDollarValue: number
     minPurchaseQuantityValue: number
+    excludedProducts: ExcludedProduct[]
 }
 
 export interface RewardState {
-    subpar: Reward
-    good: Reward
-    perfect: Reward
+    'subpar': Reward
+    'good': Reward
+    'perfect': Reward
 }
 
 export interface EmailOrderData {
-    customerFirstName: string,
-    productName: string,
+    customerFirstName: string
+    productName: string
     productImage: string
+}
+
+export interface SelectedProduct_Reward {
+    id: string
+    title: string
+    totalVariants: number
+    images?: any
+    variants: {
+        title: string
+    }[]
 }

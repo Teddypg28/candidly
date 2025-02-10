@@ -17,9 +17,7 @@ import { SaveBar } from "@shopify/app-bridge-react";
 
 import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
-import sendEmail from "~/helpers/sendEmail";
 
-import generateEmailMarkup from "~/helpers/email/generateEmailMarkup";
 import standardizeLineBreaks from "~/helpers/standardizeLineBreaks";
 import generateEmailBody from "~/helpers/email/generateEmailBody";
 
@@ -27,15 +25,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
         const formData = await request.formData()
-
-        if (formData.get('action') === "testEmail") {
-            const emailMarkup = formData.get('emailMarkup') as string
-            const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
-            if (appSettings) {
-                await sendEmail(emailMarkup, 'mrgiftr@gmail.com', appSettings.primaryEmail)
-            }
-            return true
-        } 
         
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
@@ -234,11 +223,18 @@ export default function EmailTemplate() {
         }
     }
 
+    const emailData = {
+        bannerBgColor: settings.bannerBgColor,
+        logo: settings.logo,
+        companyName: settings.companyName
+    }
+
     const sendTestEmail = () => { 
         const formData = new FormData()
         formData.append('action', 'testEmail')
-        formData.append('emailMarkup', generateEmailMarkup(emailBody, settings))
-        submit(formData, {method: 'POST', encType: 'multipart/form-data'})
+        formData.append('emailBody', emailBody)
+        formData.append('emailData', JSON.stringify(emailData))
+        submit(formData, {action: '/api/reviewRequestEmail/test/send', method: 'POST', encType: 'multipart/form-data', navigate: false})
     }
 
     const editEmail = (e: any) => {
@@ -274,7 +270,7 @@ export default function EmailTemplate() {
 
     return (
         <Page
-        primaryAction={{content: 'Send Test Email', onAction: sendTestEmail}}
+        primaryAction={{content: 'Send Test Email', onAction: sendTestEmail, disabled: isFormDirty}}
         >
             <SaveBar open={isFormDirty}>
                 <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>
@@ -416,7 +412,7 @@ export default function EmailTemplate() {
                                             }
                                         </div>
                                     </div>
-                                    <div dangerouslySetInnerHTML={{__html: generateEmailBody(emailBody, settings)}}></div>
+                                    <div dangerouslySetInnerHTML={{__html: generateEmailBody(emailBody, emailData)}}></div>
                                     {/* {
                                         settings.productDisplay[0] !== 'disabled' && 
                                         <>
