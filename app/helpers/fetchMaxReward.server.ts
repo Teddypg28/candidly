@@ -1,33 +1,16 @@
 import { Session } from '@shopify/shopify-app-remix/server'
-import db from '../db.server'
+import fetchRewardTiers from './fetchRewardTiers'
 
-export default async function fetchMaxReward(session: Session) {
-    // determine max reward configured
-    const rewards = await db.reward.findFirst({where: {store: {equals: session.shop}}})
-    
-    const maxReward = !rewards ? undefined : 
-        
-        await Promise.all([rewards.goodId, rewards.subparId, rewards.perfectId].map(async (rewardSettingId) => {
-            const rewardSetting = await db.rewardSetting.findFirst({where: {id: rewardSettingId}})
-            if (!rewardSetting || rewardSetting && rewardSetting.selectedRewardType === "none") {
-                return null
-            } else {
-
-                switch (rewardSetting.selectedRewardType) {
-                    case "free-shipping":
-                        if (rewardSetting.minPurchaseType === "none") {
-                            return rewardSetting.selectedRewardType
-                        } else {
-                            if (rewardSetting.minPurchaseType === "")
-                            return `${rewardSetting.selectedRewardType} when you purchase at `
-                        }
-                }
-
-                return rewardSetting.selectedRewardType
-            }
-        }))
-        .then(res => res.filter(rewardType => rewardType !== null))
-        .then(res => res[res.length - 1])
-
+export default async function fetchMaxReward(shop: string) {
+    const rewardTiers = await fetchRewardTiers(shop)
+    if (rewardTiers.every(tier => tier === rewardTiers[0])) {
+        return undefined
+    }
+    let maxReward: string = ''
+    rewardTiers.forEach(tier => {
+        if (tier !== "No Reward") {
+            maxReward = tier
+        }
+    })
     return maxReward
 }

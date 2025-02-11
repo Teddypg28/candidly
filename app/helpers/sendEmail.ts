@@ -4,16 +4,6 @@ import generateEmailMarkup from './email/generateEmailMarkup';
 
 export default async function sendEmail(emailBody: string, emailData: ReviewRequestEmailData, toAddress: string, fromAddress: string) {
 
-    /*
-    1) at 6:00 pm EST, search db for review request records with send date matching current date
-    2) check if rewards exist
-    3) if rewards exist:
-        - generate rewards email html
-       else:
-        - generate no rewards email html
-    4) send email
-    */  
-
     const emailMarkup = generateEmailMarkup(emailBody, emailData)
 
     const sesClient = new SESClient({

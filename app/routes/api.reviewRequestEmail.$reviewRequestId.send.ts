@@ -44,7 +44,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
     }
 
     const firstName = ''
-    const maxReward = await fetchMaxReward(session)
+    const maxReward = await fetchMaxReward(session.shop)
 
     const emailData: ReviewRequestEmailData = {
         reviewRequestId: reviewRequest.id,

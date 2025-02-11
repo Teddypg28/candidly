@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "reviews-app"
 handle = "reviews-app-48"
-application_url = "https://r-perth-deviation-stereo.trycloudflare.com"
+application_url = "https://likely-workers-nationally-starts.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products"
 
 [auth]
 redirect_urls = [
-  "https://r-perth-deviation-stereo.trycloudflare.com/auth/callback",
-  "https://r-perth-deviation-stereo.trycloudflare.com/auth/shopify/callback",
-  "https://r-perth-deviation-stereo.trycloudflare.com/api/auth/callback"
+  "https://likely-workers-nationally-starts.trycloudflare.com/auth/callback",
+  "https://likely-workers-nationally-starts.trycloudflare.com/auth/shopify/callback",
+  "https://likely-workers-nationally-starts.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://r-perth-deviation-stereo.trycloudflare.com/api"
+url = "https://likely-workers-nationally-starts.trycloudflare.com/api"
 subpath = "reviews"
 prefix = "apps"
 
