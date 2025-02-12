@@ -224,7 +224,8 @@ export default function EmailTemplate() {
     const emailData = {
         bannerBgColor: settings.bannerBgColor,
         logo: settings.logo,
-        companyName: settings.companyName
+        companyName: settings.companyName,
+        store: settings.store
     }
 
     const sendTestEmail = () => { 

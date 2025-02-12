@@ -51,6 +51,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
         bannerBgColor: storeEmailSettings.bannerBgColor,
         logo: storeEmailSettings.logo,
         companyName: storeGeneralSettings.companyName,
+        store: reviewRequest.store,
         firstName,
         maxReward
     }

@@ -264,6 +264,7 @@ export interface AppSettings {
 
 export interface ReviewRequestEmailData {
     reviewRequestId?: number,
+    store: string
     bannerBgColor: string, 
     logo: {
         name: string,

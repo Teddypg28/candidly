@@ -180,12 +180,13 @@ model ReviewRequest {
   createdAt         DateTime
   orderName         String
   orderId           BigInt
-  name              String
+  firstName         String
   email             String
   fulfillmentStatus String?
   reviewStatus      String    @default("waiting")
-  requestSentDate   DateTime?
+  nextRequestDate   DateTime?
   emailsSent        Int       @default(0)
+  authToken         String?
 }
 
 model ExcludedProduct {
