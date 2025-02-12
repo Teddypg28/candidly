@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
+import { LoaderFunctionArgs, redirect } from "@remix-run/node";
 
 import db from '../../db.server'
 import { useLoaderData } from "@remix-run/react";
@@ -6,25 +6,29 @@ import { useLoaderData } from "@remix-run/react";
 import styles from '../../styles/ReviewPreview.module.css'
 import { useEffect, useRef, useState } from "react";
 import { ReviewFormSettings } from "@prisma/client";
+import fetchRewardTiers from "~/helpers/fetchRewardTiers";
 
 export const loader = async ({ params } : LoaderFunctionArgs) => {
 
     const store = params.store as string
     const reviewRequestId = params.reviewRequestId as string
+    const authToken = params.authToken as string
 
-    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: parseInt(reviewRequestId)}, AND: {store: {equals: store}}}})
+    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: parseInt(reviewRequestId)}, AND: {store: {equals: store}, authToken: {equals: authToken}}}})
 
-    if (!reviewRequest) return null
+    if (!reviewRequest) return redirect('/')
     
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
+    const rewardsTiers = await fetchRewardTiers(`${store}.myshopify.com`) as string[]
 
-    return formSettings
+    return {formSettings, rewardsTiers}
 }
 
 export default function ReviewForm() {
 
     const data = useLoaderData<typeof loader>()
 
+    // state to track customer input
     const [firstName, setFirstName] = useState('Teddy')
     const [email, setEmail] = useState('teddypg02@gmail.com')
     const [reviewBody, setReviewBody] = useState('')
@@ -41,15 +45,10 @@ export default function ReviewForm() {
     let reviewHeadlineStatusColor
 
     if (reviewHeadlineWordList.length <= 3) {
-
         reviewHeadlineTier = 1
-
     } else if (reviewHeadlineWordList.length > 3 && reviewHeadlineWordList.length <= 9) {
-
         reviewHeadlineTier = 2
-
     } else {
-
         reviewHeadlineTier = 3
         reviewHeadlineStatusColor = "#67af98"
     }
@@ -57,7 +56,7 @@ export default function ReviewForm() {
     const reviewBodyWordList = reviewBody.trim().split(/\s+/).filter(word => word !== "")
 
     let reviewBodyTier
-    let reviewBodyStatusColor = data?.primaryFormColor
+    let reviewBodyStatusColor = data?.formSettings.primaryFormColor
 
     if (reviewBodyWordList.length <= 14) {
 
@@ -75,7 +74,7 @@ export default function ReviewForm() {
     }
 
     let uploadedMediaTier
-    let uploadedMediaStatusColor = data?.primaryFormColor
+    let uploadedMediaStatusColor = data.formSettings.primaryFormColor
 
     if (uploadedMediaRef.current.length === 0) {
         uploadedMediaTier = 1
@@ -87,12 +86,13 @@ export default function ReviewForm() {
     }
 
     const reviewScoreTier = Math.floor((reviewHeadlineTier + reviewBodyTier + uploadedMediaTier) / 3)
-    const rewards = ['No Reward', '40% Off', 'Buy 2, Get 1 Free']
+    const rewards = [data.rewardsTiers[0], data.rewardsTiers[1], data.rewardsTiers[2]]
+    const noRewardsConfigured = rewards.every(reward => reward === "No Reward")
 
     const renderStars = (rating: number) => {
         for (let i = 1; i<=5; i++) {
             if (i <= rating) {
-                (document.querySelector(`#star${i}`) as HTMLElement).style.fill = data?.primaryFormColor || ''
+                (document.querySelector(`#star${i}`) as HTMLElement).style.fill = data.formSettings.primaryFormColor
             } else {
                 (document.querySelector(`#star${i}`) as HTMLElement).style.fill = '#e8e8e8'
             }
@@ -132,12 +132,12 @@ export default function ReviewForm() {
                 })
             }
     
-        }, [data.primaryFormColor])
+        }, [data.formSettings.primaryFormColor])
 
     
         data !== null && useEffect(() => {
             renderStars(rating.current)
-        }, [data.primaryFormColor])
+        }, [data.formSettings.primaryFormColor])
     
        data !== null && useEffect(() => {
     
@@ -281,8 +281,8 @@ export default function ReviewForm() {
             
                 <div className={styles.reviewForm}>
                     <div className={styles.reviewFormHeadingContainer}>
-                        <h1 style={{margin: 0, padding: 0, fontSize: '26px'}}>{data.heading}</h1>
-                        <p style={{margin: 0, padding: 0, marginTop: '10px'}}>{data.subheading}</p>
+                        <h1 style={{margin: 0, padding: 0, fontSize: '26px'}}>{data.formSettings.heading}</h1>
+                        <p style={{margin: 0, padding: 0, marginTop: '10px'}}>{data.formSettings.subheading}</p>
                     </div>
                     <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px'}}>
                         <div style={{border: '1px solid black', borderRadius: '10px', width: '75px', height: '75px', overflow: 'hidden'}}>
@@ -292,19 +292,19 @@ export default function ReviewForm() {
                             <p style={{padding: 0, margin: 0}}>{'Sample Product Title'}</p>
                             <div className={styles.reviewFormStarsContainer} style={{padding: 0, margin: 0}}>
                                 <svg id="reviewFormStar" data-rating="1" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                    <path id="star1" fill={data.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    <path id="star1" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                 </svg>
                                 <svg id="reviewFormStar" data-rating="2" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                    <path id="star2" fill={data.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    <path id="star2" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                 </svg>
                                 <svg id="reviewFormStar" data-rating="3" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                    <path id="star3" fill={data.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    <path id="star3" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                 </svg>
                                 <svg id="reviewFormStar" data-rating="4" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                    <path id="star4" fill={data.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    <path id="star4" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                 </svg>
                                 <svg id="reviewFormStar" data-rating="5" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                    <path id="star5" fill={data.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                                    <path id="star5" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
                                 </svg>
                             </div>
                         </div>
@@ -312,8 +312,8 @@ export default function ReviewForm() {
                     <div className={styles.reviewFieldWrapper}>
                         <label> Give it a Headline * </label>
                         <div style={{position: 'relative'}}>
-                            <input value={reviewHeadline} onChange={(e) => setReviewHeadline(e.target.value)} name='title' placeholder={data.headlinePlaceholder} />
-                            {reviewHeadlineTier === 3 && 
+                            <input value={reviewHeadline} onChange={(e) => setReviewHeadline(e.target.value)} name='title' placeholder={data.formSettings.headlinePlaceholder} />
+                            {!noRewardsConfigured && reviewHeadlineTier === 3 && 
                             <div className={styles.characterCountContainer} style={{backgroundColor: reviewHeadlineStatusColor}}>
                                 <span>Perfect!</span>
                             </div>}
@@ -321,15 +321,15 @@ export default function ReviewForm() {
                     </div>
                     <div style={{marginBottom: '10px'}}>
                         <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                            <div className={styles.progressBar} style={{backgroundColor: reviewHeadlineTier === 3 ? '#67af98' : data.primaryFormColor, height: '100%', width: `${Math.round(reviewHeadlineWordList.length / 10 * 100)}%`}}> </div>
+                            <div className={styles.progressBar} style={{backgroundColor: reviewHeadlineTier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(reviewHeadlineWordList.length / 10 * 100)}%`}}> </div>
                         </div>
                         <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: reviewHeadlineTier == 3 ? reviewHeadlineStatusColor : 'black'}}>{reviewHeadlineTier === 3 ? "You wrote a perfect headline!" : `You are ${Math.round(reviewHeadlineWordList.length / 10 * 100)}% of the way to writing the perfect headline`}</p>
                     </div>
                     <div className={styles.reviewFieldWrapper}>
                         <label>Review *</label>
                         <div style={{position: 'relative'}}>
-                            <textarea value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} name='body' className={styles.reviewTextArea} placeholder={data.reviewPlaceholder} />
-                            {reviewBodyTier === 3 && 
+                            <textarea value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} name='body' className={styles.reviewTextArea} placeholder={data.formSettings.reviewPlaceholder} />
+                            {!noRewardsConfigured && reviewBodyTier === 3 && 
                             <div className={styles.characterCountContainer} style={{backgroundColor: reviewBodyStatusColor}}>
                                 <span>Perfect!</span>
                             </div>}
@@ -337,7 +337,7 @@ export default function ReviewForm() {
                     </div>
                     <div>
                         <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                            <div className={styles.progressBar} style={{backgroundColor: reviewBodyTier === 3 ? '#67af98' : data.primaryFormColor, height: '100%', width: `${Math.round(reviewBodyWordList.length / 40 * 100)}%`}}> </div>
+                            <div className={styles.progressBar} style={{backgroundColor: reviewBodyTier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(reviewBodyWordList.length / 40 * 100)}%`}}> </div>
                         </div>
                         <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: reviewBodyTier == 3 ? reviewBodyStatusColor : 'black'}}>{reviewBodyTier !== 3 ? `You are ${Math.round(reviewBodyWordList.length / 40 * 100)}% of the way to writing the perfect body` : "You wrote the perfect body!"}</p>
                     </div>
@@ -358,43 +358,45 @@ export default function ReviewForm() {
                         </label>
                         <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
                         <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
-                        {uploadedMediaTier === 3 && 
+                        {!noRewardsConfigured && uploadedMediaTier === 3 && 
                         <div className={styles.characterCountContainer} style={{backgroundColor: uploadedMediaStatusColor, bottom: '5px'}}>
                             <span>Perfect!</span>
                         </div>}
                     </div>
                     {uploadMediaError && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>{uploadMediaError}</p>}
-                    <div>
-                        <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                            <div className={styles.progressBar} style={{backgroundColor: uploadedMediaTier === 3 ? '#67af98' : data.primaryFormColor, height: '100%', width: `${Math.round(uploadedMediaRef.current.length / 2 * 100)}%`}}> </div>
+                    {!noRewardsConfigured && 
+                    <>
+                        <div>
+                            <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
+                                <div className={styles.progressBar} style={{backgroundColor: uploadedMediaTier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(uploadedMediaRef.current.length / 2 * 100)}%`}}> </div>
+                            </div>
+                            <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: uploadedMediaTier == 3 ? uploadedMediaStatusColor : 'black'}}>{uploadedMediaTier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</p>
                         </div>
-                        <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: uploadedMediaTier == 3 ? uploadedMediaStatusColor : 'black'}}>{uploadedMediaTier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</p>
-                    </div>
-                    <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
-                    <div>
-                        <p style={{fontWeight: 'bold', margin: 0}}>Reward Tiers</p>
-                        <p style={{margin: 0, marginTop: '3px', fontSize: '14px'}}>The better your review, the better your reward</p>
-                    </div>
-                    <div>
-                        <div className={styles.rewardTiersContainer}>
-                            <div className={styles.rewardTierOne} style={{backgroundColor: reviewScoreTier === 1 ? data.primaryFormColor : 'lightgray', filter: reviewScoreTier === 1 ? 'none' : "blur(1px)"}}>
-                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[0]}</p>
-                            </div>
-                            <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScoreTier === 2 ? data.primaryFormColor : 'lightgray', filter: reviewScoreTier === 2 ? 'none' : "blur(1px)"}}> 
-                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[1]}</p>
-                            </div>
-                            <div className={styles.rewardTierThree} style={{backgroundColor: reviewScoreTier === 3 ? data.primaryFormColor : 'lightgray', filter: reviewScoreTier === 3 ? 'none' : "blur(1px)"}}>
-                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[2]}</p>
-                            </div>
+                        <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
+                        <div>
+                            <p style={{fontWeight: 'bold', margin: 0}}>Reward Tiers</p>
+                            <p style={{margin: 0, marginTop: '3px', fontSize: '14px'}}>The better your review, the better your reward</p>
                         </div>
-                    </div>
-                    <button className={styles.submitReviewBtn} style={{backgroundColor: data.primaryFormColor}}>Submit Review</button>
+                        <div>
+                            <div className={styles.rewardTiersContainer}>
+                                <div className={styles.rewardTierOne} style={{backgroundColor: reviewScoreTier === 1 ? data.formSettings.primaryFormColor : 'lightgray', filter: reviewScoreTier === 1 ? 'none' : "blur(1px)"}}>
+                                    <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[0]}</p>
+                                </div>
+                                <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScoreTier === 2 ? data.formSettings.primaryFormColor : 'lightgray', filter: reviewScoreTier === 2 ? 'none' : "blur(1px)"}}> 
+                                    <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[1]}</p>
+                                </div>
+                                <div className={styles.rewardTierThree} style={{backgroundColor: reviewScoreTier === 3 ? data.formSettings.primaryFormColor : 'lightgray', filter: reviewScoreTier === 3 ? 'none' : "blur(1px)"}}>
+                                    <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[2]}</p>
+                                </div>
+                            </div>
+                        </div> 
+                    </>
+                    }
+                    <button className={styles.submitReviewBtn} style={{backgroundColor: data.formSettings.primaryFormColor}}>Submit Review</button>
                 </div>
             
         )
         :
 
-        <div>
-            404 Error
-        </div>
+        <div>Unauthorized</div>
 }

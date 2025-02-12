@@ -31,19 +31,22 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         // delete db records of excluded products that are no longer in the updated data
         const currentDbRecords = await db.excludedProduct.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
         // updated data showing just the ids of the products
-        const updatedExcludedProductIds = excludedProducts.map(product => product.productId)
+        let updatedExcludedProductIds = excludedProducts.map(product => product.productId)
         await Promise.all(currentDbRecords.map(async (currentDbRecord) => {
+            // if product id of excluded product from db not in updated excluded product ids, delete it from db
             if (!updatedExcludedProductIds.includes(currentDbRecord.productId)) {
                 await db.excludedProduct.delete({where: {id: currentDbRecord.id}})
-            }
-        }))
-        // update excludedProducts linked to the rewardSetting
-        await Promise.all(excludedProducts.map(async (excludedProduct: any) => {
-            if (!excludedProduct.id) {
-                await db.excludedProduct.create({data: {productId: excludedProduct.productId, variantIds: excludedProduct.variantIds, rewardSettingId: payload[reviewType].id}})
             } else {
-                await db.excludedProduct.update({where: {id: excludedProduct.id}, data: {productId: excludedProduct.productId, variantIds: excludedProduct.variantIds}})
+                // if it does exist, run an update
+                const variantIds = excludedProducts.find(product => product.productId === currentDbRecord.productId)?.variantIds as string[]
+                await db.excludedProduct.update({where: {id: currentDbRecord.id}, data: {variantIds}})
             }
+            updatedExcludedProductIds = updatedExcludedProductIds.filter(productId => productId !== currentDbRecord.productId)
+        }))
+        // the remaining product ids need to be created 
+        await Promise.all(updatedExcludedProductIds.map(async (productId) => {
+            const data = excludedProducts.find(product => product.productId === productId) as ExcludedProduct
+            await db.excludedProduct.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
         }))
     }))
     
