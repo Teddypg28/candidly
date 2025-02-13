@@ -1,6 +1,6 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 import { ReviewRequestEmailData } from '~/types/types';
-import generateEmailMarkup from './email/generateEmailMarkup';
+import generateEmailMarkup from './generateEmailMarkup';
 
 export default async function sendEmail(emailBody: string, emailData: ReviewRequestEmailData, toAddress: string, fromAddress: string) {
 

@@ -230,7 +230,6 @@ export default function EmailTemplate() {
 
     const sendTestEmail = () => { 
         const formData = new FormData()
-        formData.append('action', 'testEmail')
         formData.append('emailBody', emailBody)
         formData.append('emailData', JSON.stringify(emailData))
         submit(formData, {action: '/api/reviewRequestEmail/test/send', method: 'POST', encType: 'multipart/form-data', navigate: false})
