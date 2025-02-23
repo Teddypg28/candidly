@@ -46,6 +46,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
     const maxReward = await fetchMaxReward(session.shop)
 
     const emailData: ReviewRequestEmailData = {
+        authToken: reviewRequest.authToken,
         reviewRequestId: reviewRequest.id,
         bannerBgColor: storeEmailSettings.bannerBgColor,
         logo: storeEmailSettings.logo,
@@ -54,4 +55,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
         firstName,
         maxReward
     }
+
+    await sendEmail(emailBody, emailData, "mrgiftr@gmail.com", "teddypg02@gmail.com")
+
 }

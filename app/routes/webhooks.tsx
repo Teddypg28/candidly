@@ -49,9 +49,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   
         if (storeSettings) {
   
-          const daysAfterOrder = storeSettings.firstReviewRequest
+          const daysAfterFulfillment = storeSettings.firstReviewRequest
           const nextRequestDate = new Date(payload.created_at)
-          nextRequestDate.setDate(nextRequestDate.getDate() + daysAfterOrder)
+          nextRequestDate.setDate(nextRequestDate.getDate() + daysAfterFulfillment)
 
           await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate}})
   

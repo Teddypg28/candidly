@@ -263,6 +263,7 @@ export interface AppSettings {
 }
 
 export interface ReviewRequestEmailData {
+    authToken?: string | null,
     reviewRequestId?: number,
     store: string
     bannerBgColor: string, 
