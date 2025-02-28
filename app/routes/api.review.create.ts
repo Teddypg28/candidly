@@ -4,83 +4,85 @@ import uploadMedia from "~/helpers/uploadMedia"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
-        const formData = await request.formData()
 
-        const authToken = formData.get('authToken') as 'string' | undefined
-        const reviewRequestId = formData.get('reviewRequestId') as 'string' | undefined
-        const store = formData.get('store') as 'string' | undefined
-        const productId = formData.get('productId') as 'string' | undefined
+        return true
+        // const formData = await request.formData()
 
-        // make sure the request includes all of the necessary data to submit the review
-        if (!store || !reviewRequestId || !authToken || !productId) {
-            return new Response(JSON.stringify({status: 'missing required data'}), {status: 401})
-        }
+        // const authToken = formData.get('authToken') as 'string' | undefined
+        // const reviewRequestId = formData.get('reviewRequestId') as 'string' | undefined
+        // const store = formData.get('store') as 'string' | undefined
+        // const productId = formData.get('productId') as 'string' | undefined
 
-        // validate review request
-        const reviewRequestExists = await db.reviewRequest.findFirst({where: {authToken: {equals: authToken}, id: {equals: reviewRequestId}, store: {equals: store}}})
-        if (!reviewRequestExists) {
-            return new Response(JSON.stringify({status: 'unauthorized to submit review'}), {status: 401})
-        }
+        // // make sure the request includes all of the necessary data to submit the review
+        // if (!store || !reviewRequestId || !authToken || !productId) {
+        //     return new Response(JSON.stringify({status: 'missing required data'}), {status: 401})
+        // }
 
-        // make sure only 1 review is submitted per product
-        const reviewExists = await db.productReview.findFirst({where: {reviewRequestId: {equals: reviewRequestId}, productId: {equals: productId}}})
-        if (reviewExists) {
-            return new Response(JSON.stringify({status: 'review has already been submitted'}), {status: 401})
-        }
+        // // validate review request
+        // const reviewRequestExists = await db.reviewRequest.findFirst({where: {authToken: {equals: authToken}, id: {equals: reviewRequestId}, store: {equals: store}}})
+        // if (!reviewRequestExists) {
+        //     return new Response(JSON.stringify({status: 'unauthorized to submit review'}), {status: 401})
+        // }
 
-        // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
-        const uploadedMedia = formData.getAll('uploadedMedia') as File[]
-        formData.delete('uploadedMedia')
+        // // make sure only 1 review is submitted per product
+        // const reviewExists = await db.productReview.findFirst({where: {reviewRequestId: {equals: reviewRequestId}, productId: {equals: productId}}})
+        // if (reviewExists) {
+        //     return new Response(JSON.stringify({status: 'review has already been submitted'}), {status: 401})
+        // }
 
-        // convert form data to regular javascript object
-        const data: any = Object.fromEntries(formData)
+        // // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
+        // const uploadedMedia = formData.getAll('uploadedMedia') as File[]
+        // formData.delete('uploadedMedia')
 
-        // remove authToken
-        delete data['authToken']
+        // // convert form data to regular javascript object
+        // const data: any = Object.fromEntries(formData)
 
-        // isolate customQuestionAnswers
-        const selectedAnswerChoices = JSON.parse(data.selectedAnswerChoices)
+        // // remove authToken
+        // delete data['authToken']
 
-        // remove it from main data object, so that review can be created
-        delete data['selectedAnswerChoices']
+        // // isolate customQuestionAnswers
+        // const selectedAnswerChoices = JSON.parse(data.selectedAnswerChoices)
 
-        // fetch store settings to check auto publishing rules
-        const storeSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
-        const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
-        const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: '', date: new Date(), isPublished}})
+        // // remove it from main data object, so that review can be created
+        // delete data['selectedAnswerChoices']
 
-        // grab all of the ids connected to the selected answer choices
-        const answerChoiceIds: string[] = []
-        Object.keys(selectedAnswerChoices).forEach(questionIdKey => {
-            if (typeof selectedAnswerChoices[questionIdKey] === "string") {
-                answerChoiceIds.push(selectedAnswerChoices[questionIdKey])
-            } else {
-                selectedAnswerChoices[questionIdKey].forEach((answerChoice: {id: string, value: string}) => {
-                    answerChoiceIds.push(answerChoice.id)
-                })
-            }
-        })
+        // // fetch store settings to check auto publishing rules
+        // const storeSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
+        // const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
+        // const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: '', date: new Date(), isPublished}})
+
+        // // grab all of the ids connected to the selected answer choices
+        // const answerChoiceIds: string[] = []
+        // Object.keys(selectedAnswerChoices).forEach(questionIdKey => {
+        //     if (typeof selectedAnswerChoices[questionIdKey] === "string") {
+        //         answerChoiceIds.push(selectedAnswerChoices[questionIdKey])
+        //     } else {
+        //         selectedAnswerChoices[questionIdKey].forEach((answerChoice: {id: string, value: string}) => {
+        //             answerChoiceIds.push(answerChoice.id)
+        //         })
+        //     }
+        // })
                 
-        // upload media images
-        if (uploadedMedia.length > 0) {
-            await uploadMedia(uploadedMedia, newReview.id)
-        }
+        // // upload media images
+        // if (uploadedMedia.length > 0) {
+        //     await uploadMedia(uploadedMedia, newReview.id)
+        // }
 
-        // loop through ids and create answer choice snapshots and link them to review
-        await Promise.all(answerChoiceIds.map(async (id) => {
-            const answerChoiceData = await db.radioAnswerChoice.findFirst({where: {id}})
-            if (answerChoiceData) {
-                const data = {
-                    display: answerChoiceData.display, 
-                    label: answerChoiceData.label,
-                    value: answerChoiceData.value,
-                    questionId: answerChoiceData.questionId,
-                    reviewId: newReview.id
-                }
-                return await db.answerChoiceSnapshot.create({data})
-            }
-        }))
-        return json({status: 'success'}, {status: 200})
+        // // loop through ids and create answer choice snapshots and link them to review
+        // await Promise.all(answerChoiceIds.map(async (id) => {
+        //     const answerChoiceData = await db.radioAnswerChoice.findFirst({where: {id}})
+        //     if (answerChoiceData) {
+        //         const data = {
+        //             display: answerChoiceData.display, 
+        //             label: answerChoiceData.label,
+        //             value: answerChoiceData.value,
+        //             questionId: answerChoiceData.questionId,
+        //             reviewId: newReview.id
+        //         }
+        //         return await db.answerChoiceSnapshot.create({data})
+        //     }
+        // }))
+        // return json({status: 'success'}, {status: 200})
     } 
         
      catch (error) {

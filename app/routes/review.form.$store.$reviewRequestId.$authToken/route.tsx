@@ -12,6 +12,7 @@ import { FaArrowRight } from "react-icons/fa"
 import { FaArrowLeft } from "react-icons/fa"
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
 import calculateCurrentRewardTier from "~/helpers/calculateCurrentRewardTier";
+import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
@@ -62,6 +63,9 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 export default function ReviewForm() {
 
     const data = useLoaderData<typeof loader>()
+
+    const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(false)
+    const [productsToReview, setProductsToReview] = useState(data.productDataObjects)
 
     // state to track customer input
     const [currentProductIndex, setCurrentProductIndex] = useState(0)
@@ -135,7 +139,7 @@ export default function ReviewForm() {
     }, [data.formSettings.primaryFormColor])
 
     useEffect(() => {
-        
+
         try {
             const fontAwesomeScriptTag = document.createElement('link')
             fontAwesomeScriptTag.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -297,7 +301,7 @@ export default function ReviewForm() {
         setUserInputState(initialUserReviewFormInputState)
         setErrors({})
 
-    }, [currentProductIndex])
+    }, [productsToReview])
 
     // changes current product being reviewed
     const changeProduct = (direction: 'forward' | 'back') => {
@@ -315,7 +319,7 @@ export default function ReviewForm() {
             if (key !== "selectedAnswerChoices" && userInputState[key as keyof typeof userInputState] === "") {
                 errors[key] = true
             } else {
-                const requiredQuestions = data.questions.filter(question => question.productIds.includes(data.productDataObjects[currentProductIndex].id) || question.productConfiguration[0] === 'all' && question.isRequired[0] === "true")
+                const requiredQuestions = data.questions.filter(question => question.productIds.includes(productsToReview[currentProductIndex].id) || question.productConfiguration[0] === 'all' && question.isRequired[0] === "true")
                 const requiredQuestionIds = requiredQuestions.map(question => question.id)
                 requiredQuestionIds.forEach(questionId => {
                     if (!userInputState["selectedAnswerChoices"][questionId] || userInputState["selectedAnswerChoices"][questionId].length === 0) {
@@ -347,19 +351,28 @@ export default function ReviewForm() {
             reviewFormData.append('authToken', data.reviewData.authToken)
             reviewFormData.append('store', data.reviewData.store)
             reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
-            reviewFormData.append('productId', data.productDataObjects[currentProductIndex].id)
+            reviewFormData.append('productId', productsToReview[currentProductIndex].id)
 
             uploadedMedia.forEach(file => reviewFormData.append("media", file))
 
             const res = await fetch('/api/review/create', {method: 'POST', body: reviewFormData})
             if (res.status !== 200) {
                 setErrors({'submission': true})
+            } else {
+                setReviewSuccessfullySubmitted(true)
+                const productsLeftToReview = productsToReview.filter(product => product.id !== productsToReview[currentProductIndex].id)
+                if (productsLeftToReview.length > 0) {
+                    setTimeout(() => {
+                        setProductsToReview(productsLeftToReview)
+                        setReviewSuccessfullySubmitted(false)
+                    }, 1500)
+                }
             }
         }
     }
 
     const CustomQuestionMarkup  = data.questions.map((question, index) => {
-        if (question.productConfiguration[0] === "all" || question.productIds.includes(data.productDataObjects[currentProductIndex]?.id)) {
+        if (question.productConfiguration[0] === "all" || question.productIds.includes(productsToReview[currentProductIndex]?.id)) {
             if (question.radioAllowMultipleAnswers[0] === 'true') {
                 const Markup = (
                     <div key={index} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
@@ -410,152 +423,154 @@ export default function ReviewForm() {
     })
     
     return (
-
-        <div className={styles.reviewForm}>
-            <div className={styles.reviewFormHeadingContainer}>
-                <h1 style={{margin: 0, padding: 0, fontSize: '26px'}}>{data.formSettings.heading}</h1>
-                <p style={{margin: 0, padding: 0, marginTop: '10px'}}>{data.formSettings.subheading}</p>
-            </div>
-            <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px'}}>
-                <div style={{border: '1px solid lightgray', borderRadius: '10px', width: '75px', height: '75px', overflow: 'hidden'}}>
-                    <img src={data.productDataObjects[currentProductIndex]?.image || undefined} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+        <div style={{width: '100%', height: '100%'}}>
+            {reviewSuccessfullySubmited && <ReviewSubmittedMessage />}
+            <div className={styles.reviewForm}>
+                <div className={styles.reviewFormHeadingContainer}>
+                    <h1 style={{margin: 0, padding: 0, fontSize: '26px'}}>{data.formSettings.heading}</h1>
+                    <p style={{margin: 0, padding: 0, marginTop: '10px'}}>{data.formSettings.subheading}</p>
                 </div>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                    <p style={{padding: 0, margin: 0}}>{data.productDataObjects[currentProductIndex]?.title || ''}</p>
-                    <div className={styles.reviewFormStarsContainer} style={{padding: 0, margin: 0}}>
-                        <svg id="reviewFormStar" data-rating="1" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                            <path id="star1" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>
-                        <svg id="reviewFormStar" data-rating="2" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                            <path id="star2" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>
-                        <svg id="reviewFormStar" data-rating="3" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                            <path id="star3" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>
-                        <svg id="reviewFormStar" data-rating="4" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                            <path id="star4" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>
-                        <svg id="reviewFormStar" data-rating="5" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                            <path id="star5" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>
+                <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px'}}>
+                    <div style={{border: '1px solid lightgray', borderRadius: '10px', width: '75px', height: '75px', overflow: 'hidden'}}>
+                        <img src={productsToReview[currentProductIndex]?.image || undefined} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                     </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                        <p style={{padding: 0, margin: 0}}>{productsToReview[currentProductIndex]?.title || ''}</p>
+                        <div className={styles.reviewFormStarsContainer} style={{padding: 0, margin: 0}}>
+                            <svg id="reviewFormStar" data-rating="1" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <path id="star1" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                            </svg>
+                            <svg id="reviewFormStar" data-rating="2" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <path id="star2" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                            </svg>
+                            <svg id="reviewFormStar" data-rating="3" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <path id="star3" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                            </svg>
+                            <svg id="reviewFormStar" data-rating="4" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <path id="star4" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                            </svg>
+                            <svg id="reviewFormStar" data-rating="5" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <path id="star5" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    {
+                        productsToReview.length > 1 &&
+                        <div style={{display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto'}}>
+                            <FaArrowLeft 
+                            onClick={currentProductIndex === 0 ? undefined : () => changeProduct('back')}
+                            color={currentProductIndex === 0 ? 'lightgray' : 'black'} 
+                            cursor={currentProductIndex === 0 ? 'disabled' : 'pointer'}
+                            />
+                            <p style={{fontSize: '15px'}}>Change Product</p>
+                            <FaArrowRight 
+                            onClick={currentProductIndex === productsToReview.length - 1 ? undefined : () => changeProduct('forward')}
+                            color={currentProductIndex === productsToReview.length - 1 ? 'lightgray' : 'black'} 
+                            cursor={currentProductIndex === productsToReview.length - 1 ? 'disabled' : 'pointer'}
+                            />
+                        </div>
+                    }
                 </div>
-                {
-                    data.productDataObjects.length > 1 &&
-                    <div style={{display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto'}}>
-                        <FaArrowLeft 
-                        onClick={currentProductIndex === 0 ? undefined : () => changeProduct('back')}
-                        color={currentProductIndex === 0 ? 'lightgray' : 'black'} 
-                        cursor={currentProductIndex === 0 ? 'disabled' : 'pointer'}
-                        />
-                        <p style={{fontSize: '15px'}}>Product {currentProductIndex+1}</p>
-                        <FaArrowRight 
-                        onClick={currentProductIndex === data.productDataObjects.length - 1 ? undefined : () => changeProduct('forward')}
-                        color={currentProductIndex === data.productDataObjects.length - 1 ? 'lightgray' : 'black'} 
-                        cursor={currentProductIndex === data.productDataObjects.length - 1 ? 'disabled' : 'pointer'}
-                        />
+                <div className={styles.reviewFieldWrapper}>
+                    <label> Give it a Headline * </label>
+                    <div style={{position: 'relative'}}>
+                        <input value={userInputState.headline} onChange={(e) => setUserInputState({...userInputState, headline: e.target.value})} name='title' placeholder={data.formSettings.headlinePlaceholder} />
+                        {!noRewardsConfigured && tierData.headline.tier === 3 && 
+                        <div className={styles.characterCountContainer} style={{backgroundColor: tierData.headline.color, padding: '5px 10px'}}>
+                            <span>Perfect!</span>
+                        </div>}
                     </div>
+                    {errors['headline'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Headline is required</p>}
+                </div>
+                {!noRewardsConfigured &&
+                <div style={{marginBottom: '10px'}}>
+                    <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
+                        <div className={styles.progressBar} style={{backgroundColor: tierData.headline.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(tierData.headline.wordlist.length / 10 * 100)}%`}}> </div>
+                    </div>
+                    <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.headline.tier == 3 ? tierData.headline.color : 'black'}}>{tierData.headline.tier === 3 ? "You wrote a perfect headline!" : `You are ${Math.round(tierData.headline.wordlist.length / 10 * 100)}% of the way to writing the perfect headline`}</p>
+                </div>
                 }
-            </div>
-            <div className={styles.reviewFieldWrapper}>
-                <label> Give it a Headline * </label>
-                <div style={{position: 'relative'}}>
-                    <input value={userInputState.headline} onChange={(e) => setUserInputState({...userInputState, headline: e.target.value})} name='title' placeholder={data.formSettings.headlinePlaceholder} />
-                    {!noRewardsConfigured && tierData.headline.tier === 3 && 
-                    <div className={styles.characterCountContainer} style={{backgroundColor: tierData.headline.color, padding: '5px 10px'}}>
-                        <span>Perfect!</span>
-                    </div>}
+                <div className={styles.reviewFieldWrapper}>
+                    <label>Review *</label>
+                    <div style={{position: 'relative'}}>
+                        <textarea value={userInputState.body} onChange={(e) => setUserInputState({...userInputState, body: e.target.value})} name='body' className={styles.reviewTextArea} placeholder={data.formSettings.reviewPlaceholder} />
+                        {!noRewardsConfigured && tierData.body.tier === 3 && 
+                        <div className={styles.characterCountContainer} style={{backgroundColor: tierData.body.color, padding: '5px 10px'}}>
+                            <span>Perfect!</span>
+                        </div>}
+                    </div>
+                    {errors['body'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Review is required</p>}
                 </div>
-                {errors['headline'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Headline is required</p>}
-            </div>
-            {!noRewardsConfigured &&
-            <div style={{marginBottom: '10px'}}>
-                <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                    <div className={styles.progressBar} style={{backgroundColor: tierData.headline.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(tierData.headline.wordlist.length / 10 * 100)}%`}}> </div>
-                </div>
-                <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.headline.tier == 3 ? tierData.headline.color : 'black'}}>{tierData.headline.tier === 3 ? "You wrote a perfect headline!" : `You are ${Math.round(tierData.headline.wordlist.length / 10 * 100)}% of the way to writing the perfect headline`}</p>
-            </div>
-            }
-            <div className={styles.reviewFieldWrapper}>
-                <label>Review *</label>
-                <div style={{position: 'relative'}}>
-                    <textarea value={userInputState.body} onChange={(e) => setUserInputState({...userInputState, body: e.target.value})} name='body' className={styles.reviewTextArea} placeholder={data.formSettings.reviewPlaceholder} />
-                    {!noRewardsConfigured && tierData.body.tier === 3 && 
-                    <div className={styles.characterCountContainer} style={{backgroundColor: tierData.body.color, padding: '5px 10px'}}>
-                        <span>Perfect!</span>
-                    </div>}
-                </div>
-                {errors['body'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Review is required</p>}
-            </div>
-            {!noRewardsConfigured &&
-            <div>
-                <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                    <div className={styles.progressBar} style={{backgroundColor: tierData.body.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(tierData.body.wordList.length / 40 * 100)}%`}}> </div>
-                </div>
-                <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.body.tier == 3 ? tierData.body.color : 'black'}}>{tierData.body.tier !== 3 ? `You are ${Math.round(tierData.body.wordList.length / 40 * 100)}% of the way to writing the perfect body` : "You wrote the perfect body!"}</p>
-            </div>
-            }
-            {CustomQuestionMarkup}
-            <div className={styles.reviewNameEmailWrapper}>
-                <div className={styles.reviewNameEmailContainer}>
-                    <label>Your First Name *</label>
-                    <input type='name' name='name' value={userInputState.firstName} onChange={(e) => setUserInputState({...userInputState, firstName: e.target.value})} />
-                    {errors['firstName'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>First name is required</p>}
-                </div>
-                <div className={styles.reviewNameEmailContainer}>
-                    <label>Your Email Address *</label>
-                    <input type='email' name='email' value={userInputState.email} onChange={(e) => setUserInputState({...userInputState, email: e.target.value})} />
-                    {errors['email'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Email is required</p>}
-                </div>
-            </div>
-            <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
-                <label className={styles.uploadMediaLabel}>
-                    <p>Upload Media</p>
-                    <svg viewBox="0 0 1024 1024" className={styles.uploadIcon} version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z" fill="#000000"></path><path d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z" fill="#39393A"></path><path d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z" fill="#000000"></path></g></svg>            
-                </label>
-                <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
-                <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
-                {!noRewardsConfigured && tierData.media.tier === 3 && 
-                <div className={styles.characterCountContainer} style={{backgroundColor: tierData.media.color, bottom: '5px', padding: '5px 10px'}}>
-                    <span>Perfect!</span>
-                </div>}
-            </div>
-            {uploadMediaError && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>{uploadMediaError}</p>}
-            {!noRewardsConfigured && 
-            <>
+                {!noRewardsConfigured &&
                 <div>
                     <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                        <div className={styles.progressBar} style={{backgroundColor: tierData.media.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(uploadedMediaRef.current.length / 2 * 100)}%`}}> </div>
+                        <div className={styles.progressBar} style={{backgroundColor: tierData.body.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(tierData.body.wordList.length / 40 * 100)}%`}}> </div>
                     </div>
-                    <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.media.tier == 3 ? tierData.media.color : 'black'}}>{tierData.media.tier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</p>
+                    <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.body.tier == 3 ? tierData.body.color : 'black'}}>{tierData.body.tier !== 3 ? `You are ${Math.round(tierData.body.wordList.length / 40 * 100)}% of the way to writing the perfect body` : "You wrote the perfect body!"}</p>
                 </div>
-                <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
-                <div>
-                    <p style={{fontWeight: 'bold', margin: 0}}>Reward Tiers</p>
-                    <p style={{margin: 0, marginTop: '3px', fontSize: '14px'}}>The better your review, the better your reward</p>
-                </div>
-                <div>
-                    <div className={styles.rewardTiersContainer}>
-                        <div className={styles.rewardTierOne} style={{backgroundColor: tierData.score === 1 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 1 ? 'none' : "blur(1px)"}}>
-                            <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[0]}</p>
-                        </div>
-                        <div className={styles.rewardTierTwo} style={{backgroundColor: tierData.score === 2 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 2 ? 'none' : "blur(1px)"}}> 
-                            <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[1]}</p>
-                        </div>
-                        <div className={styles.rewardTierThree} style={{backgroundColor: tierData.score === 3 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 3 ? 'none' : "blur(1px)"}}>
-                            <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[2]}</p>
-                        </div>
+                }
+                {CustomQuestionMarkup}
+                <div className={styles.reviewNameEmailWrapper}>
+                    <div className={styles.reviewNameEmailContainer}>
+                        <label>Your First Name *</label>
+                        <input type='name' name='name' value={userInputState.firstName} onChange={(e) => setUserInputState({...userInputState, firstName: e.target.value})} />
+                        {errors['firstName'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>First name is required</p>}
                     </div>
-                </div> 
-            </>
-            }
-            <button 
-            onClick={submitReview} 
-            className={styles.submitReviewBtn} 
-            style={{backgroundColor: data.formSettings.primaryFormColor}}>
-                Submit Review
-            </button>
-            {errors['submission'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px', textAlign: 'center'}}>Error submitting review</p>}
+                    <div className={styles.reviewNameEmailContainer}>
+                        <label>Your Email Address *</label>
+                        <input type='email' name='email' value={userInputState.email} onChange={(e) => setUserInputState({...userInputState, email: e.target.value})} />
+                        {errors['email'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Email is required</p>}
+                    </div>
+                </div>
+                <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
+                    <label className={styles.uploadMediaLabel}>
+                        <p>Upload Media</p>
+                        <svg viewBox="0 0 1024 1024" className={styles.uploadIcon} version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z" fill="#000000"></path><path d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z" fill="#39393A"></path><path d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z" fill="#000000"></path></g></svg>            
+                    </label>
+                    <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
+                    <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
+                    {!noRewardsConfigured && tierData.media.tier === 3 && 
+                    <div className={styles.characterCountContainer} style={{backgroundColor: tierData.media.color, bottom: '5px', padding: '5px 10px'}}>
+                        <span>Perfect!</span>
+                    </div>}
+                </div>
+                {uploadMediaError && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>{uploadMediaError}</p>}
+                {!noRewardsConfigured && 
+                <>
+                    <div>
+                        <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
+                            <div className={styles.progressBar} style={{backgroundColor: tierData.media.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(uploadedMediaRef.current.length / 2 * 100)}%`}}> </div>
+                        </div>
+                        <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.media.tier == 3 ? tierData.media.color : 'black'}}>{tierData.media.tier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</p>
+                    </div>
+                    <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
+                    <div>
+                        <p style={{fontWeight: 'bold', margin: 0}}>Reward Tiers</p>
+                        <p style={{margin: 0, marginTop: '3px', fontSize: '14px'}}>The better your review, the better your reward</p>
+                    </div>
+                    <div>
+                        <div className={styles.rewardTiersContainer}>
+                            <div className={styles.rewardTierOne} style={{backgroundColor: tierData.score === 1 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 1 ? 'none' : "blur(1px)"}}>
+                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[0]}</p>
+                            </div>
+                            <div className={styles.rewardTierTwo} style={{backgroundColor: tierData.score === 2 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 2 ? 'none' : "blur(1px)"}}> 
+                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[1]}</p>
+                            </div>
+                            <div className={styles.rewardTierThree} style={{backgroundColor: tierData.score === 3 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 3 ? 'none' : "blur(1px)"}}>
+                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[2]}</p>
+                            </div>
+                        </div>
+                    </div> 
+                </>
+                }
+                <button 
+                onClick={submitReview} 
+                className={styles.submitReviewBtn} 
+                style={{backgroundColor: data.formSettings.primaryFormColor}}>
+                    Submit Review
+                </button>
+                {errors['submission'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px', textAlign: 'center'}}>Error submitting review</p>}
+            </div>
         </div>
     )
 }
