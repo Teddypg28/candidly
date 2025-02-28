@@ -34,9 +34,9 @@ model Session {
 
 model AnswerChoiceSnapshot {
   id           Int                @id @default(autoincrement())
-  reviewId     Int
+  reviewId     String
   review       ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  questionId   Int
+  questionId   String
   question     ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
   label        String
   value        String
@@ -45,25 +45,25 @@ model AnswerChoiceSnapshot {
 }
 
 model RadioAnswerChoice {
-  id         Int                @id @default(autoincrement())
+  id         String             @id @default(uuid())
   value      String
   label      String
   display    Boolean
-  questionId Int
+  questionId String
   question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model TextAnswer {
-  id         Int                @id @default(autoincrement())
+  id         String             @id @default(uuid())
   value      String
-  reviewId   Int
+  reviewId   String
   review     ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  questionId Int
+  questionId String
   question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model ProductReview {
-  id                     Int                    @id @default(autoincrement())
+  id                     String                 @id @default(uuid())
   store                  String
   productId              String
   title                  String
@@ -74,20 +74,21 @@ model ProductReview {
   media                  ProductReviewMedia[]
   date                   DateTime
   isPublished            Boolean
+  reviewRequestId        String
   radioQuestionResponses AnswerChoiceSnapshot[]
   textQuestionResponses  TextAnswer[]
 }
 
 model ProductReviewMedia {
-  id       Int           @id @default(autoincrement())
+  id       String        @id @default(uuid())
   url      String
   name     String
-  reviewId Int
+  reviewId String
   review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 }
 
 model ReviewFormQuestion {
-  id                        Int                    @id @default(autoincrement())
+  id                        String                 @id @default(uuid())
   store                     String
   productConfiguration      String[]
   answerType                String[]
@@ -104,7 +105,7 @@ model ReviewFormQuestion {
 }
 
 model SavedReviewsTableViews {
-  id                 Int      @id @default(autoincrement())
+  id                 String   @id @default(uuid())
   store              String
   name               String
   queryValue         String
@@ -115,7 +116,7 @@ model SavedReviewsTableViews {
 }
 
 model SavedCustomQuestionTableView {
-  id                           Int      @id @default(autoincrement())
+  id                           String   @id @default(uuid())
   store                        String
   name                         String
   queryValue                   String
@@ -124,7 +125,7 @@ model SavedCustomQuestionTableView {
 }
 
 model SavedReviewRequestTableView {
-  id                          Int      @id @default(autoincrement())
+  id                          String   @id @default(uuid())
   store                       String
   name                        String
   queryValue                  String
@@ -135,7 +136,7 @@ model SavedReviewRequestTableView {
 }
 
 model AppSettings {
-  id                  Int      @id @default(autoincrement())
+  id                  String   @id @default(uuid())
   store               String
   autoPublishReviews  String[]
   minReviewRating     Int
@@ -149,12 +150,12 @@ model ReviewRequestEmailLogo {
   id                           Int                        @id @default(autoincrement())
   url                          String
   name                         String
-  reviewRequestEmailSettingsId Int                        @unique
+  reviewRequestEmailSettingsId String                     @unique
   reviewRequestEmailSettings   ReviewRequestEmailSettings @relation(fields: [reviewRequestEmailSettingsId], references: [id], onDelete: Cascade)
 }
 
 model ReviewRequestEmailSettings {
-  id                Int                     @id @default(autoincrement())
+  id                String                  @id @default(uuid())
   store             String
   bannerBgColor     String
   logo              ReviewRequestEmailLogo?
@@ -165,7 +166,7 @@ model ReviewRequestEmailSettings {
 }
 
 model ReviewFormSettings {
-  id                  Int    @id @default(autoincrement())
+  id                  String @id @default(uuid())
   store               String
   heading             String
   subheading          String
@@ -175,7 +176,7 @@ model ReviewFormSettings {
 }
 
 model ReviewRequest {
-  id                Int       @id @default(autoincrement())
+  id                String    @id @default(uuid())
   store             String
   createdAt         DateTime
   orderName         String
@@ -190,20 +191,19 @@ model ReviewRequest {
 }
 
 model ExcludedProduct {
-  id              Int           @id @default(autoincrement())
+  id              String        @id @default(uuid())
   productId       String
-  variantIds      String[]
-  rewardSettingId Int
+  rewardSettingId String
   reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
 }
 
 model Reward {
-  id    Int    @id @default(autoincrement())
+  id    String @id @default(uuid())
   store String
 
-  subparId  Int @unique
-  goodId    Int @unique
-  perfectId Int @unique
+  subparId  String @unique
+  goodId    String @unique
+  perfectId String @unique
 
   subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id])
   good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id])
@@ -211,7 +211,7 @@ model Reward {
 }
 
 model RewardSetting {
-  id                       Int               @id @default(autoincrement())
+  id                       String            @id @default(uuid())
   selectedRewardType       String
   fixedAmount              Int
   percentageAmount         Int
@@ -230,7 +230,7 @@ model RewardSetting {
 }
 
 model CurrentOrdersStatus {
-  id      Int     @id @default(autoincrement())
+  id      String  @id @default(uuid())
   store   String
   handled Boolean @default(false)
 }

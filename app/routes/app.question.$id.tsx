@@ -24,7 +24,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         const data = await request.json()
 
         if (data.action === 'delete') {
-            await db.reviewFormQuestion.delete({where: {id: Number(params.id), AND: {store: {equals: session.shop}}}})
+            await db.reviewFormQuestion.delete({where: {id: params.id, AND: {store: {equals: session.shop}}}})
             return redirect('/app/custom-questions')
         }
 
@@ -36,7 +36,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         }
 
         // update question logic
-        const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: Number(params.id)}}, include: {radioAnswerChoices: true}})
+        const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: params.id}}, include: {radioAnswerChoices: true}})
         
         if (question) {
             const currentAnswerChoices = data.radioAnswerChoices
@@ -48,11 +48,11 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             }
 
             delete data['radioAnswerChoices']
-            const updatedQuestion = await db.reviewFormQuestion.update({where: {id: Number(params.id)}, data: {...data, store: session.shop}})
-            const currentAnswerChoiceSnapshots = await db.answerChoiceSnapshot.findMany({where: {questionId: {equals: Number(params.id)}}})
+            const updatedQuestion = await db.reviewFormQuestion.update({where: {id: params.id}, data: {...data, store: session.shop}})
+            const currentAnswerChoiceSnapshots = await db.answerChoiceSnapshot.findMany({where: {questionId: {equals: params.id}}})
             if (currentAnswerChoiceSnapshots[0].display.toString() !== updatedQuestion.radioDisplayAnswer[0]) {
                 const display = updatedQuestion.radioDisplayAnswer[0] === 'true' ? true : false
-                await db.answerChoiceSnapshot.updateMany({where: {questionId: {equals: Number(params.id)}}, data: {display}})
+                await db.answerChoiceSnapshot.updateMany({where: {questionId: {equals: params.id}}, data: {display}})
             }
         }
         // const result = await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})
@@ -71,7 +71,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         if (params.id === 'new') {
             return json({initialQuestionState, initialProductDataState: [], initialCollectionDataState: []})
         } else {
-            const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: parseInt(params.id as any)}}, include: {radioAnswerChoices: true}, omit: {id: true}})
+            const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: params.id}}, include: {radioAnswerChoices: true}, omit: {id: true}})
             if (result !== null) {
                 const productData = await fetchProductInfo(admin, result.productIds)
                 const collectionData = await fetchCollectionInfo(admin, result.collectionIds)

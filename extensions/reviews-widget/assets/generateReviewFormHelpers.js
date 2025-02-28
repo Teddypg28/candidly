@@ -118,7 +118,7 @@ const insertCustomQuestion = (question) => {
     let questionMarkup
     if (question.answerType[0] === 'text') {
         questionMarkup = `
-                <div class='reviewFieldWrapper' style="width: 100%">
+            <div class='reviewFieldWrapper' style="width: 100%">
                 <label for='customQuestion-${question.id}'>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
                 <textarea class='reviewFormInput reviewFormTextArea' data-name='customQuestion-${question.id}' id='customQuestion-${question.id}' placeholder="Enter your response here"></textarea>
                 <p class='reviewFormValidationError hidden' id='customQuestion-${question.id}Error'>This field is required</p>

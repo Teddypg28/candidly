@@ -47,11 +47,11 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     initialEmailBody: (
         `Hey {{first_name}},
     
-        We hope you’re absolutely loving your {{product_name}}!
+        We hope you’re absolutely loving your {{productName}}!
         
         We’d be so grateful if you could take a moment to share your experience. Your feedback not only helps us improve but also guides others in making confident choices.
         
-        As a special thank-you, we’re offering a reward of up to [max reward] when you offer a quick rating. It’ll only take a minute of your time—and it would mean the world to us!
+        As a special thank-you, we’re offering a reward of up to {{maxReward}} when you offer a quick rating. It’ll only take a minute of your time—and it would mean the world to us!
 
         {{stars}}
         Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
@@ -60,7 +60,7 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     ),
     followUpEmailBody: (
         `
-            We hope you’re doing well! We wanted to follow up on our previous email about your [product name] experience. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
+            We hope you’re doing well! We wanted to follow up on our previous email about your {{productName}} experience. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
 
             Remember: Completing the quick review form takes just a minute, and as a thank-you, you’ll be eligible for a reward of up to {{maxReward}}!
 
@@ -113,7 +113,7 @@ export interface RadioAnswerChoice {
 }
 
 export interface ReviewFormQuestion {
-    id?: number
+    id?: string
     answerType: string[]
     productConfiguration: string[]
     productIds: string[]
@@ -252,7 +252,7 @@ export interface ProductReview {
 }
 
 export interface AppSettings {
-    id: number
+    id: string
     store: string
     autoPublishReviews: string[]
     minReviewRating: number 
@@ -263,18 +263,23 @@ export interface AppSettings {
 }
 
 export interface ReviewRequestEmailData {
-    authToken?: string | null,
-    reviewRequestId?: number,
+    authToken?: string | null
+    reviewRequestId?: string
     store: string
-    bannerBgColor: string, 
+    bannerBgColor: string
     logo: {
-        name: string,
-        url: string,
+        name: string
+        url: string
         file?: File
     } | null,
-    firstName?: string,
-    companyName?: string,
+    firstName?: string
+    companyName?: string
     maxReward?: string
+    lineItems?: {
+        productId: string
+        productName: string
+        productImage: string
+    }[]
 }
 
 export interface ReviewRequestEmailSettings {
@@ -305,8 +310,7 @@ export interface SettingsPageProps {
 }
 
 export interface ExcludedProduct {
-    productId: string,
-    variantIds: string[]
+    productId: string
 }
 
 export interface Reward {
@@ -338,11 +342,22 @@ export interface EmailOrderData {
 export interface SelectedProduct_Reward {
     id: string
     title: string
-    totalVariants: number
     images: {
         originalSrc: string
     }[]
-    variants: {
-        title: string
-    }[]
+}
+
+export const initialUserReviewFormInputState: UserReviewFormInputState = {
+    headline: '',
+    body: '',
+    selectedAnswerChoices: {}
+}
+
+export interface UserReviewFormInputState {
+    firstName?: string
+    email?: string
+    productId?: string
+    headline: string
+    body: string
+    selectedAnswerChoices: {[key: string]: {id: string, value: string}[]}
 }

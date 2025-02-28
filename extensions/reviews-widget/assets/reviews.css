@@ -579,8 +579,8 @@ div, h1, h2, h3, h4, p, input, textarea, button {
     display: flex;
     font-size: 14px;
     font-family: inherit;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     padding: 5px 10px;
     cursor: pointer;
 }

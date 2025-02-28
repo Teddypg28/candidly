@@ -18,7 +18,7 @@ export default async function sendReviewRequestEmails() {
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: request.store}}}) as AppSettings
 
         const generateNextDate = () => {
-            // set the next review request date
+            // returns the next review request date using the second review request number of days setting
             const nextRequestDate = new Date(request.nextRequestDate as any)
             nextRequestDate.setDate(nextRequestDate.getDate() + storeSettings.secondReviewRequest)
             return nextRequestDate

@@ -2,14 +2,19 @@ import { ReviewRequestEmailData } from "~/types/types";
 
 export default function generateEmailBody(emailBody: string, data: ReviewRequestEmailData) {
 
+    let queryString = ''
+    data.lineItems?.forEach((lineItem, index) => {
+        queryString += `productId${index+1}=${lineItem.productId}&productTitle${index+1}=${lineItem.productName}&productImage${index+1}=${lineItem.productImage}${index === data.lineItems?.length && '&'}`
+    })
+
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://concluded-sa-homepage-athletes.trycloudflare.com/review/form/${data.store}/${data.reviewRequestId}` : '#'
+    const href = data.reviewRequestId ? `https://concluded-sa-homepage-athletes.trycloudflare.com/review/form/${data.store}/${data.reviewRequestId}/${data.authToken}${data.lineItems && `?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,
         companyName: data.companyName,
         productName: '',
-        maxReward: data.maxReward,
+        maxReward: data.maxReward?.toLowerCase(),
         stars: (
             `<div style="display: flex; justify-content: center; width: fit-content; gap: 5px; margin: 0px auto; padding: 0px">
                 <a href="${href}" style="font-size: 35px; text-decoration: none; pointer-events: ${data.reviewRequestId ? 'auto' : 'none'}" id="1-star">

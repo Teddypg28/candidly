@@ -1,7 +1,7 @@
 import uploadImageToS3 from "~/utils/uploadImageToS3"
 import db from '../db.server'
 
-export default async function uploadMedia(uploadedMedia: File[], reviewId: number) {
+export default async function uploadMedia(uploadedMedia: File[], reviewId: string) {
     // upload each new file to s3
     const results = await Promise.all(uploadedMedia.map(async (file: File) => {
         return await uploadImageToS3(file as File)

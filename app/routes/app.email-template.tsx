@@ -21,6 +21,7 @@ import uploadLogo from "~/utils/uploadLogo";
 
 import standardizeLineBreaks from "~/helpers/standardizeLineBreaks";
 import generateEmailBody from "~/helpers/email/generateEmailBody";
+import fetchMaxReward from "~/helpers/fetchMaxReward.server";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
@@ -110,12 +111,12 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         
         // convert each email body to consistent line break format
         standardizeLineBreaks(settings)
-        return json({settings: {...settings, companyName}, productData})
+        return json({settings: {...settings, companyName}, productData, maxReward: await fetchMaxReward(settings.store)})
     }
     const defaultSettings = await db.reviewRequestEmailSettings.create({data: {...defaultReviewRequestEmailSettings, logo: undefined, store: session.shop}, include: {logo: {omit: {id: true, reviewRequestEmailSettingsId: true}}}})
     // convert each email body to consistent line break format
     standardizeLineBreaks(defaultSettings)
-    return json({settings: {...defaultSettings, companyName}, productData: [] as ReviewRequestEmailProductData[]})
+    return json({settings: {...defaultSettings, companyName}, productData: [] as ReviewRequestEmailProductData[], maxReward: await fetchMaxReward(defaultSettings.store)})
 }
 
 export default function EmailTemplate() {
@@ -225,7 +226,8 @@ export default function EmailTemplate() {
         bannerBgColor: settings.bannerBgColor,
         logo: settings.logo,
         companyName: settings.companyName,
-        store: settings.store
+        store: settings.store,
+        maxReward: data.maxReward
     }
 
     const sendTestEmail = () => { 

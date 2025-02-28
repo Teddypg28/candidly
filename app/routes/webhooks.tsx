@@ -24,7 +24,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "ORDERS_CREATE":
 
       if (session) {
-
           const data = {
             createdAt: new Date(payload.created_at),
             orderName: payload.name,
@@ -34,9 +33,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             firstName: payload.customer.first_name,
             fulfillmentStatus: payload.fulfillment_status
           }
-  
           await db.reviewRequest.create({ data })
-            
         }
 
       break
@@ -44,19 +41,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "ORDERS_FULFILLED":
 
       if (session) {
-
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
   
         if (storeSettings) {
-  
           const daysAfterFulfillment = storeSettings.firstReviewRequest
           const nextRequestDate = new Date(payload.created_at)
           nextRequestDate.setDate(nextRequestDate.getDate() + daysAfterFulfillment)
 
           await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate}})
-  
         }
-
       }
 
       break
@@ -64,9 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "ORDERS_CANCELLED":
 
       if (session) {
-
         await db.reviewRequest.deleteMany({where: {store: {equals: session.shop}, AND: {orderId: {equals: payload.id}}}}) 
-
       }
 
       break

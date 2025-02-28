@@ -36,10 +36,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             // if product id of excluded product from db not in updated excluded product ids, delete it from db
             if (!updatedExcludedProductIds.includes(currentDbRecord.productId)) {
                 await db.excludedProduct.delete({where: {id: currentDbRecord.id}})
-            } else {
-                // if it does exist, run an update
-                const variantIds = excludedProducts.find(product => product.productId === currentDbRecord.productId)?.variantIds as string[]
-                await db.excludedProduct.update({where: {id: currentDbRecord.id}, data: {variantIds}})
             }
             updatedExcludedProductIds = updatedExcludedProductIds.filter(productId => productId !== currentDbRecord.productId)
         }))
@@ -60,9 +56,9 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
         include: 
             {
-                subpar: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}}, 
-                good: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}},
-                perfect: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}}
+                subpar: {include: {excludedProducts: {select: {productId: true}}}}, 
+                good: {include: {excludedProducts: {select: {productId: true}}}},
+                perfect: {include: {excludedProducts: {select: {productId: true}}}}
             },
         omit: {
                 subparId: true,
@@ -92,9 +88,9 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             perfect: {create: {...perfect, excludedProducts: {create: perfect.excludedProducts}}}
         },
         include: {
-            subpar: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}},
-            good: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}},
-            perfect: {include: {excludedProducts: {select: {productId: true, variantIds: true}}}}
+            subpar: {include: {excludedProducts: {select: {productId: true}}}},
+            good: {include: {excludedProducts: {select: {productId: true}}}},
+            perfect: {include: {excludedProducts: {select: {productId: true}}}}
         },
         omit: {
             subparId: true,
