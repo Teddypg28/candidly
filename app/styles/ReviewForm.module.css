@@ -222,6 +222,21 @@ body {
     display: flex;
 }
 
+.rewardTierText {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .rewardTiersContainer {
+        width: 100%;
+    }
+
+    .rewardTierText {
+        font-size: 10px;
+    }
+}
+
 .rewardTierOne {
     width: 33%;
     height: 100%;

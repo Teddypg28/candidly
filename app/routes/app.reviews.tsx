@@ -43,13 +43,13 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     if (action === 'deleteReviews') {
         return await Promise.all(data.reviewIds.map(async (id: string) => {
-            return await db.productReview.delete({where: {id: parseInt(id)}})
+            return await db.productReview.delete({where: { id }})
         }))
     }
 
     if (action === 'publishReviews') {
         const publishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
-            return await db.productReview.update({where: {id: parseInt(id)}, data: {isPublished: true}})
+            return await db.productReview.update({where: { id }, data: {isPublished: true}})
         }))
         return await Promise.all(publishedReviews.map(async (review) => {
             return await updateProductRatingMetafields(review.productId, review.rating, admin, session)
@@ -58,7 +58,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     if (action === 'unpublishReviews') {
         const unpublishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
-            return await db.productReview.update({where: {id: parseInt(id)}, data: {isPublished: false}})
+            return await db.productReview.update({where: { id }, data: {isPublished: false}})
         }))
         return await Promise.all(unpublishedReviews.map(async (review) => {
             return await updateProductRatingMetafields(review.productId, 0, admin, session)
@@ -136,7 +136,7 @@ export default function Reviews() {
     }).filter(review => {
         return new Date(review.date).toLocaleDateString().includes(indexTableState.queryValue) ||
         review.body.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.title.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) 
-        || review.productTitle.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.name.toLowerCase().includes(indexTableState.queryValue.toLowerCase())
+        || review.productTitle.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.firstName.toLowerCase().includes(indexTableState.queryValue.toLowerCase())
     }).filter(review => {
         if (indexTableState.selectedProducts.length > 0) {
             return indexTableState.selectedProducts.includes(review.productTitle)
@@ -188,7 +188,7 @@ export default function Reviews() {
             <IndexTable.Row key={index} selected={selectedResources.includes(review.id.toString())} id={review.id.toString()} position={index}>
                 <IndexTable.Cell>{new Date(review.date).toLocaleDateString()}</IndexTable.Cell>
                 <IndexTable.Cell><Text as="p" tone={review.productTitle === 'Product Deleted' ? "critical" : "base"}>{review.productTitle}</Text></IndexTable.Cell>
-                <IndexTable.Cell>{review.name}</IndexTable.Cell>
+                <IndexTable.Cell>{review.firstName}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <Link url={`/app/review/${review.id}`}>{review.title}</Link>
                 </IndexTable.Cell>
@@ -391,7 +391,7 @@ export default function Reviews() {
     }, [selectedResources])
 
     const exportAsCsv = () => {
-        const rows = filteredReviews.map(review => [review.title, review.body, review.name, review.email, review.rating, review.media, new Date(review.date).toLocaleDateString(), review.isPublished])
+        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.email, review.rating, review.media, new Date(review.date).toLocaleDateString(), review.isPublished])
         const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'store'].includes(key))
         rows.unshift(rowHeadings)
         const encodedReviewData = rows.map(row => row.join()).join('\n')

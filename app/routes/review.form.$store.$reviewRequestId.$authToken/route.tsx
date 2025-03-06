@@ -8,8 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import { ReviewFormSettings } from "@prisma/client";
 import fetchRewardTiers from "~/helpers/fetchRewardTiers";
 
-import { FaArrowRight } from "react-icons/fa"
-import { FaArrowLeft } from "react-icons/fa"
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
 import calculateCurrentRewardTier from "~/helpers/calculateCurrentRewardTier";
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
@@ -25,10 +23,19 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const searchParams = url.searchParams
     const stars = parseInt(searchParams.get('stars') as string)
 
+    // use these productIds to retrieve the proper questions
+    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: store}, authToken: {equals: authToken}}}})
+    if (!reviewRequest) return redirect('/')
+    
+    console.log(store, reviewRequest.id)
+
+    const matchingProductReviews = await db.productReview.findMany({where: {store: {equals: store}, AND: {reviewRequestId: {equals: reviewRequest.id}}}})
+    const alreadyReviewedProducts = matchingProductReviews.map(review => review.productId)
+
     // see how many product ids are included
     const productDataObjects: {id: string, title: string | null, image: string | null}[] = []
     searchParams.forEach((value, key) => {
-        if (key.includes('productId')) {
+        if (key.includes('productId') && !alreadyReviewedProducts.includes(`gid://shopify/Product/${value}`)) {
             const num = key.split('Id')[1]
             const data = {
                 id: `gid://shopify/Product/${value}`,
@@ -39,13 +46,11 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
         }
     })
 
-    // use these productIds to retrieve the proper questions
+    if (productDataObjects.length === 0) return redirect('/')
+   
     const productIds = productDataObjects.map(product => product.id)
     const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: store}, OR: [{productConfiguration: {equals: ['all']}}, {productIds: {hasSome: productIds}}]}, include: {radioAnswerChoices: true}})
-    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: store}, authToken: {equals: authToken}}}})
 
-    if (!reviewRequest) return redirect('/')
-    
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: store}}, omit: {id: true}}) as ReviewFormSettings
     const rewardsTiers = await fetchRewardTiers(store) as string[]
 
@@ -61,14 +66,17 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 }
 
 export default function ReviewForm() {
-
+    
     const data = useLoaderData<typeof loader>()
+    
+    const defaultState = {
+        ...initialUserReviewFormInputState, 
+        firstName: data.customerData.firstName,
+        email: data.customerData.email
+    }
 
     const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(false)
     const [productsToReview, setProductsToReview] = useState(data.productDataObjects)
-
-    // state to track customer input
-    const [currentProductIndex, setCurrentProductIndex] = useState(0)
 
     const [userInputState, setUserInputState] = useState<UserReviewFormInputState>({
         ...initialUserReviewFormInputState, 
@@ -85,7 +93,7 @@ export default function ReviewForm() {
 
     const [uploadMediaError, setUploadMediaError] = useState('')
 
-    const tierData = calculateCurrentRewardTier(userInputState.headline, userInputState.body, uploadedMediaRef, data.formSettings.primaryFormColor)
+    const tierData = calculateCurrentRewardTier(userInputState.title, userInputState.body, uploadedMediaRef, data.formSettings.primaryFormColor)
 
     const rewards = [data.rewardsTiers[0], data.rewardsTiers[1], data.rewardsTiers[2]]
     const noRewardsConfigured = rewards.every(reward => reward === "No Reward")
@@ -123,7 +131,6 @@ export default function ReviewForm() {
         })
 
         return () => {
-
             document.querySelectorAll('#reviewFormStar').forEach((star) => {
                 star.removeEventListener('mouseover', mouseoverFunction)
                 star.removeEventListener('mouseleave', mouseleaveFunction)
@@ -254,63 +261,60 @@ export default function ReviewForm() {
 
     }, [])
 
+    const customDropdownQuestions = useRef<any>({})
+
     useEffect(() => {
         // attach event listeners for toggling chevron direction + dropdown open/closed state
         data.questions.forEach(question => {
             const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${question.id}`) as HTMLBodyElement
             const customQuestionDropdown = document.querySelector(`#dropdownTop-${question.id}`) as HTMLBodyElement
             const chevronIconContainer = document.querySelector(`#chevronContainer-${question.id}`)
-            customQuestionDropdown?.addEventListener('click', () => {
-                if (customQuestionDropdown.dataset.status === "closed" && chevronIconContainer) {
-                    chevronIconContainer.innerHTML = `<i class="fa-solid fa-chevron-up" style="color: black"> </i>`
-                    customQuestionDropdown.dataset.status = "open"
-                    dropdownItemsContainer.style.display = "block"
-                } else if (customQuestionDropdown.dataset.status === "open" && chevronIconContainer) {
-                    chevronIconContainer.innerHTML = `<i class="fa-solid fa-chevron-down" style="color: black"> </i>`
-                    customQuestionDropdown.dataset.status = "closed"
-                    dropdownItemsContainer.style.display = "none"
-                }
-            })
 
-            // attach event listeners for tracking which answer choice was clicked
-            question.radioAnswerChoices.forEach(answerChoice => {
-                    const answerChoiceItemElements = document.querySelectorAll(`div[data-choiceid="${answerChoice.id}"]`)
-                    answerChoiceItemElements.forEach(item => {
-                        item.addEventListener('click', (e: any) => {
-                            const target = e.target.closest('div[data-choiceid]')
-                            const isClicked = target.dataset.clicked
-                            const checkbox = document.querySelector(`div[data-choiceidcheckbox="${answerChoice.id}"]`)
-
-                            if (!checkbox) return 
-
-                            if (isClicked === "true") {                      
-                                target.dataset.clicked = "false"
-                                checkbox.textContent = ''
-                                setUserInputState(prevUserInputState => {return {...prevUserInputState, selectedAnswerChoices: {...prevUserInputState['selectedAnswerChoices'], [question.id]: prevUserInputState['selectedAnswerChoices'][question.id].filter(choice => choice.value !== target.dataset.answerchoicevalue)}}})
-                            } else {
-                                target.dataset.clicked = "true"
-                                checkbox.textContent = '•'
-                                setUserInputState(prevUserInputState => {return {...prevUserInputState, selectedAnswerChoices: {...prevUserInputState['selectedAnswerChoices'], [question.id]: [...(prevUserInputState['selectedAnswerChoices'][question.id] || []), {id: answerChoice.id, value: target.dataset.answerchoicevalue}]}}})
-                            }
+            if (!customDropdownQuestions.current[question.id]) {
+                customQuestionDropdown?.addEventListener('click', () => {
+                    if (customQuestionDropdown.dataset.status === "closed" && chevronIconContainer) {
+                        chevronIconContainer.innerHTML = `<i class="fa-solid fa-chevron-up" style="color: black"> </i>`
+                        customQuestionDropdown.dataset.status = "open"
+                        dropdownItemsContainer.style.display = "block"
+                    } else if (customQuestionDropdown.dataset.status === "open" && chevronIconContainer) {
+                        chevronIconContainer.innerHTML = `<i class="fa-solid fa-chevron-down" style="color: black"> </i>`
+                        customQuestionDropdown.dataset.status = "closed"
+                        dropdownItemsContainer.style.display = "none"
+                    }
+                })
+    
+                // attach event listeners for tracking which answer choice was clicked
+                question.radioAnswerChoices.forEach(answerChoice => {
+                        const answerChoiceItemElements = document.querySelectorAll(`div[data-choiceid="${answerChoice.id}"]`)
+                        answerChoiceItemElements.forEach(item => {
+                            item.addEventListener('click', (e: any) => {
+                                const target = e.target.closest('div[data-choiceid]')
+                                const isClicked = target.dataset.clicked
+                                const checkbox = document.querySelector(`div[data-choiceidcheckbox="${answerChoice.id}"]`)
+    
+                                if (!checkbox) return 
+    
+                                if (isClicked === "true") {                      
+                                    target.dataset.clicked = "false"
+                                    checkbox.textContent = ''
+                                    setUserInputState(prevUserInputState => {return {...prevUserInputState, selectedAnswerChoices: {...prevUserInputState['selectedAnswerChoices'], [question.id]: prevUserInputState['selectedAnswerChoices'][question.id].filter(choice => choice.value !== target.dataset.answerchoicevalue)}}})
+                                } else {
+                                    target.dataset.clicked = "true"
+                                    checkbox.textContent = '•'
+                                    setUserInputState(prevUserInputState => {return {...prevUserInputState, selectedAnswerChoices: {...prevUserInputState['selectedAnswerChoices'], [question.id]: [...(prevUserInputState['selectedAnswerChoices'][question.id] || []), {id: answerChoice.id, value: target.dataset.answerchoicevalue}]}}})
+                                }
+                            })
                         })
-                    })
-            })
+                })
+            }
+            customDropdownQuestions.current[question.id] = true
         })
 
         // reset input state whenever user navigates to a different review form
-        setUserInputState(initialUserReviewFormInputState)
+        setUserInputState(defaultState)
         setErrors({})
 
     }, [productsToReview])
-
-    // changes current product being reviewed
-    const changeProduct = (direction: 'forward' | 'back') => {
-        if (direction === 'forward') {
-            setCurrentProductIndex(currentProductIndex + 1)
-        } else {
-            setCurrentProductIndex(currentProductIndex - 1)
-        }
-    }
 
     // check for review form errors
     const isErrors = () => {
@@ -319,12 +323,11 @@ export default function ReviewForm() {
             if (key !== "selectedAnswerChoices" && userInputState[key as keyof typeof userInputState] === "") {
                 errors[key] = true
             } else {
-                const requiredQuestions = data.questions.filter(question => question.productIds.includes(productsToReview[currentProductIndex].id) || question.productConfiguration[0] === 'all' && question.isRequired[0] === "true")
+                const requiredQuestions = data.questions.filter(question => question.productIds.includes(productsToReview[0].id) || question.productConfiguration[0] === 'all' && question.isRequired[0] === "true")
                 const requiredQuestionIds = requiredQuestions.map(question => question.id)
                 requiredQuestionIds.forEach(questionId => {
                     if (!userInputState["selectedAnswerChoices"][questionId] || userInputState["selectedAnswerChoices"][questionId].length === 0) {
                         errors[questionId] = true
-                        console.log(errors)
                     }
                 })
             }
@@ -348,10 +351,13 @@ export default function ReviewForm() {
                     reviewFormData.append(key, value)
                 }
             })
+
             reviewFormData.append('authToken', data.reviewData.authToken)
             reviewFormData.append('store', data.reviewData.store)
             reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
-            reviewFormData.append('productId', productsToReview[currentProductIndex].id)
+            reviewFormData.append('productId', productsToReview[0].id)
+            reviewFormData.append('rating', rating.current.toString())
+            reviewFormData.append('store', data.reviewData.store)
 
             uploadedMedia.forEach(file => reviewFormData.append("media", file))
 
@@ -360,7 +366,7 @@ export default function ReviewForm() {
                 setErrors({'submission': true})
             } else {
                 setReviewSuccessfullySubmitted(true)
-                const productsLeftToReview = productsToReview.filter(product => product.id !== productsToReview[currentProductIndex].id)
+                const productsLeftToReview = productsToReview.filter(product => product.id !== productsToReview[0].id)
                 if (productsLeftToReview.length > 0) {
                     setTimeout(() => {
                         setProductsToReview(productsLeftToReview)
@@ -372,7 +378,7 @@ export default function ReviewForm() {
     }
 
     const CustomQuestionMarkup  = data.questions.map((question, index) => {
-        if (question.productConfiguration[0] === "all" || question.productIds.includes(productsToReview[currentProductIndex]?.id)) {
+        if (question.productConfiguration[0] === "all" || question.productIds.includes(productsToReview[0]?.id)) {
             if (question.radioAllowMultipleAnswers[0] === 'true') {
                 const Markup = (
                     <div key={index} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
@@ -410,8 +416,8 @@ export default function ReviewForm() {
                         className={styles.customQuestionDropdown} 
                         id={`answerChoicesContainer-${question.id}`}>
                             <option value="">Select one</option>
-                            {question.radioAnswerChoices.map((choice) => {
-                                return <option value={choice.id}>{choice.value}</option>
+                            {question.radioAnswerChoices.map((choice, index) => {
+                                return <option key={index} value={choice.id}>{choice.value}</option>
                             })}
                         </select>
                         {errors[question.id] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>This question is required</p>}
@@ -432,10 +438,10 @@ export default function ReviewForm() {
                 </div>
                 <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px'}}>
                     <div style={{border: '1px solid lightgray', borderRadius: '10px', width: '75px', height: '75px', overflow: 'hidden'}}>
-                        <img src={productsToReview[currentProductIndex]?.image || undefined} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                        <img src={productsToReview[0]?.image || undefined} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                     </div>
                     <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                        <p style={{padding: 0, margin: 0}}>{productsToReview[currentProductIndex]?.title || ''}</p>
+                        <p style={{padding: 0, margin: 0}}>{productsToReview[0]?.title || ''}</p>
                         <div className={styles.reviewFormStarsContainer} style={{padding: 0, margin: 0}}>
                             <svg id="reviewFormStar" data-rating="1" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
                                 <path id="star1" fill={data.formSettings.primaryFormColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
@@ -454,27 +460,11 @@ export default function ReviewForm() {
                             </svg>
                         </div>
                     </div>
-                    {
-                        productsToReview.length > 1 &&
-                        <div style={{display: 'flex', alignItems: 'center', gap: '15px', marginLeft: 'auto'}}>
-                            <FaArrowLeft 
-                            onClick={currentProductIndex === 0 ? undefined : () => changeProduct('back')}
-                            color={currentProductIndex === 0 ? 'lightgray' : 'black'} 
-                            cursor={currentProductIndex === 0 ? 'disabled' : 'pointer'}
-                            />
-                            <p style={{fontSize: '15px'}}>Change Product</p>
-                            <FaArrowRight 
-                            onClick={currentProductIndex === productsToReview.length - 1 ? undefined : () => changeProduct('forward')}
-                            color={currentProductIndex === productsToReview.length - 1 ? 'lightgray' : 'black'} 
-                            cursor={currentProductIndex === productsToReview.length - 1 ? 'disabled' : 'pointer'}
-                            />
-                        </div>
-                    }
                 </div>
                 <div className={styles.reviewFieldWrapper}>
                     <label> Give it a Headline * </label>
                     <div style={{position: 'relative'}}>
-                        <input value={userInputState.headline} onChange={(e) => setUserInputState({...userInputState, headline: e.target.value})} name='title' placeholder={data.formSettings.headlinePlaceholder} />
+                        <input value={userInputState.title} onChange={(e) => setUserInputState({...userInputState, title: e.target.value})} name='title' placeholder={data.formSettings.headlinePlaceholder} />
                         {!noRewardsConfigured && tierData.headline.tier === 3 && 
                         <div className={styles.characterCountContainer} style={{backgroundColor: tierData.headline.color, padding: '5px 10px'}}>
                             <span>Perfect!</span>
@@ -513,12 +503,12 @@ export default function ReviewForm() {
                 <div className={styles.reviewNameEmailWrapper}>
                     <div className={styles.reviewNameEmailContainer}>
                         <label>Your First Name *</label>
-                        <input type='name' name='name' value={userInputState.firstName} onChange={(e) => setUserInputState({...userInputState, firstName: e.target.value})} />
+                        <input type='name' name='name' value={userInputState.firstName || ""} onChange={(e) => setUserInputState({...userInputState, firstName: e.target.value})} />
                         {errors['firstName'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>First name is required</p>}
                     </div>
                     <div className={styles.reviewNameEmailContainer}>
                         <label>Your Email Address *</label>
-                        <input type='email' name='email' value={userInputState.email} onChange={(e) => setUserInputState({...userInputState, email: e.target.value})} />
+                        <input type='email' name='email' value={userInputState.email || ""} onChange={(e) => setUserInputState({...userInputState, email: e.target.value})} />
                         {errors['email'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Email is required</p>}
                     </div>
                 </div>
@@ -551,13 +541,13 @@ export default function ReviewForm() {
                     <div>
                         <div className={styles.rewardTiersContainer}>
                             <div className={styles.rewardTierOne} style={{backgroundColor: tierData.score === 1 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 1 ? 'none' : "blur(1px)"}}>
-                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[0]}</p>
+                                <p className={styles.rewardTierText}>{rewards[0]}</p>
                             </div>
                             <div className={styles.rewardTierTwo} style={{backgroundColor: tierData.score === 2 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 2 ? 'none' : "blur(1px)"}}> 
-                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[1]}</p>
+                                <p className={styles.rewardTierText}>{rewards[1]}</p>
                             </div>
                             <div className={styles.rewardTierThree} style={{backgroundColor: tierData.score === 3 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 3 ? 'none' : "blur(1px)"}}>
-                                <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[2]}</p>
+                                <p className={styles.rewardTierText}>{rewards[2]}</p>
                             </div>
                         </div>
                     </div> 

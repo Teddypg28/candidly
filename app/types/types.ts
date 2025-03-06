@@ -16,14 +16,13 @@ export const initialRewardState: Reward = {
 }
 
 export const sampleReviewData = [
-    ['title, body', 'name', 'email', 'rating', 'media', 'date', 'isPublished'],
+    ['title, body', 'firstName', 'email', 'rating', 'date', 'isPublished'],
     [
         'Blizzard Bites are awesome!',
         'They are definitely some of the best protein bites on the market! Looking forward to trying more soon!',
         'Katie',
         'katielovesblizzardbites@gmail.com',
         5,
-        '',
         new Date().toLocaleDateString(),
         false
     ]
@@ -348,7 +347,7 @@ export interface SelectedProduct_Reward {
 }
 
 export const initialUserReviewFormInputState: UserReviewFormInputState = {
-    headline: '',
+    title: '',
     body: '',
     selectedAnswerChoices: {}
 }
@@ -357,7 +356,7 @@ export interface UserReviewFormInputState {
     firstName?: string
     email?: string
     productId?: string
-    headline: string
+    title: string
     body: string
     selectedAnswerChoices: {[key: string]: {id: string, value: string}[]}
 }

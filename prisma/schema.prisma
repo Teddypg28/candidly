@@ -68,7 +68,7 @@ model ProductReview {
   productId              String
   title                  String
   body                   String
-  name                   String
+  firstName              String
   email                  String?
   rating                 Int
   media                  ProductReviewMedia[]

@@ -23,9 +23,6 @@ export default async function importCsvFile(session: SessionData, data: FormData
             reviewsDbObject[headings[index]] = column
         })
 
-        // temporary before media upload functionality updated
-        delete reviewsDbObject['media']
-
         reviewsDbObject['productId'] = productId
         reviewsDbObject['store'] = session.shop
         reviewsDbObject['isPublished'] = false
