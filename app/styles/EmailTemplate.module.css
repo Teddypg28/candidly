@@ -1,0 +1,71 @@
+.emailHeaderContainer {
+    height: 70px;
+    display: flex;
+    align-items: center; 
+    justify-content: center
+}
+
+.productImageContainer {
+    height: 100px;
+    width: 100%;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.logoContainer {
+    color: white;
+    display: flex; 
+    align-items: center;
+    justify-content: center
+}
+
+.productContainer {
+    border: 2px solid lightgray;
+    text-align: center;
+    width: 10px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+}
+
+.separator {
+    width: 100%;
+    border: none; 
+    height: 0.10px; 
+    background-color: lightgray
+}
+
+.shopNowBtn {
+    border: none;
+    width: 100%;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+}
+
+.trashCanIconContainer {
+    position: absolute;
+    top: 0px;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.uploadedMedia {
+    position: relative;
+    border-radius: 5px;
+    overflow: hidden;
+    z-index: 1000;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}

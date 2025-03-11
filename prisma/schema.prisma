@@ -1,0 +1,236 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model AnswerChoiceSnapshot {
+  id           Int                @id @default(autoincrement())
+  reviewId     String
+  review       ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label        String
+  value        String
+  display      Boolean
+  snapshotDate DateTime           @default(now())
+}
+
+model RadioAnswerChoice {
+  id         String             @id @default(uuid())
+  value      String
+  label      String
+  display    Boolean
+  questionId String
+  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model TextAnswer {
+  id         String             @id @default(uuid())
+  value      String
+  reviewId   String
+  review     ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  questionId String
+  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model ProductReview {
+  id                     String                 @id @default(uuid())
+  store                  String
+  productId              String
+  title                  String
+  body                   String
+  firstName              String
+  email                  String?
+  rating                 Int
+  media                  ProductReviewMedia[]
+  date                   DateTime
+  isPublished            Boolean
+  reviewRequestId        String
+  radioQuestionResponses AnswerChoiceSnapshot[]
+  textQuestionResponses  TextAnswer[]
+}
+
+model ProductReviewMedia {
+  id       String        @id @default(uuid())
+  url      String
+  name     String
+  reviewId String
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model ReviewFormQuestion {
+  id                        String                 @id @default(uuid())
+  store                     String
+  productConfiguration      String[]
+  answerType                String[]
+  productIds                String[]
+  collectionIds             String[]
+  title                     String
+  isRequired                String[]
+  radioAnswerChoices        RadioAnswerChoice[]
+  answerChoiceSnapshots     AnswerChoiceSnapshot[]
+  textAnswers               TextAnswer[]
+  radioAllowMultipleAnswers String[]
+  radioDisplayAnswer        String[]
+  radioDisplayedAnswerLabel String
+}
+
+model SavedReviewsTableViews {
+  id                 String   @id @default(uuid())
+  store              String
+  name               String
+  queryValue         String
+  sortSelected       String[]
+  selectedProducts   String[]
+  selectedRatings    String[]
+  selectedVisibility String[]
+}
+
+model SavedCustomQuestionTableView {
+  id                           String   @id @default(uuid())
+  store                        String
+  name                         String
+  queryValue                   String
+  sortSelected                 String[]
+  selectedProductConfiguration String[]
+}
+
+model SavedReviewRequestTableView {
+  id                          String   @id @default(uuid())
+  store                       String
+  name                        String
+  queryValue                  String
+  selectedProductFilters      String[]
+  selectedFulfillmentFilters  String[]
+  selectedReviewStatusFilters String[]
+  sortSelected                String[]
+}
+
+model AppSettings {
+  id                  String   @id @default(uuid())
+  store               String
+  autoPublishReviews  String[]
+  minReviewRating     Int
+  firstReviewRequest  Int
+  secondReviewRequest Int
+  primaryEmail        String
+  companyName         String
+}
+
+model ReviewRequestEmailLogo {
+  id                           Int                        @id @default(autoincrement())
+  url                          String
+  name                         String
+  reviewRequestEmailSettingsId String                     @unique
+  reviewRequestEmailSettings   ReviewRequestEmailSettings @relation(fields: [reviewRequestEmailSettingsId], references: [id], onDelete: Cascade)
+}
+
+model ReviewRequestEmailSettings {
+  id                String                  @id @default(uuid())
+  store             String
+  bannerBgColor     String
+  logo              ReviewRequestEmailLogo?
+  productDisplay    String[]
+  productIds        String[]
+  initialEmailBody  String
+  followUpEmailBody String
+}
+
+model ReviewFormSettings {
+  id                  String @id @default(uuid())
+  store               String
+  heading             String
+  subheading          String
+  headlinePlaceholder String
+  reviewPlaceholder   String
+  primaryFormColor    String
+}
+
+model ReviewRequest {
+  id                String    @id @default(uuid())
+  store             String
+  createdAt         DateTime
+  orderName         String
+  orderId           BigInt
+  firstName         String
+  email             String
+  fulfillmentStatus String?
+  reviewStatus      String    @default("waiting")
+  nextRequestDate   DateTime?
+  emailsSent        Int       @default(0)
+  authToken         String?
+}
+
+model ExcludedProduct {
+  id              String        @id @default(uuid())
+  productId       String
+  rewardSettingId String
+  reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
+}
+
+model Reward {
+  id    String @id @default(uuid())
+  store String
+
+  subparId  String @unique
+  goodId    String @unique
+  perfectId String @unique
+
+  subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id])
+  good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id])
+  perfect RewardSetting @relation("PerfectReward", fields: [perfectId], references: [id])
+}
+
+model RewardSetting {
+  id                       String            @id @default(uuid())
+  selectedRewardType       String
+  fixedAmount              Int
+  percentageAmount         Int
+  bogoRewardType           String
+  bogoPurchaseAmount       Int
+  bogoReceiveAmount        Int
+  bogoDiscountAmount       Int
+  minPurchaseType          String
+  minPurchaseDollarValue   Int
+  minPurchaseQuantityValue Int
+  excludedProducts         ExcludedProduct[]
+
+  subparReward  Reward? @relation("SubparReward")
+  goodReward    Reward? @relation("GoodReward")
+  perfectReward Reward? @relation("PerfectReward")
+}
+
+model CurrentOrdersStatus {
+  id      String  @id @default(uuid())
+  store   String
+  handled Boolean @default(false)
+}

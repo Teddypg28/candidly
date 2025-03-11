@@ -1,0 +1,11 @@
+.tabContainer:hover {
+    background-color: rgb(230, 230, 230) !important;
+    cursor: pointer;
+}
+
+.tabContainer {
+    border-radius: 7px;
+    padding: 5px 10px;
+    display: flex;
+    
+}

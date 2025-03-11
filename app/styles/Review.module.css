@@ -1,0 +1,17 @@
+.uploadedMedia {
+    position: relative;
+    border-radius: 5px;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.trashCanIconContainer {
+    position: absolute;
+    top: 0px;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
