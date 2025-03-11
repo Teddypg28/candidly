@@ -35,7 +35,7 @@ export const action = async ({request} : ActionFunctionArgs) => {
 
     if (action === 'deleteQuestions') {
         return await Promise.all(data.questionIdsToDelete.map(async (id: string) => {
-            return await db.reviewFormQuestion.delete({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}})
+            return await db.reviewFormQuestion.delete({where: {id, AND: {store: {equals: session.shop}}}})
         }))
     }
     return true

@@ -16,7 +16,7 @@ export default async function updateAnswerChoices(currentAnswerChoices: RadioAns
 
         // create new answer choices using remaining data
         const remainingData = currentAnswerChoices.filter((answerChoice, index) => index > oldAnswerChoices.length - 1)
-        const remainingDataWithQuestionId = remainingData.map((answerChoice) => {return {...answerChoice, questionId: Number(questionId)}})
+        const remainingDataWithQuestionId = remainingData.map((answerChoice) => {return {...answerChoice, questionId}})
         await db.radioAnswerChoice.createMany({data: remainingDataWithQuestionId})
 
     } else {

@@ -20,12 +20,12 @@ const getProductName = async (productId: string, admin: AdminApiContext) => {
 export default async function getAnalyticsData(session: SessionParams, admin: AdminApiContext, dateRange: string) {
     // initialize totalReviews object
     let totalReviews: {
-        id: number;
+        id: string;
         store: string;
         productId: string;
         title: string;
         body: string;
-        name: string;
+        firstName: string;
         email: string | null;
         rating: number;
         date: Date;

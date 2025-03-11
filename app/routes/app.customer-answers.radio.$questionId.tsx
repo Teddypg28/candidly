@@ -4,7 +4,7 @@ import db from '../db.server'
 import { useLoaderData, useNavigate } from "@remix-run/react";
 
 export async function loader({ params } : LoaderFunctionArgs) {
-    const questionId = parseInt(params.questionId as string)
+    const questionId = params.questionId as string
     const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: questionId}}, include: {radioAnswerChoices: true}})
 
     if (!question || question.answerType[0] !== "radio") return redirect('/app/custom-questions')
