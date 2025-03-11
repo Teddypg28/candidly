@@ -119,7 +119,7 @@ const renderMediaCarousel = (index, src) => {
                 <div class="mediaCarouselCardDataContainer">
                     <img class="currentCarouselItem" src="${src}" />
                     <div class="mediaCarouselReviewDetails"> 
-                        <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${reviewData.reviews[index].name}</div>
+                        <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${reviewData.reviews[index].firstName}</div>
                         <div style="display: flex; align-items: center; gap: 15px">
                             <div>${generateStars(reviewData.reviews[index].rating)}</div>
                             <p>${getDate(new Date(reviewData.reviews[index].date))}</p>
@@ -197,7 +197,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
                 <p>${getDate(new Date(review.date))}</p>
                 <div class='ratingNameContainer'>
                     <div>${generateStars(review.rating)}</div>
-                    <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${review.name}</div>
+                    <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${review.firstName}</div>
                 </div>
                 <h2 class='reviewHeading'>${review.title}</h2>
                 <div class='reviewBody'>${review.body}</div>

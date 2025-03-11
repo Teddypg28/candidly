@@ -11,7 +11,6 @@ import db from '../db.server'
 
 import SettingsTabs from "~/components/SettingsTabs";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
-import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
 import GeneralSettings from "~/components/settings/GeneralSettings";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
@@ -76,9 +75,6 @@ export default function Settings() {
         case "general":
             SettingsComponent = <GeneralSettings state={settingsState} setState={setSettingsState} errors={errors} />
             break
-        case "review-request-timing":
-            SettingsComponent = <ReviewRequestTimingSettings state={settingsState} setState={setSettingsState} errors={errors} />
-            break   
         case "verification":
             SettingsComponent = <ReviewVerificationSettings state={settingsState} setState={setSettingsState} errors={errors} />
             break

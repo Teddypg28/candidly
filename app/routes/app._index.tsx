@@ -45,12 +45,6 @@ export default function Index() {
             url: '/app/settings/general'
         },
         {
-            name: 'Customize Your Review Request Email Template', 
-            description: 'Add a logo and configure how you want your email to look when you send review requests to customers', 
-            complete: data.reviewRequestEmailSettings,
-            url: '/app/email-template'
-        },
-        {
             name: 'Customize Your Review Form', 
             description: 'Customize the look and messaging on the review form that your customers will fill out', 
             complete: data.reviewFormDesignSettings,
@@ -132,7 +126,7 @@ export default function Index() {
                             }
                             <BlockStack gap={'500'}>
                                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%'}}>
-                                    <Text as="p" fontWeight="bold">{numOfStepsCompleted} of 3 Tasks Complete</Text>
+                                    <Text as="p" fontWeight="bold">{numOfStepsCompleted} of {onboardingSteps.length} Tasks Complete</Text>
                                     <div style={{width: '80%'}}>
                                         <ProgressBar tone="success" size="small" progress={progress} />
                                     </div>

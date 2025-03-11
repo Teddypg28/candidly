@@ -9,10 +9,9 @@ interface Props {
     headlinePlaceholder: string
     reviewPlaceholder: string
     primaryColor: string
-    rewards: string[]
 }
 
-const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor, rewards } : Props ) => {
+const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor } : Props ) => {
 
     const [reviewBody, setReviewBody] = useState('')
     const [reviewHeadline, setReviewHeadline] = useState('')
@@ -26,8 +25,6 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
     const reviewHeadlineWordList = reviewHeadline.trim().split(/\s+/).filter(word => word !== "")
     let reviewHeadlineTier
     let reviewHeadlineStatusColor
-
-    const noRewardsConfigured = rewards.every(reward => reward === "No Reward")
 
     if (reviewHeadlineWordList.length <= 3) {
 
@@ -291,38 +288,14 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                             <label> Give it a Headline * </label>
                             <div style={{position: 'relative'}}>
                                 <input value={reviewHeadline} onChange={(e) => setReviewHeadline(e.target.value)} name='title' placeholder={headlinePlaceholder} />
-                                {!noRewardsConfigured && reviewHeadlineTier === 3 && 
-                                <div className={styles.characterCountContainer} style={{backgroundColor: reviewHeadlineStatusColor}}>
-                                    <span>Perfect!</span>
-                                </div>}
                             </div>
                         </div>
-                        {!noRewardsConfigured && 
-                        <div style={{marginBottom: '10px'}}>
-                            <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                                <div className={styles.progressBar} style={{backgroundColor: reviewHeadlineTier === 3 ? '#67af98' : primaryColor, height: '100%', width: `${Math.round(reviewHeadlineWordList.length / 10 * 100)}%`}}> </div>
-                            </div>
-                            <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', fontWeight: reviewHeadlineTier === 3 ? 'bolder' : 'normal', color: reviewHeadlineTier == 3 ? reviewHeadlineStatusColor : 'black'}}>{reviewHeadlineTier === 3 ? "You wrote a perfect headline!" : `You are ${Math.round(reviewHeadlineWordList.length / 10 * 100)}% of the way to writing the perfect headline`}</p>
-                        </div>
-                        }
                         <div className={styles.reviewFieldWrapper}>
                             <label>Review *</label>
                             <div style={{position: 'relative'}}>
                                 <textarea value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} name='body' className={styles.reviewTextArea} placeholder={reviewPlaceholder} />
-                                {!noRewardsConfigured && reviewBodyTier === 3 && 
-                                <div className={styles.characterCountContainer} style={{backgroundColor: reviewBodyStatusColor}}>
-                                    <span>Perfect!</span>
-                                </div>}
                             </div>
                         </div>
-                        {!noRewardsConfigured &&
-                        <div>
-                            <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                                <div className={styles.progressBar} style={{backgroundColor: reviewBodyTier === 3 ? '#67af98' : primaryColor, height: '100%', width: `${Math.round(reviewBodyWordList.length / 40 * 100)}%`}}> </div>
-                            </div>
-                            <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', fontWeight: reviewBodyTier === 3 ? 'bolder' : 'normal', color: reviewBodyTier == 3 ? reviewBodyStatusColor : 'black'}}>{reviewBodyTier !== 3 ? `You are ${Math.round(reviewBodyWordList.length / 40 * 100)}% of the way to writing the perfect body` : "You wrote the perfect body!"}</p>
-                        </div>
-                        }
                         <div className={styles.reviewNameEmailWrapper} style={{gap: '10px'}}>
                             <div className={styles.reviewNameEmailContainer}>
                                 <label>Your First Name *</label>
@@ -340,40 +313,8 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                             </label>
                             <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
                             <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
-                            {!noRewardsConfigured && uploadedMediaTier === 3 && 
-                            <div className={styles.characterCountContainer} style={{backgroundColor: uploadedMediaStatusColor, bottom: '5px'}}>
-                                <span>Perfect!</span>
-                            </div>}
                         </div>
                         {uploadMediaError && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>{uploadMediaError}</p>}
-                        {!noRewardsConfigured &&
-                        <>
-                            <div>
-                                <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                                    <div className={styles.progressBar} style={{backgroundColor: uploadedMediaTier === 3 ? '#67af98' : primaryColor, height: '100%', width: `${Math.round(uploadedMediaRef.current.length / 2 * 100)}%`}}> </div>
-                                </div>
-                                <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', fontWeight: uploadedMediaTier === 3 ? 'bolder' : 'normal', color: uploadedMediaTier == 3 ? uploadedMediaStatusColor : 'black'}}>{uploadedMediaTier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</p>
-                            </div>
-                            <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
-                            <div>
-                                <p style={{fontWeight: 'bold', margin: 0}}>Reward Tiers</p>
-                                <p style={{margin: 0, marginTop: '3px', fontSize: '14px'}}>The better your review, the better your reward</p>
-                            </div>
-                            <div>
-                                <div className={styles.rewardTiersContainer}>
-                                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScoreTier === 1 ? primaryColor : 'lightgray', filter: reviewScoreTier === 1 ? 'none' : "blur(1px)"}}>
-                                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[0]}</p>
-                                    </div>
-                                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScoreTier === 2 ? primaryColor : 'lightgray', filter: reviewScoreTier === 2 ? 'none' : "blur(1px)"}}> 
-                                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[1]}</p>
-                                    </div>
-                                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScoreTier === 3 ? primaryColor : 'lightgray', filter: reviewScoreTier === 3 ? 'none' : "blur(1px)"}}>
-                                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewards[2]}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                        }
                         <button className={styles.submitReviewBtn} style={{backgroundColor: primaryColor}}>Submit Review</button>
                     </div>
                 </div>

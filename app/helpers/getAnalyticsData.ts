@@ -98,8 +98,6 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
                 {heading: 'Average Product Rating', value: totalAvgProductRating, key: 'avgProductRating'},
                 {heading: 'Best Rated Product', value: bestProductTitleHandle.title, handle: bestProductTitleHandle?.handle, key: 'bestProduct'},
                 {heading: 'Worst Rated Product', value: worstProductTitleHandle?.title || '-', handle: worstProductTitleHandle?.handle, key: 'worstProduct'},
-                {heading: 'Total Review Requests', value: totalReviewRequests, key: 'totalReviewRequests'},
-                {heading: 'Total Review Requests Sent', value: totalReviewRequestsSent, key: 'totalReviewRequestsSent'}
             ]
             // return data
             return analyticsData

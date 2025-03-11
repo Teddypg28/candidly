@@ -11,7 +11,6 @@ import { HexColorPicker, HexColorInput } from 'react-colorful'
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import { defaultReviewFormSettings } from "~/types/types";
-import fetchRewardTiers from "~/helpers/fetchRewardTiers";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()
@@ -22,14 +21,13 @@ export async function action({ request } : ActionFunctionArgs) {
 export async function loader({ request } : LoaderFunctionArgs) {
     const { session } = await authenticate.admin(request)
     const reviewFormSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
-    const rewardTiers = await fetchRewardTiers(session.shop)
 
     if (reviewFormSettings) {
-        return json({settings: reviewFormSettings, rewards: rewardTiers})
+        return json({settings: reviewFormSettings})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {...defaultReviewFormSettings, store: session.shop}})
 
-    return json({settings: defaultSettings, rewards: rewardTiers})
+    return json({settings: defaultSettings})
 }
 
 export default function ReviewForm() {
@@ -53,12 +51,6 @@ export default function ReviewForm() {
                 <button onClick={() => { setSettingsState(cleanState) }}></button>
             </SaveBar>
             <BlockStack gap='200'>
-                <Banner 
-                tone="info"
-                title="Note: Reward Configuration"
-                >
-                    If no rewards are configured, the form will not include the progress bars or reward tiers
-                </Banner>
                 <Layout>
                     <Layout.Section variant="oneThird">
                         <Card>
@@ -97,7 +89,6 @@ export default function ReviewForm() {
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
                         <ReviewFormPreview 
-                        rewards={data.rewards}
                         heading={settingsState.heading}
                         subheading={settingsState.subheading}
                         headlinePlaceholder={settingsState.headlinePlaceholder}

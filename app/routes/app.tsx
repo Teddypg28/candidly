@@ -6,8 +6,6 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
-import '../reviewRequestEmailScheduler'
-
 import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
@@ -28,11 +26,8 @@ export default function App() {
           Home
         </Link>
         <Link to="/app/reviews">Reviews</Link>
-        <Link to="/app/review-requests">Review Requests</Link>
-        <Link to="/app/rewards">Review Rewards</Link>
         <Link to="/app/custom-questions">Custom Questions</Link>
         <Link to="/app/review-form">Review Form Design</Link>
-        <Link to="/app/email-template">Email Template Design</Link>
         <Link to="/app/settings/general">Settings</Link>
       </NavMenu>
       <Outlet />
