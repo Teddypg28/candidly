@@ -27,8 +27,6 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: store}, authToken: {equals: authToken}}}})
     if (!reviewRequest) return redirect('/')
     
-    console.log(store, reviewRequest.id)
-
     const matchingProductReviews = await db.productReview.findMany({where: {store: {equals: store}, AND: {reviewRequestId: {equals: reviewRequest.id}}}})
     const alreadyReviewedProducts = matchingProductReviews.map(review => review.productId)
 
