@@ -51,6 +51,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         const publishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
             return await db.productReview.update({where: { id }, data: {isPublished: true}})
         }))
+
+        console.log(publishedReviews)
+
         return await Promise.all(publishedReviews.map(async (review) => {
             return await updateProductRatingMetafields(review.productId, review.rating, admin, session)
         }))

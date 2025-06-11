@@ -7,7 +7,6 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     const { session } = await authenticate.public.appProxy(request)
 
-    
     if (session && params.productId) {
         
         try {

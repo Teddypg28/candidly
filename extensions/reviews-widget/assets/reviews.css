@@ -1,8 +1,16 @@
-
 .allMediaContainer {
     display: flex;
     align-items: center;
     gap: 15px;
+}
+
+.avgCustomerRatingText, #totalCustomerReviews {
+    font-size: 15px;
+}
+
+#averageCustomerReviewScore {
+    font-size: 40px;
+    font-weight: bold;
 }
 
 .answerChoiceFlexBox {
@@ -62,7 +70,7 @@
 .check-icon {
     position: absolute;
     right: 10px;
-    top: 14px;
+    top: 21px;
 }
 
 .chevronIconContainer {
@@ -73,6 +81,52 @@
     height: 100%;
     width: 50%;
     object-fit: contain;
+}
+
+.checkbox {
+    border: 1px solid black;
+    border-radius: 5px;
+    height: 20px;
+    width: 20px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropdownTop {
+    width: 250px;
+    height: fit-content;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    display: flex;
+    font-size: 14px;
+    font-family: inherit;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.dropdownItemsContainer {
+    position: relative;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    width: 100%;
+    height: fit-content;
+    margin-top: 5px;
+}
+
+.dropdownItem {
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdownItem:hover {
+    background-color: rgb(241, 241, 241);
+    cursor: pointer;
 }
 
 .emailVerificationMessage {
@@ -88,12 +142,22 @@
     margin-bottom: 10px;
 }
 
+.generatedStars {
+    display: flex;
+}
+
 .heading {
     margin-bottom: 10px;
     padding: 0px;
+    font-size: 40px;
+}
+
+.hidden {
+    display: none;
 }
 
 .headingBtnContainer {
+    width: 100%;
     align-items: center;
     display: flex;
     justify-content: space-between;
@@ -115,6 +179,10 @@
     height: 100vh;
     width: 100vw;
     padding: 10px;
+}
+
+.multipleChoicesContainer {
+    position: relative; 
 }
 
 .mediaCarouselCardContainer {
@@ -149,13 +217,9 @@
     cursor: pointer
 }
 
-.noReviews {
-    width: fit-content;
-    margin: auto;
-}
-
-.noReviewsMobile {
-    display: none;
+.noReviewsText {
+    text-align: center;
+    font-size: 15px;
 }
 
 .outerFillContainer {
@@ -198,12 +262,33 @@
     font-size: 14px;
 }
 
-.reviewFormValidationError {
-    color: red;
-    text-align: left;
+.reviewHeading {
+    font-size: 20px;
+}
+
+.reviewerName {
+    font-size: 16px;
+}
+
+#reviewCount {
     padding: 0px;
     margin: 0px;
-    font-size: 14px
+}
+
+.reviewWidgetHeader {
+    width: 70vw;
+    margin: auto;
+}
+
+.reviewFormValidationError {
+    background-color: rgb(240, 220, 220);
+    border-radius: 0.25rem;
+    color: darkred;
+    text-align: left;
+    padding: 10px 5px;
+    margin: 0px;
+    font-size: 14px;
+    margin-top: 5px;
 }
 
 .reviewContainer > p {
@@ -220,7 +305,7 @@
 
 .reviewBody {
     width: 65%;
-    line-height: 25px;
+    line-height: 25px
 }
 
 #reviews {
@@ -247,6 +332,7 @@
 .reviewBarContainer {
     display: flex;
     align-items: center;
+    justify-content: center;
     width: 100%;
     gap: 5px;
     height: 30px
@@ -268,7 +354,9 @@
 .reviewStatsWrapper {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    margin: 15px 0px;
+    gap: 50px;
 }
 
 .reviewStatsContainer {
@@ -342,6 +430,10 @@
     cursor: pointer;
 }
 
+.reviewFormSubheading {
+    font-size: 15px;
+}
+
 .reviewFormStarsContainer {
     display: flex;
     width: fit-content;
@@ -365,7 +457,7 @@
 
 .reviewFormHeadingContainer > h1 {
     font-weight: bold;
-    font-size: 30px;
+    font-size: 25px;
 }
 
 .reviewFieldWrapper {
@@ -406,8 +498,14 @@
 }
 
 .reviewMediaItem {
-    height: 100px;
+    height: 150px;
+    width: 150px;
     cursor: pointer
+}
+
+.star, .numMatchingStarReviews {
+    padding: 0px;
+    margin: 0px;
 }
 
 .sortByContainer {
@@ -418,6 +516,7 @@
     position: relative;
     cursor: pointer;
     box-shadow: 1px 1px 1px 1px rgb(222, 222, 222);
+    padding: 5px 0px;
 }
 
 .sortByItemsContainer {
@@ -434,7 +533,7 @@
 }
 
 .sortByItem {
-    padding: 0px 15px;
+    padding: 10px 15px;
     position: relative;
 }
 
@@ -471,17 +570,24 @@
     padding: 0px;
 }
 
+.uploadMediaText {
+    padding: 0px;
+    margin: 0px;
+}
+
 .uploadMediaContainer {
     border: 2px dotted lightgray;
+    padding: 20px 0px;
     border-radius: 5px;
     position: relative;
+    height: fit-content;
 }
 
 .uploadMediaContainer > label {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 5px
 }
 
 .uploadMediaBtn {
@@ -551,64 +657,10 @@
 
 .writeReviewBtn {
     border: 1px solid black;
-    padding: 5px 20px;
+    padding: 10px 20px;
     border-radius: 15px;
     cursor: pointer;
     font-weight: bold;
-}
-
-.checkbox {
-    border: 1px solid black;
-    border-radius: 5px;
-    height: 20px;
-    width: 20px;
-    font-size: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.dropdownTop {
-    width: 250px;
-    height: fit-content;
-    border: 1px solid lightgray;
-    border-radius: 5px;
-    display: flex;
-    font-size: 14px;
-    font-family: inherit;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 10px;
-    cursor: pointer;
-}
-
-.dropdownItemsContainer {
-    position: relative;
-    border: 1px solid lightgray;
-    border-radius: 5px;
-    width: 100%;
-    height: fit-content;
-    margin-top: 5px;
-}
-
-.dropdownItem {
-    padding: 5px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.dropdownItem:hover {
-    background-color: rgb(241, 241, 241);
-    cursor: pointer;
-}
-
-.multipleChoicesContainer {
-    position: relative; 
-}
-
-.hidden {
-    display: none;
 }
 
 @media only screen and (max-width: 2000px) {
@@ -649,13 +701,22 @@
     }
 } 
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 1500px) {
     .reviewForm {
-        width: 90%;
+        width: 50%;
+    }
+
+    .reviewWidgetHeader {
+        width: 90vw;
     }
 }
 
 @media only screen and (max-width: 480px) {
+
+    .reviewWidgetHeader {
+        width: 100%;
+        margin: auto;
+    }
 
     .flexContainer {
         justify-content: space-between;
@@ -692,7 +753,8 @@
     }
 
     .reviewForm {
-        height: fit-content
+        height: fit-content;
+        width: 90%
     };
 
     .submitReviewBtn {
@@ -707,17 +769,6 @@
     .headingBtnContainer {
         flex-direction: column;
         margin-bottom: 20px;
-    }
-
-    .noReviewsMobile {
-        display: block;
-        margin: 0px;
-        padding: 0px;
-        margin-bottom: 30px;
-    }
-
-    .noReviews {
-        display: none;
     }
 
     .outerFillContainer {
