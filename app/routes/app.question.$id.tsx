@@ -52,7 +52,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             const currentAnswerChoiceSnapshots = await db.answerChoiceSnapshot.findMany({where: {questionId: {equals: params.id}}})
             if (currentAnswerChoiceSnapshots[0].display.toString() !== updatedQuestion.radioDisplayAnswer[0]) {
                 const display = updatedQuestion.radioDisplayAnswer[0] === 'true' ? true : false
-                await db.answerChoiceSnapshot.updateMany({where: {questionId: {equals: params.id}}, data: {display}})
+                await db.answerChoiceSnapshot.updateMany({where: {questionId: {equals: params.id}}, data: {display, label: updatedQuestion.radioDisplayedAnswerLabel}})
             }
         }
         // const result = await db.reviewFormQuestion.update({where: {id: parseInt(data.id)}, data: dataWithStore})

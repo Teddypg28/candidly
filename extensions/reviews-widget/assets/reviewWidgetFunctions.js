@@ -153,6 +153,7 @@ const generateCustomQuestionAnswerMarkup = (review) => {
     if (review.radioQuestionResponses.length > 0) {
         const answerData = {}
         review.radioQuestionResponses.forEach(radioQuestionResponse => {
+            console.log(answerData, radioQuestionResponse)
             if (Object.keys(answerData).includes(radioQuestionResponse.label)) {
                 answerData[radioQuestionResponse.label] = {...answerData[radioQuestionResponse.label], answers: [answerData[radioQuestionResponse.label].answers, radioQuestionResponse.value]}
             } else {

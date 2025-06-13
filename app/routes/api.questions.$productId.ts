@@ -27,21 +27,21 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         `
         const res = await admin?.graphql(matchingCollectionIdsQuery)
         const data = await res?.json()
-        const matchingCollectionIds = data?.data.product.collections.edges.map((edge: any) => edge.node.id)
+        const productCollectionIds = data?.data.product.collections.edges.map((edge: any) => edge.node.id)
 
         // fetch all questions connected to the store
         const allQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session?.shop}}, include: {radioAnswerChoices: true}})
         // only return questions that are configured for all products or for the given product ID
         const configuredQuestions = allQuestions.filter(question => {
             if (question.productConfiguration[0] === 'all' || question.productConfiguration[0] === 'products' && question.productIds.includes(`gid://shopify/Product/${productId}`)
-            || question.productConfiguration[0] === 'collections' && question.collectionIds.some(cId => matchingCollectionIds.includes(cId))
+            || question.productConfiguration[0] === 'collections' && question.collectionIds.some(cId => productCollectionIds.includes(cId))
             ) {
                 return question
             }
         })
         return new Response(JSON.stringify({result: configuredQuestions}), {status: 200})
     } catch (error) {
-        console.log(error)
+        console.error(error)
         return new Response(JSON.stringify({error}), {status: 500})
     }
 }

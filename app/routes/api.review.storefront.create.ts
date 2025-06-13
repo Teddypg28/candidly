@@ -18,7 +18,7 @@ export async function action({ request } : ActionFunctionArgs) {
         const data: any = Object.fromEntries(formData)
 
         // isolate customQuestionAnswers
-        const selectedAnswerChoices = JSON.parse(data.selectedAnswerChoices)
+        const selectedAnswerChoices = JSON.parse(data.customQuestionAnswers)
 
         // remove it from main data object, so that review can be created
         delete data['selectedAnswerChoices']
@@ -32,10 +32,10 @@ export async function action({ request } : ActionFunctionArgs) {
         // grab all of the ids connected to the selected answer choices
         const answerChoiceIds: string[] = []
         Object.keys(selectedAnswerChoices).forEach(questionIdKey => {
-            if (typeof selectedAnswerChoices[questionIdKey] === "string") {
-                answerChoiceIds.push(selectedAnswerChoices[questionIdKey])
+            if (selectedAnswerChoices[questionIdKey].value.length === 1) {
+                answerChoiceIds.push(selectedAnswerChoices[questionIdKey].value[0])
             } else {
-                selectedAnswerChoices[questionIdKey].forEach((answerChoice: {id: string, value: string}) => {
+                selectedAnswerChoices[questionIdKey].value.forEach((answerChoice: {id: string}) => {
                     answerChoiceIds.push(answerChoice.id)
                 })
             }
