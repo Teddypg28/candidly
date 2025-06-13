@@ -14,22 +14,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Session {
-  id            String    @id
-  shop          String
-  state         String
-  isOnline      Boolean   @default(false)
-  scope         String?
-  expires       DateTime?
-  accessToken   String
-  userId        BigInt?
-  firstName     String?
-  lastName      String?
-  email         String?
-  accountOwner  Boolean   @default(false)
-  locale        String?
-  collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+model AppSettings {
+  id                  String   @id @default(uuid())
+  store               String
+  autoPublishReviews  String[]
+  minReviewRating     Int
+  firstReviewRequest  Int
+  secondReviewRequest Int
+  primaryEmail        String
+  companyName         String
 }
 
 model AnswerChoiceSnapshot {
@@ -44,22 +37,17 @@ model AnswerChoiceSnapshot {
   snapshotDate DateTime           @default(now())
 }
 
-model RadioAnswerChoice {
-  id         String             @id @default(uuid())
-  value      String
-  label      String
-  display    Boolean
-  questionId String
-  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+model CurrentOrdersStatus {
+  id      String  @id @default(uuid())
+  store   String
+  handled Boolean @default(false)
 }
 
-model TextAnswer {
-  id         String             @id @default(uuid())
-  value      String
-  reviewId   String
-  review     ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  questionId String
-  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+model ExcludedProduct {
+  id              String        @id @default(uuid())
+  productId       String
+  rewardSettingId String
+  reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
 }
 
 model ProductReview {
@@ -104,46 +92,13 @@ model ReviewFormQuestion {
   radioDisplayedAnswerLabel String
 }
 
-model SavedReviewsTableViews {
-  id                 String   @id @default(uuid())
-  store              String
-  name               String
-  queryValue         String
-  sortSelected       String[]
-  selectedProducts   String[]
-  selectedRatings    String[]
-  selectedVisibility String[]
-}
-
-model SavedCustomQuestionTableView {
-  id                           String   @id @default(uuid())
-  store                        String
-  name                         String
-  queryValue                   String
-  sortSelected                 String[]
-  selectedProductConfiguration String[]
-}
-
-model SavedReviewRequestTableView {
-  id                          String   @id @default(uuid())
-  store                       String
-  name                        String
-  queryValue                  String
-  selectedProductFilters      String[]
-  selectedFulfillmentFilters  String[]
-  selectedReviewStatusFilters String[]
-  sortSelected                String[]
-}
-
-model AppSettings {
-  id                  String   @id @default(uuid())
-  store               String
-  autoPublishReviews  String[]
-  minReviewRating     Int
-  firstReviewRequest  Int
-  secondReviewRequest Int
-  primaryEmail        String
-  companyName         String
+model RadioAnswerChoice {
+  id         String             @id @default(uuid())
+  value      String
+  label      String
+  display    Boolean
+  questionId String
+  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model ReviewRequestEmailLogo {
@@ -190,13 +145,6 @@ model ReviewRequest {
   authToken         String?
 }
 
-model ExcludedProduct {
-  id              String        @id @default(uuid())
-  productId       String
-  rewardSettingId String
-  reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
-}
-
 model Reward {
   id    String @id @default(uuid())
   store String
@@ -229,8 +177,60 @@ model RewardSetting {
   perfectReward Reward? @relation("PerfectReward")
 }
 
-model CurrentOrdersStatus {
-  id      String  @id @default(uuid())
-  store   String
-  handled Boolean @default(false)
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+model SavedReviewsTableViews {
+  id                 String   @id @default(uuid())
+  store              String
+  name               String
+  queryValue         String
+  sortSelected       String[]
+  selectedProducts   String[]
+  selectedRatings    String[]
+  selectedVisibility String[]
+}
+
+model SavedCustomQuestionTableView {
+  id                           String   @id @default(uuid())
+  store                        String
+  name                         String
+  queryValue                   String
+  sortSelected                 String[]
+  selectedProductConfiguration String[]
+}
+
+model SavedReviewRequestTableView {
+  id                          String   @id @default(uuid())
+  store                       String
+  name                        String
+  queryValue                  String
+  selectedProductFilters      String[]
+  selectedFulfillmentFilters  String[]
+  selectedReviewStatusFilters String[]
+  sortSelected                String[]
+}
+
+model TextAnswer {
+  id         String             @id @default(uuid())
+  value      String
+  reviewId   String
+  review     ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  questionId String
+  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }

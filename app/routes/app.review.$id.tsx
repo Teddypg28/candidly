@@ -23,13 +23,13 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         const reviewId = params.id
 
         if (reviewId) {
-            const review = await db.productReview.findFirst({where: {store: {equals: session.shop}, AND: {id: {equals: parseInt(reviewId)}}}, include: {media: {select: {url: true, name: true}}}, omit: {id: true}})
+            const review = await db.productReview.findFirst({where: {store: {equals: session.shop}, AND: {id: {equals: reviewId}}}, include: {media: {select: {url: true, name: true}}}, omit: {id: true}})
             if (review) {
                 return json(
                     {
                         title: review.title, 
                         body: review.body, 
-                        name: review.name, 
+                        name: review.firstName, 
                         rating: review.rating.toString(), 
                         media: review.media
                     })
@@ -52,14 +52,14 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         const action = allFormData.get('action')
         if (action === 'delete') {
             // get media s3 bucket keys from db record urls and then remove them from s3 bucket
-            const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: Number(params.id)}}})
+            const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: params.id}}})
             await Promise.all(reviewMediaRecords.map(async (record) => {
                 const bucketKey = record.url.split('.com/')[1]
                 const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: bucketKey})
                 return await s3Client.send(deleteCommand)
             }))
             // delete the review
-            await db.productReview.delete({where: {id: Number(params.id)}})
+            await db.productReview.delete({where: {id: params.id}})
             return redirect('/app/reviews')
         } 
 
@@ -71,7 +71,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     
         // update product review data first, then media
         const updatedData = Object.fromEntries(allFormData)
-        const updatedProductReview = await db.productReview.update({where: {id: Number(params.id)}, data: {...updatedData, rating: parseInt(allFormData.get('rating') as string)}})
+        const updatedProductReview = await db.productReview.update({where: {id: params.id}, data: {...updatedData, rating: parseInt(allFormData.get('rating') as string)}})
 
         const updateCurrentFiles = async () => {
             const command = new ListObjectsV2Command({Bucket: process.env.S3_BUCKET_NAME})
@@ -244,7 +244,8 @@ export default function Review() {
                         placeholder="Review Title" 
                         autoComplete="off" 
                         label="Review Title" />
-                        <TextField 
+                        <TextField
+                        multiline 
                         value={state.body} 
                         onChange={value => setState(prevState => {return {...prevState, body: value}})}
                         placeholder="Review Body" 

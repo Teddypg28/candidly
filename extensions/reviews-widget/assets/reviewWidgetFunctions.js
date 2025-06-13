@@ -37,11 +37,17 @@ const generateStars = (stars) => {
 }
 
 const renderMediaCarousel = (index, src) => {
+
     document.body.style.overflow = 'hidden'
     // render the rest of the images apart of the review
     const allImages = reviewData.reviews[index].media.map((media, index) => {
         const border = media.url === src ? '1px solid lightgray' : '1px solid rgb(243, 243, 243)'
-        return `<img data-key=${index} class="mediaItem" src="${media.url}" style="border: ${border}"  />`
+        return media.url.includes('mp4') || media.url.includes('mov') ? 
+        `<video src="${media.url}" data-key=${index} class="mediaItem" style="border: ${border}"> 
+            <source src="${media.url}" />
+        </video>` 
+        : 
+        `<img data-key=${index} class="mediaItem" src="${media.url}" style="border: ${border}"  />`
     }).join('')
     // extract url value from each media object
     const mediaUrls = reviewData.reviews[index].media.map(mediaObj => mediaObj.url)
@@ -55,7 +61,13 @@ const renderMediaCarousel = (index, src) => {
             <div class="mediaCarouselCardContainer">
                 <svg class="closeMediaCarouselBtn" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.7457 3.32851C20.3552 2.93798 19.722 2.93798 19.3315 3.32851L12.0371 10.6229L4.74275 3.32851C4.35223 2.93798 3.71906 2.93798 3.32854 3.32851C2.93801 3.71903 2.93801 4.3522 3.32854 4.74272L10.6229 12.0371L3.32856 19.3314C2.93803 19.722 2.93803 20.3551 3.32856 20.7457C3.71908 21.1362 4.35225 21.1362 4.74277 20.7457L12.0371 13.4513L19.3315 20.7457C19.722 21.1362 20.3552 21.1362 20.7457 20.7457C21.1362 20.3551 21.1362 19.722 20.7457 19.3315L13.4513 12.0371L20.7457 4.74272C21.1362 4.3522 21.1362 3.71903 20.7457 3.32851Z" fill="#000000"></path> </g></svg>
                 <div class="mediaCarouselCardDataContainer">
-                    <img draggable="false" class="currentCarouselItem" src="${src}" />
+                    ${src.includes('mp4') || src.includes('mov') ? 
+                    `<video src="${src}" class="currentCarouselItem" controls>
+                        <source src="${src}" preload="auto" />
+                    </video>
+                    ` 
+                    : 
+                    `<img draggable="false" class="currentCarouselItem" src="${src}" />`}
                     <div class="mediaCarouselReviewDetails"> 
                         <div class='reviewerName' style="color: ${reviewSettings.primaryColor}; margin-bottom: 5px">${reviewData.reviews[index].firstName}</div>
                         <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px">
@@ -184,8 +196,17 @@ const setCurrentPage = (currentPage, currentSortBy) => {
 
             ${review.media.length > 0 ?
             `<div class="reviewMediaContainer">
-                ${review.media.map((mediaItem, index) => {
-                return `<img key=${index} class="reviewMediaItem" src="${mediaItem.url}" />`
+                ${review.media.map((mediaItem, index) => {     
+                return mediaItem.url.includes('mp4') || mediaItem.url.includes('mov') ? 
+                    `
+                        <video src="${mediaItem.url}" key=${index} class="reviewMediaItem">
+                            <source src="${mediaItem.url}" />
+                        </video>
+                    
+                    ` : 
+                    
+                    `<img key=${index} class="reviewMediaItem" src="${mediaItem.url}" />`
+
                 }).join('')}
             </div>` : ''}
 
@@ -228,7 +249,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
 
     nextPageBtn.addEventListener('click', () => {
         if (currentPage + 1 <= numOfPages) {
-            fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=${currentPage+1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
+            fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=${currentPage+1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                 .then(res => res.json())
                 .then(data => reviewData = data)
                 .then(() => setCurrentPage(currentPage + 1, currentSortBy))
@@ -237,7 +258,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
 
     prevPageBtn.addEventListener('click', () => {
         if (currentPage - 1 !== 0) {
-            fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=${currentPage-1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
+            fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=${currentPage-1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                 .then(res => res.json())
                 .then(data => reviewData = data)               
                 .then(() => setCurrentPage(currentPage - 1, currentSortBy))
@@ -247,7 +268,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
     const paginatorNumbers = document.querySelectorAll('.paginatorNumber')
     paginatorNumbers.forEach(el => {
         el.addEventListener('click', () => {
-            fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=${parseInt(el.dataset.page)}&limit=5&sort=${currentSortBy.toLowerCase()}`)
+            fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=${parseInt(el.dataset.page)}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                 .then(res => res.json())
                 .then(data => reviewData = data)               
                 .then(() => setCurrentPage(parseInt(el.dataset.page), currentSortBy))
@@ -262,11 +283,14 @@ const setCurrentPage = (currentPage, currentSortBy) => {
 
 const renderReviews = () => {
     document.querySelector('.mainReviewContainer').innerHTML = `
-            <div class='headingBtnContainer'>
-                <h1 class='heading'>Customer Reviews</h1>
-                <div class='writeReviewBtn'>Write Review</div>
+            <div class='reviewWidgetHeader'>
+                <div class='headingBtnContainer'>
+                    <h1 class='heading'>Customer Reviews</h1>
+                    <div class='writeReviewBtn'>Write Review</div>
+                </div>
+                <p class='noReviewsText'>Be the first to write a review!</p>
             </div>
-            <div class='hasReviewsWrapper'>
+            <div class='hasReviewsWrapper hidden'>
                 <div class='reviewStatsWrapper'>
                     <div class='reviewStatsContainer'>
                         <p class="avgCustomerRatingText">Average Customer Rating</p>
@@ -295,7 +319,7 @@ const renderReviews = () => {
         const reviewFormOverlay = document.createElement('div')
         reviewFormOverlay.className = 'hidden reviewFormOverlay'
         const reviewFormMarkup = `
-            <form class='reviewForm' action="https://powderedslopes.myshopify.com/apps/reviews/review/create" method="POST">
+            <form class='reviewForm' action="https://powderedslopes.myshopify.com/apps/api/review/storefront/create" method="POST">
                 <div class='closeReviewFormBtn'>x</div>
                 <div class='reviewFormHeadingContainer'>
                     <h1>${reviewSettings.formHeading}</h1>
@@ -580,25 +604,25 @@ const renderReviews = () => {
                 closeSortByOptions()
                 setCheckedFilter(filterItems)
                 if (currentSortBy === 'Lowest') {
-                    fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=lowest`)
+                    fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=lowest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
                         .then(() => setCurrentPage(1, currentSortBy))
                 } 
                 if (currentSortBy === 'Highest') {
-                    fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=highest`)
+                    fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=highest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
                         .then(() => setCurrentPage(1, currentSortBy))
                 }
                 if (currentSortBy === 'Oldest') {
-                    fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=oldest`)
+                    fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=oldest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
                         .then(() => setCurrentPage(1, currentSortBy))
                 }
                 if (currentSortBy === 'Newest') {
-                    fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=1&limit=5&sort=newest`)
+                    fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=newest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
                         .then(() => setCurrentPage(1, currentSortBy))

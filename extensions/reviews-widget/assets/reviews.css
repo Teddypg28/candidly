@@ -276,7 +276,7 @@
 }
 
 .reviewWidgetHeader {
-    width: 70vw;
+    width: 57vw;
     margin: auto;
 }
 
@@ -354,9 +354,9 @@
 .reviewStatsWrapper {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     margin: 15px 0px;
-    gap: 50px;
+    gap: 40px;
 }
 
 .reviewStatsContainer {
@@ -712,11 +712,6 @@
 }
 
 @media only screen and (max-width: 480px) {
-
-    .reviewWidgetHeader {
-        width: 100%;
-        margin: auto;
-    }
 
     .flexContainer {
         justify-content: space-between;

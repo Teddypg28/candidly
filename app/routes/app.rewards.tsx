@@ -214,7 +214,7 @@ export default function Reward() {
                         <BlockStack gap={'300'}>
                             <BlockStack gap={'150'}>
                                 <Text as="h1" fontWeight="bold">Exclude Products</Text>
-                                <Text as="p" tone="caution">
+                                <Text as="p">
                                     For any products that you choose to exclude, customers will not be able to use the reward when purchasing it.
                                 </Text>
                             </BlockStack>

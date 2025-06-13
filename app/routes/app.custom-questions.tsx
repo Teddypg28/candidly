@@ -35,7 +35,7 @@ export const action = async ({request} : ActionFunctionArgs) => {
 
     if (action === 'deleteQuestions') {
         return await Promise.all(data.questionIdsToDelete.map(async (id: string) => {
-            return await db.reviewFormQuestion.delete({where: {id: parseInt(id), AND: {store: {equals: session.shop}}}})
+            return await db.reviewFormQuestion.delete({where: {id, AND: {store: {equals: session.shop}}}})
         }))
     }
     return true
@@ -248,11 +248,10 @@ const CustomQuestions = () => {
 
             <Card>
                 <EmptyState
-                action={{content: 'Create Question', onAction: () => nav('/app/question/new')}}
-                heading="You Don't Have Any Custom Questions Yet"
+                action={{content: 'Create Your First Question', onAction: () => nav('/app/question/new')}}
+                heading="You Don't Have Any Custom Questions Yet!"
                 image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
                 >
-                    <p>Create your first one!</p>
                 </EmptyState>
             </Card>
 

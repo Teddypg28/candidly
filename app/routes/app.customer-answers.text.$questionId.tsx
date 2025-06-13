@@ -7,7 +7,7 @@ import { authenticate } from "~/shopify.server";
 export async function loader({ params, request } : LoaderFunctionArgs) {
     const { redirect } = await authenticate.admin(request)
 
-    const questionId = parseInt(params.questionId as string)
+    const questionId = params.questionId as string
     const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: questionId}}, include: {textAnswers: true}})
 
     if (!question || question.answerType[0] !== "text") return redirect('/app/custom-questions')

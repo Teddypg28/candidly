@@ -15,9 +15,10 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewFormDesignSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
+    const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
     const analyticsData = await getAnalyticsData(session, admin, 'all')
 
-    return json({appSettings, reviewRequestEmailSettings, reviewFormDesignSettings, analyticsData})
+    return json({appSettings, reviewRequestEmailSettings, reviewFormDesignSettings, rewardSettings, analyticsData})
 }
 
 export default function Index() {
@@ -43,6 +44,12 @@ export default function Index() {
             description: 'Make any necessary changes to the default settings that are currently in place', 
             complete: data.appSettings,
             url: '/app/settings/general'
+        },
+        {
+            name: 'Create some rewards!', 
+            description: 'Choose how you want to reward your customers when they submit reviews for your products.', 
+            complete: data.rewardSettings,
+            url: '/app/rewards'
         },
         {
             name: 'Customize Your Review Request Email Template', 
@@ -132,7 +139,7 @@ export default function Index() {
                             }
                             <BlockStack gap={'500'}>
                                 <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%'}}>
-                                    <Text as="p" fontWeight="bold">{numOfStepsCompleted} of 3 Tasks Complete</Text>
+                                    <Text as="p" fontWeight="bold">{numOfStepsCompleted} of {onboardingSteps.length} Tasks Complete</Text>
                                     <div style={{width: '80%'}}>
                                         <ProgressBar tone="success" size="small" progress={progress} />
                                     </div>

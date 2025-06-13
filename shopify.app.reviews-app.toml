@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Ratesphere"
 handle = "ratesphere"
-application_url = "https://here-tue-teachers-pupils.trycloudflare.com"
+application_url = "https://promoting-enclosed-players-card.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,17 +17,17 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products"
 
 [auth]
 redirect_urls = [
-  "https://here-tue-teachers-pupils.trycloudflare.com/auth/callback",
-  "https://here-tue-teachers-pupils.trycloudflare.com/auth/shopify/callback",
-  "https://here-tue-teachers-pupils.trycloudflare.com/api/auth/callback"
+  "https://promoting-enclosed-players-card.trycloudflare.com/auth/callback",
+  "https://promoting-enclosed-players-card.trycloudflare.com/auth/shopify/callback",
+  "https://promoting-enclosed-players-card.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://here-tue-teachers-pupils.trycloudflare.com/api"
-subpath = "reviews"
+url = "https://promoting-enclosed-players-card.trycloudflare.com/api"
+subpath = "api"
 prefix = "apps"
 
 [pos]

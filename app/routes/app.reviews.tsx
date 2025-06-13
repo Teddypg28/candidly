@@ -98,7 +98,7 @@ export default function Reviews() {
 
     const [indexTableState, setIndexTableState] = useState<ReviewTableState>(initialReviewTableState)
     const [importCsvFileState, setImportCsvFileState] = useState<ImportCsvFileState>(initialImportCsvFileState)
-    const [fileData, setFileData] = useState('')
+    const [fileData, setFileData] = useState<string | null>('')
     const [pageNumber, setPageNumber] = useState(1)
     
     const submit = useSubmit()
@@ -116,10 +116,8 @@ export default function Reviews() {
             exportCsvAnchor.click()
             document.body.removeChild(exportCsvAnchor)
         }
+
         return () => {
-            if (exportCsvAnchor) {
-                document.body.removeChild(exportCsvAnchor)
-            }
             setFileData('')
         }
     }, [fileData])
@@ -395,7 +393,7 @@ export default function Reviews() {
     }, [selectedResources])
 
     const exportAsCsv = () => {
-        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.email, review.rating, review.media, new Date(review.date).toLocaleDateString(), review.isPublished])
+        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.email, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.id, review.media.map(mediaObj => mediaObj.url)])
         const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'store'].includes(key))
         rows.unshift(rowHeadings)
         const encodedReviewData = rows.map(row => row.join()).join('\n')

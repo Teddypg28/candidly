@@ -49,7 +49,7 @@ const avgRating = parseFloat('{{avg_rating}}')
 const reviewProductId = '{{product.id}}'
 
 // fetch custom questions attached to product id
-fetch(`https://${window.Shopify.shop}/apps/reviews/questions/${reviewProductId}`)
+fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
 .then(data => data.json())
 .then(questions => {
     // if there are custom questions, push them to the customQuestions key of the review settings object
@@ -64,7 +64,7 @@ fetch(`https://${window.Shopify.shop}/apps/reviews/questions/${reviewProductId}`
 })
 .then(() => {
     // fetch the settings connected to the store
-    fetch(`https://${window.Shopify.shop}/apps/reviews/settings`)
+    fetch(`https://${window.Shopify.shop}/apps/api/settings`)
         .then(data => data.json())
         .then(result => {
             // if there is no error, overwrite the placeholder reviewSettings object that was initialized above with the store's custom settings
@@ -80,7 +80,7 @@ fetch(`https://${window.Shopify.shop}/apps/reviews/questions/${reviewProductId}`
         })
         .then(() => {
             // fetch all of the reviews connected to the product id
-            fetch(`https://${window.Shopify.shop}/apps/reviews/reviews/${reviewProductId}?page=1&limit=5`)
+            fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`)
                 .then(res => res.json())
                 .then(data => { 
                     // set the global reviewData object to the returned review data so we can access it below
@@ -88,20 +88,12 @@ fetch(`https://${window.Shopify.shop}/apps/reviews/questions/${reviewProductId}`
                 })
         .then(() => {
 
+            renderReviews()
             if (reviewData.reviews.length > 0) {
-                renderReviews()
                 createReviewStars(reviewData, reviewSettings, avgRating)
-            } else {
-                document.querySelector('.mainReviewContainer').innerHTML = `
-                    <div class='reviewWidgetHeader'>
-                        <div class='headingBtnContainer'>
-                            <h1 class='heading'>Customer Reviews</h1>
-                            <div class='writeReviewBtn'>Write Review</div>
-                        </div>
-                        <p class='noReviewsText'>Be the first to write a review!</p>
-                    </div>
-                `
-            }         
+                document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
+                document.querySelector('.noReviewsText').classList.add('hidden')
+            }   
 
             // change reviews section background color
             const divs = Array.from(document.querySelectorAll('div'))
