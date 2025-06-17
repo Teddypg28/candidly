@@ -19,9 +19,9 @@ import { SaveBar } from "@shopify/app-bridge-react";
 import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
 
-import standardizeLineBreaks from "~/helpers/standardizeLineBreaks";
+import standardizeLineBreaks from "~/helpers/email/standardizeLineBreaks";
 import generateEmailBody from "~/helpers/email/generateEmailBody";
-import fetchMaxReward from "~/helpers/fetchMaxReward.server";
+import fetchMaxReward from "~/helpers/rewards/fetchMaxReward.server";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {

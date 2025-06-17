@@ -1,6 +1,7 @@
 import { AdminApiContext } from "@shopify/shopify-app-remix/server";
 import { SelectedCollection } from "~/types/types";
 
+// fetches collection info to display which collections are connected to a custom question
 export default async function fetchCollectionInfo(admin: AdminApiContext, collectionIds: string[]) {
 
     const query = `query getCollectionDetails($id: ID!) {

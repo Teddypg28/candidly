@@ -13,8 +13,8 @@ import { CustomQuestionFormError, ReviewFormQuestion, initialCustomQuestionError
 
 import { redirect } from "@remix-run/node";
 
-import fetchProductInfo from "~/helpers/fetchProductInfo";
-import fetchCollectionInfo from "~/helpers/fetchCollectionInfo";
+import fetchProductInfo from "~/helpers/questions/fetchProductInfo";
+import fetchCollectionInfo from "~/helpers/questions/fetchCollectionInfo";
 import updateAnswerChoices from "~/helpers/updateAnswerChoices";
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {

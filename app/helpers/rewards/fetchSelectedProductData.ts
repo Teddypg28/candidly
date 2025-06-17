@@ -1,6 +1,7 @@
 import { AdminApiContext } from "@shopify/shopify-app-remix/server"
 import { RewardState, SelectedProduct_Reward } from "~/types/types"
 
+// fetches product data to display which products are excluded from rewards
 export default async function fetchSelectedProductData(rewardSettings: RewardState, admin: AdminApiContext) {
     const selectedProducts: {subpar: SelectedProduct_Reward[], good: SelectedProduct_Reward[], perfect: SelectedProduct_Reward[]} = {subpar: [], good: [], perfect: []}
     await Promise.all(['subpar', 'good', 'perfect'].map(async (reviewType) => {

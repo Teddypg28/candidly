@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
@@ -31,7 +32,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             store: session.shop,
             email: payload.customer.email,
             firstName: payload.customer.first_name,
-            fulfillmentStatus: payload.fulfillment_status
+            fulfillmentStatus: payload.fulfillment_status,
+            authToken: await generateReviewRequestHash()
           }
           await db.reviewRequest.create({ data })
         }

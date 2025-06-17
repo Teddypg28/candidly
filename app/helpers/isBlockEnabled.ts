@@ -1,5 +1,6 @@
 import { authenticate } from "~/shopify.server";
 
+// checks if review widget is enabled on store's current theme
 export default async function isBlockEnabled(request: Request, blockFileName: string, type: string) {
 
     const { session, admin } = await authenticate.admin(request)

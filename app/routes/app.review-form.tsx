@@ -11,7 +11,7 @@ import { HexColorPicker, HexColorInput } from 'react-colorful'
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import { defaultReviewFormSettings } from "~/types/types";
-import fetchRewardTiers from "~/helpers/fetchRewardTiers";
+import fetchRewardTiers from "~/helpers/rewards/fetchRewardTiers";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()

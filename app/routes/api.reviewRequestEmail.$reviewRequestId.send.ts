@@ -5,7 +5,7 @@ import db from '../db.server'
 import sendEmail from "~/helpers/email/sendEmail";
 import { AppSettings, ReviewRequest, ReviewRequestEmailSettings } from "@prisma/client";
 import { ReviewRequestEmailData } from "~/types/types";
-import fetchMaxReward from "~/helpers/fetchMaxReward.server";
+import fetchMaxReward from "~/helpers/rewards/fetchMaxReward.server";
 
 export async function action( { request, params } : ActionFunctionArgs) {
     const { session, admin } = await authenticate.admin(request)
@@ -18,8 +18,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
         const emailData = JSON.parse(formData.get('emailData') as any)
         const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
-        // replace mrgiftr email with ratesphere app email whenever its purchased
-        if (appSettings) await sendEmail(emailBody, emailData, "teddypg02@gmail.com", "support@trycandidly.app")
+        if (appSettings) await sendEmail(emailBody, emailData, appSettings.primaryEmail, "support@trycandidly.app")
 
         return true      
     }
@@ -88,6 +87,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
         lineItems
     }
 
-    await sendEmail(emailBody, emailData, "mrgiftr@gmail.com", "teddypg02@gmail.com")
+    await sendEmail(emailBody, emailData, "teddypg02@gmail.com", "support@trycandidly.app")
 
 }

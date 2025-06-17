@@ -12,7 +12,7 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { SaveBar } from "@shopify/app-bridge-react";
 
 import db from '../db.server'
-import fetchSelectedProductData from "~/helpers/fetchSelectedProductData";
+import fetchSelectedProductData from "~/helpers/rewards/fetchSelectedProductData";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
 

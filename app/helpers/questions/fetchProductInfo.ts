@@ -3,6 +3,7 @@ import { AdminApiContext } from "node_modules/@shopify/shopify-app-remix/dist/ts
 import { ImageIcon } from "@shopify/polaris-icons";
 import { SelectedProduct } from "~/types/types";
 
+// fetches product info to display which products are connected to a custom question
 export default async function fetchProductInfo(admin: AdminApiContext, productIds: string[]) {
 
     const query = `query getProductDetails($id: ID!) {
@@ -30,7 +31,6 @@ export default async function fetchProductInfo(admin: AdminApiContext, productId
             image: data.data.product.featuredMedia ? data.data.product.featuredMedia.preview.image.url : ImageIcon,
             title: data.data.product.title,
             variants: data.data.product.variants.nodes.map((variant: any) => variant.title)
-
         }
 
     }))

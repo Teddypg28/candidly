@@ -1,4 +1,3 @@
-import { Session } from '@shopify/shopify-app-remix/server'
 import fetchRewardTiers from './fetchRewardTiers'
 
 export default async function fetchMaxReward(shop: string) {

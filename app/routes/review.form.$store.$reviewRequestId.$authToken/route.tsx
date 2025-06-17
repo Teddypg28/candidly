@@ -6,10 +6,10 @@ import { useLoaderData } from "@remix-run/react";
 import styles from '../../styles/ReviewForm.module.css'
 import { useEffect, useRef, useState } from "react";
 import { ReviewFormSettings } from "@prisma/client";
-import fetchRewardTiers from "~/helpers/fetchRewardTiers";
+import fetchRewardTiers from "~/helpers/rewards/fetchRewardTiers";
 
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
-import calculateCurrentRewardTier from "~/helpers/calculateCurrentRewardTier";
+import calculateCurrentRewardTier from "~/helpers/rewards/calculateCurrentRewardTier";
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {

@@ -8,7 +8,7 @@ export default function generateEmailBody(emailBody: string, data: ReviewRequest
     })
 
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://concluded-sa-homepage-athletes.trycloudflare.com/review/form/${data.store}/${data.reviewRequestId}/${data.authToken}${data.lineItems && `?${queryString}`}` : '#'
+    const href = data.reviewRequestId ? `https://notify-gba-persons-of.trycloudflare.com/review/form/${data.store}/${data.reviewRequestId}/${data.authToken}${data.lineItems && `?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,

@@ -1,5 +1,5 @@
 import { RewardSetting } from '@prisma/client'
-import db from '../db.server'
+import db from '../../db.server'
 
 export default async function fetchRewardTiers(store: string) {
 
