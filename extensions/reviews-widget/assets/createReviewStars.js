@@ -10,7 +10,7 @@ const createReviewStars = () => {
      let navigationTagHref
      const divs = document.querySelectorAll('div')
      for (let i = 0; i<divs.length; i++) {
-         if (divs[i].id.includes('ratesphere')) {
+         if (divs[i].id.includes('candidly')) {
              navigationTagHref = divs[i].id
              break
          }

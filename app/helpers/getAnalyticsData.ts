@@ -2,30 +2,30 @@ import { AdminApiContext } from 'node_modules/@shopify/shopify-app-remix/dist/ts
 import db from '../db.server'
 import { SessionParams } from 'node_modules/@shopify/shopify-api/dist/ts/lib/session/types'
 import { startOfDay } from 'date-fns'
+import { AnalyticsData } from '~/types/types'
 
 const getProductName = async (productId: string, admin: AdminApiContext) => {
     const query = `
         query getProductName($id: ID!) {
             product(id: $id) {
             title
-            handle
             }
         }
     `
     const result = await admin.graphql(query, {variables: {id: productId}})
     const data = await result.json()
-    return data.data.product ? {title: data.data.product.title, handle: data.data.product.handle} : {title: 'Product Deleted', handle: null}
+    return data.data.product ? {title: data.data.product.title} : {title: 'Product Deleted'}
 }
 
 export default async function getAnalyticsData(session: SessionParams, admin: AdminApiContext, dateRange: string) {
     // initialize totalReviews object
     let totalReviews: {
-        id: number;
+        id: string;
         store: string;
         productId: string;
         title: string;
         body: string;
-        name: string;
+        firstName: string;
         email: string | null;
         rating: number;
         date: Date;
@@ -76,7 +76,7 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
             // initialize array to hold product avgProductRating data for each product
             const avgProductRatings: {avgRating: number, productId: string}[] = []
             // loop through reviews, find matching ids, calculate avg rating for the product, push data object to array 
-            await Promise.all(filteredProductIds.map(async (id) => {
+            filteredProductIds.map((id) => {
                 let productRatingSum = 0
                 const productReviews = totalReviews.filter(review => review.productId === id)
                 productReviews.forEach(review => {
@@ -84,20 +84,20 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
                 })
                 const avgRating = (productRatingSum/productReviews.length)
                 avgProductRatings.push({avgRating, productId: id})
-            }))
+            })
             // read the product ids for the best and worst products
-            const bestProductId = avgProductRatings.sort((a, b) => a.avgRating - b.avgRating)[0].productId
-            const worstProductData = avgProductRatings.sort((a, b) => b.avgRating - a.avgRating)[0]
+            const bestProductId = avgProductRatings.sort((a, b) => b.avgRating - a.avgRating)[0].productId
+            const worstProductData = avgProductRatings.sort((a, b) => a.avgRating - b.avgRating)[0]
             const worstProductId = worstProductData.avgRating === 5 || totalReviews.length === 1 || bestProductId === worstProductData.productId ? null : worstProductData.productId 
             // use product ids and helper function to read the product names of the best/worst products
             const bestProductTitleHandle = await getProductName(bestProductId, admin)
             const worstProductTitleHandle = worstProductId ? await getProductName(worstProductId, admin) : null
             // create an array of objects with the data for each metric
-            const analyticsData = [
+            const analyticsData: AnalyticsData[] = [
                 {heading: 'Total Reviews', value: totalReviews.length, key: 'totalReviews'},
                 {heading: 'Average Product Rating', value: totalAvgProductRating, key: 'avgProductRating'},
-                {heading: 'Best Rated Product', value: bestProductTitleHandle.title, handle: bestProductTitleHandle?.handle, key: 'bestProduct'},
-                {heading: 'Worst Rated Product', value: worstProductTitleHandle?.title || '-', handle: worstProductTitleHandle?.handle, key: 'worstProduct'},
+                {heading: 'Best Rated Product', value: bestProductTitleHandle.title, link: `https://admin.shopify.com/store/powderedslopes/products/${bestProductId.split('Product/')[1]}`, key: 'bestProduct'},
+                {heading: 'Worst Rated Product', value: worstProductTitleHandle?.title || '-', link: `https://admin.shopify.com/store/powderedslopes/products/${worstProductData.productId.split('Product/')[1]}`, key: 'worstProduct'},
                 {heading: 'Total Review Requests', value: totalReviewRequests, key: 'totalReviewRequests'},
                 {heading: 'Total Review Requests Sent', value: totalReviewRequestsSent, key: 'totalReviewRequestsSent'}
             ]

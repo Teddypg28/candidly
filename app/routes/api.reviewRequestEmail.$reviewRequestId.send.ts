@@ -19,7 +19,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
         const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
 
         // replace mrgiftr email with ratesphere app email whenever its purchased
-        if (appSettings) await sendEmail(emailBody, emailData, "mrgiftr@gmail.com", appSettings.primaryEmail)
+        if (appSettings) await sendEmail(emailBody, emailData, "teddypg02@gmail.com", "support@trycandidly.app")
 
         return true      
     }

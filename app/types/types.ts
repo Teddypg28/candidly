@@ -100,6 +100,13 @@ export const initialCustomQuestionErrorState = {
     radioDisplayedAnswerLabel: false
 }
 
+export interface AnalyticsData {
+    heading: string
+    value: number | string
+    key?: string
+    link?: string
+}
+
 export interface SettingsTab {
     store: string,
     path: string

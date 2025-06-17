@@ -377,10 +377,10 @@ export default function Reviews() {
         }
     }
 
-    const deleteSelectedReviews = useCallback(async () => {
-        submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
-        removeSelectedResources(selectedResources)
-    }, [selectedResources])
+    // const deleteSelectedReviews = useCallback(async () => {
+    //     submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
+    //     removeSelectedResources(selectedResources)
+    // }, [selectedResources])
 
     const publishSelectedReviews = useCallback(async () => {
         submit(JSON.stringify({reviewIds: selectedResources, action: 'publishReviews'}), {method: 'POST', encType: 'application/json'})
@@ -556,7 +556,6 @@ export default function Reviews() {
                 <PageActions 
                 primaryAction={{content: 'Publish', disabled: selectedResources.length === 0, onAction: publishSelectedReviews}}
                 secondaryActions={[
-                    {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedReviews},
                     {content: 'Unpublish', disabled: selectedResources.length === 0, onAction: unpublishSelectedReviews}
                 ]}
                 />

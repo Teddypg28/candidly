@@ -1,5 +1,5 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Button, Card, InlineGrid, InlineStack, Page, ProgressBar, Select, Text } from "@shopify/polaris";
+import { BlockStack, Button, Card, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
@@ -8,6 +8,8 @@ import db from '../db.server'
 import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
+import { AnalyticsData } from "~/types/types";
+import isBlockEnabled from "~/helpers/isBlockEnabled";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session, admin } = await authenticate.admin(request)
@@ -17,8 +19,24 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const reviewFormDesignSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
     const analyticsData = await getAnalyticsData(session, admin, 'all')
+    const isReviewWidgetEnabled = await isBlockEnabled(request, 'reviews', 'appBlock')
 
-    return json({appSettings, reviewRequestEmailSettings, reviewFormDesignSettings, rewardSettings, analyticsData})
+    const themes = await admin.rest.resources.Theme.all({ session })
+    const activeTheme = themes.data.find(theme => theme.role === "main")
+    const activeThemeId = activeTheme?.id
+
+    return json(
+        {
+            appSettings, 
+            reviewRequestEmailSettings, 
+            reviewFormDesignSettings, 
+            rewardSettings, 
+            analyticsData, 
+            isReviewWidgetEnabled, 
+            activeThemeId, 
+            store: session.shop
+        }
+    )
 }
 
 export default function Index() {
@@ -39,6 +57,12 @@ export default function Index() {
     }, [dateRange])
 
     const onboardingSteps = [
+        {
+            name: 'Configure Reviews Widget', 
+            description: 'Configure the reviews widget on your product pages', 
+            complete: data.isReviewWidgetEnabled,
+            url: `https://${data.store}/admin/themes/${data.activeThemeId || 'current'}/editor?template=product&addAppBlockId=8000cf7a96c4069469b9760940699882/reviews&target=product`
+        },
         {
             name: 'Visit the Settings Page', 
             description: 'Make any necessary changes to the default settings that are currently in place', 
@@ -65,9 +89,9 @@ export default function Index() {
         }
     ]
 
-    const numOfStepsCompleted = onboardingSteps.filter(step => step.complete !== null).length
+    const numOfStepsCompleted = onboardingSteps.filter(step => step.complete !== null && step.complete !== false).length
     const progress = Math.round((numOfStepsCompleted/onboardingSteps.length) * 100)
-    const indexOfFirstIncompleteStep = onboardingSteps.findIndex(step => step.complete === null)
+    const indexOfFirstIncompleteStep = onboardingSteps.findIndex(step => step.complete === null || step.complete === false)
 
     const onboardingStepsMarkup = onboardingSteps.map((step, index) => {
         return (
@@ -79,7 +103,7 @@ export default function Index() {
                         <Text as="p" variant="bodySm">{step.description}</Text>
                         {index === indexOfFirstIncompleteStep && (
                         <InlineStack>
-                            <Button url={step.url} variant="primary">Complete Step</Button>
+                            <Button target="_blank" url={step.url} variant="primary">Complete Step</Button>
                         </InlineStack>
                         )}
                     </BlockStack>
@@ -91,13 +115,13 @@ export default function Index() {
 
     const analyticsMarkup = [{start: 0, end: 1}, {start: 2, end: 3}, {start: 4, end: 5}].map(indices => {
         const cards: React.JSX.Element[] = []
-        analyticsData.forEach((row, index) => {
+        analyticsData.forEach((row: AnalyticsData, index) => {
             if (index >= indices.start && index <= indices.end) {
                 cards.push(
                     <Card key={index}>
-                        <BlockStack gap={'150'}>
+                        <BlockStack gap={'150'} inlineAlign="center">
                             <Text as="h1" alignment="center" variant="headingMd">{row.heading}</Text>
-                            <Text as="h1" variant="heading2xl" alignment="center">{row.value}</Text>
+                            {row.link ? <Link target="_blank" url={row.link}>{row.value}</Link> : <Text as="h1" variant="heading2xl" alignment="center">{row.value}</Text> }
                         </BlockStack>
                     </Card>
                 )
