@@ -388,7 +388,7 @@ body {
     }
 
     .reviewFormHeadingContainer > h1 {
-        font-size: 25px;
+        font-size: 21px;
     }
 
     .reviewForm {
@@ -402,5 +402,4 @@ body {
     .submitReviewBtn {
         width: 100%;
     }
-
 }

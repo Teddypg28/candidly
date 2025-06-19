@@ -111,9 +111,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
     }
   
     await sendEmail(emailBody, emailData, "teddypg02@gmail.com", "support@trycandidly.app")
-  
-    console.log('Email sent!')
-    
+      
     return new Response(JSON.stringify({message: 'Email successfully sent'}), {status: 200, headers: {'Content-Type': 'application/json'}})
 
   } catch (error) {

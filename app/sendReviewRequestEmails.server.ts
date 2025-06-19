@@ -4,13 +4,9 @@ import { AppSettings } from './types/types'
 export default async function sendReviewRequestEmails() {
     const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date().toLocaleDateString()}, AND: {reviewStatus: {equals: 'waiting'}}}})
 
-    console.log(requestsToSendToday)
-
     await Promise.all(requestsToSendToday.map(async (request) => {
 
-        console.log('Sending email...')
-
-        await fetch(`https://blackberry-springfield-sentence-corrected.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
+        await fetch(`https://sunset-bearing-investigators-allied.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
 
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: request.store}}}) as AppSettings
 
@@ -27,6 +23,5 @@ export default async function sendReviewRequestEmails() {
         }
         await db.reviewRequest.update({where: {id: request.id}, data: updatedData})
 
-        console.log('database record updated!')
     }))
 }

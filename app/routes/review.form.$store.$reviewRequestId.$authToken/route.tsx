@@ -430,12 +430,12 @@ export default function ReviewForm() {
             {reviewSuccessfullySubmited && <ReviewSubmittedMessage />}
             <div className={styles.reviewForm}>
                 <div className={styles.reviewFormHeadingContainer}>
-                    <h1 style={{margin: 0, padding: 0, fontSize: '26px'}}>{data.formSettings.heading}</h1>
+                    <h1 style={{margin: 0, padding: 0}}>{data.formSettings.heading}</h1>
                     <p style={{margin: 0, padding: 0, marginTop: '10px'}}>{data.formSettings.subheading}</p>
                 </div>
                 <div style={{display: 'flex', gap: '15px', alignItems: 'center', marginBottom: '15px'}}>
                     <div style={{border: '1px solid lightgray', borderRadius: '10px', width: '75px', height: '75px', overflow: 'hidden'}}>
-                        <img src={productsToReview[0]?.image || undefined} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                        <img src={productsToReview[0].image || undefined} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                     </div>
                     <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
                         <p style={{padding: 0, margin: 0}}>{productsToReview[0]?.title || ''}</p>

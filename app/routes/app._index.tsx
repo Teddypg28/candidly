@@ -113,12 +113,12 @@ export default function Index() {
         )
     })
 
-    const analyticsMarkup = [{start: 0, end: 1}, {start: 2, end: 3}, {start: 4, end: 5}].map(indices => {
+    const analyticsMarkup = [{start: 0, end: 1}, {start: 2, end: 3}, {start: 4, end: 5}].map((indices, indice) => {
         const cards: React.JSX.Element[] = []
         analyticsData.forEach((row: AnalyticsData, index) => {
             if (index >= indices.start && index <= indices.end) {
                 cards.push(
-                    <Card key={index}>
+                    <Card key={`${indice}-${index}`}>
                         <BlockStack gap={'150'} inlineAlign="center">
                             <Text as="h1" alignment="center" variant="headingMd">{row.heading}</Text>
                             {row.link ? <Link target="_blank" url={row.link}>{row.value}</Link> : <Text as="h1" variant="heading2xl" alignment="center">{row.value}</Text> }

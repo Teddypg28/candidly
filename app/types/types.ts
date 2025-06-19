@@ -1,6 +1,8 @@
 import { IndexFiltersProps } from "@shopify/polaris"
 import { MutableRefObject } from "react"
 
+// variables
+
 export const initialRewardState: Reward = {
     selectedRewardType: 'none', 
     fixedAmount: 10, 
@@ -100,67 +102,11 @@ export const initialCustomQuestionErrorState = {
     radioDisplayedAnswerLabel: false
 }
 
-export interface AnalyticsData {
-    heading: string
-    value: number | string
-    key?: string
-    link?: string
-}
-
-export interface SettingsTab {
-    store: string,
-    path: string
-}
-
-export interface RadioAnswerChoice {
-    id?: string;
-    value: string;
-    display: boolean;
-    label?: string;
-}
-
-export interface ReviewFormQuestion {
-    id?: string
-    answerType: string[]
-    productConfiguration: string[]
-    productIds: string[]
-    collectionIds: string[]
-    title: string
-    isRequired: string[]
-    radioAnswerChoices: RadioAnswerChoice[]
-    radioAllowMultipleAnswers: string[]
-    radioDisplayAnswer: string[]
-    radioDisplayedAnswerLabel: string
-}
-
-export interface SelectedCollection {
-    id: string
-    title: string
-}
-
-export interface SelectedProduct {
-    id: string
-    image: any
-    title: string,
-    variants: string[]
-}
-
-export interface CustomQuestionFormError {
-    title: boolean 
-    product: boolean
-    collection: boolean
-    answerChoices: boolean
-    radioDisplayedAnswerLabel: boolean
-    [key: string]: boolean
-}
-
-export interface CustomReviewFormAnswerOption {
-    [key: string]: any
-}
-
-export interface EmailCompanyData {
-    name: string, 
-    logo: string | null
+export const initialCustomQuestionTableState: CustomQuestionTableState = {
+    queryValue: '',
+    selectedTab: 0,
+    sortSelected: ['numProducts desc'],
+    selectedProductConfiguration: []
 }
 
 export const initialReviewTableState: ReviewTableState = {
@@ -181,11 +127,37 @@ export const initialReviewRequestTableState: ReviewRequestTableState = {
     selectedReviewStatusFilters: [],
 }
 
-export const initialCustomQuestionTableState: CustomQuestionTableState = {
-    queryValue: '',
-    selectedTab: 0,
-    sortSelected: ['numProducts desc'],
-    selectedProductConfiguration: []
+// types
+
+export interface AppSettings {
+    id: string
+    store: string
+    autoPublishReviews: string[]
+    minReviewRating: number 
+    firstReviewRequest: number
+    secondReviewRequest: number
+    companyName: string
+    primaryEmail: string
+}
+
+export interface AnalyticsData {
+    heading: string
+    value: number | string
+    key?: string
+    link?: string
+}
+
+export interface CustomQuestionFormError {
+    title: boolean 
+    product: boolean
+    collection: boolean
+    answerChoices: boolean
+    radioDisplayedAnswerLabel: boolean
+    [key: string]: boolean
+}
+
+export interface CustomReviewFormAnswerOption {
+    [key: string]: any
 }
 
 export interface CustomQuestionTableState {
@@ -193,6 +165,56 @@ export interface CustomQuestionTableState {
     selectedTab: number
     sortSelected: IndexFiltersProps['sortSelected']
     selectedProductConfiguration: string[]
+}
+
+export interface EmailCompanyData {
+    name: string, 
+    logo: string | null
+}
+
+export interface ExcludedProduct {
+    productId: string
+}
+
+export interface EmailOrderData {
+    customerFirstName: string
+    productName: string
+    productImage: string
+}
+
+export interface Import3rdPartyReviewsFormState {
+    isImporting3rdPartyReviews: boolean
+    numberOfReviews: number
+    selectedImportRatings: string[]
+    productLink: any
+    selectedProductData3rdParty?: SelectedProductData
+    importFormErrors: any
+}
+
+export interface ImportCsvFileState {
+    files: File[],
+    products: SelectedProductData[],
+    importInitiated: boolean,
+    errors: any
+}
+
+export interface ProductReview {
+    title: string
+    body: string
+    name: string
+    rating: string
+    media: {
+        name: string
+        url: string
+        file?: File
+    }[]
+}
+
+export interface RadioAnswerChoice {
+    id?: string;
+    value: string;
+    display: boolean;
+    label?: string;
 }
 
 export interface ReviewTableState {
@@ -213,60 +235,18 @@ export interface ReviewRequestTableState {
     selectedReviewStatusFilters: string[]
 }
 
-export interface Import3rdPartyReviewsFormState {
-    isImporting3rdPartyReviews: boolean
-    numberOfReviews: number
-    selectedImportRatings: string[]
-    productLink: any
-    selectedProductData3rdParty?: SelectedProductData
-    importFormErrors: any
-}
-
-export interface ImportCsvFileState {
-    files: File[],
-    products: SelectedProductData[],
-    importInitiated: boolean,
-    errors: any
-}
-
-interface SelectedProductData {
-    id: string 
-    image: string
+export interface ReviewFormQuestion {
+    id?: string
+    answerType: string[]
+    productConfiguration: string[]
+    productIds: string[]
+    collectionIds: string[]
     title: string
-}
-
-export interface ReviewRequestData {
-    store: string 
-    date: Date 
-    fulfillmentStatus: string | null 
-    reviewStatus: string 
-    emailsSent: number 
-    product: string 
-    orderId: number 
-    orderName: string
-}
-
-export interface ProductReview {
-    title: string
-    body: string
-    name: string
-    rating: string
-    media: {
-        name: string
-        url: string
-        file?: File
-    }[]
-}
-
-export interface AppSettings {
-    id: string
-    store: string
-    autoPublishReviews: string[]
-    minReviewRating: number 
-    firstReviewRequest: number
-    secondReviewRequest: number
-    companyName: string
-    primaryEmail: string
+    isRequired: string[]
+    radioAnswerChoices: RadioAnswerChoice[]
+    radioAllowMultipleAnswers: string[]
+    radioDisplayAnswer: string[]
+    radioDisplayedAnswerLabel: string
 }
 
 export interface ReviewRequestEmailData {
@@ -283,9 +263,10 @@ export interface ReviewRequestEmailData {
     companyName?: string
     maxReward?: string
     lineItems: {
+        currentQuantity: number
         productId: string
-        productName: string
-        productImage: string
+        title: string
+        image: string
     }[]
     configuredQuestions: string[][]
 }
@@ -311,16 +292,6 @@ export interface ReviewRequestEmailProductData {
     handle: string
 }
 
-export interface SettingsPageProps {
-    state: AppSettings
-    setState: React.Dispatch<React.SetStateAction<AppSettings>>
-    errors: MutableRefObject<string[]>
-}
-
-export interface ExcludedProduct {
-    productId: string
-}
-
 export interface Reward {
     selectedRewardType: string
     fixedAmount: number
@@ -341,10 +312,44 @@ export interface RewardState {
     'perfect': Reward
 }
 
-export interface EmailOrderData {
-    customerFirstName: string
-    productName: string
-    productImage: string
+export interface ReviewRequestData {
+    store: string 
+    date: Date 
+    fulfillmentStatus: string | null 
+    reviewStatus: string 
+    emailsSent: number 
+    product: string 
+    orderId: number 
+    orderName: string
+}
+
+export interface SettingsTab {
+    store: string,
+    path: string
+}
+
+export interface SelectedCollection {
+    id: string
+    title: string
+}
+
+export interface SelectedProduct {
+    id: string
+    image: any
+    title: string,
+    variants: string[]
+}
+
+interface SelectedProductData {
+    id: string 
+    image: string
+    title: string
+}
+
+export interface SettingsPageProps {
+    state: AppSettings
+    setState: React.Dispatch<React.SetStateAction<AppSettings>>
+    errors: MutableRefObject<string[]>
 }
 
 export interface SelectedProduct_Reward {

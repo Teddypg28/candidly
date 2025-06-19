@@ -3,11 +3,9 @@ import sendReviewRequestEmails from './sendReviewRequestEmails.server';
 
 // '30 8 * * *'
 
-const job = new CronJob(
-  '43 00 * * *', 
+new CronJob(
+  '03 12 * * *', 
   async function () {
-
-    console.log('cron job started!')
     
     await sendReviewRequestEmails()
 
