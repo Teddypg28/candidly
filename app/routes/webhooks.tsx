@@ -50,7 +50,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           const nextRequestDate = new Date(payload.created_at)
           nextRequestDate.setDate(nextRequestDate.getDate() + daysAfterFulfillment)
 
-          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate}})
+          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate: nextRequestDate.toLocaleDateString()}})
         }
       }
 

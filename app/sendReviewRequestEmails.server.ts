@@ -2,11 +2,15 @@ import db from './db.server'
 import { AppSettings } from './types/types'
 
 export default async function sendReviewRequestEmails() {
-    const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date()}, AND: {reviewStatus: {equals: 'pending'}}}})
+    const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date().toLocaleDateString()}, AND: {reviewStatus: {equals: 'waiting'}}}})
+
+    console.log(requestsToSendToday)
 
     await Promise.all(requestsToSendToday.map(async (request) => {
 
-        await fetch(`/api/reviewRequestEmail/${request.id}/send`, {method: 'POST'})
+        console.log('Sending email...')
+
+        await fetch(`https://blackberry-springfield-sentence-corrected.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
 
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: request.store}}}) as AppSettings
 
@@ -14,7 +18,7 @@ export default async function sendReviewRequestEmails() {
             // returns the next review request date using the second review request number of days setting
             const nextRequestDate = new Date(request.nextRequestDate as any)
             nextRequestDate.setDate(nextRequestDate.getDate() + storeSettings.secondReviewRequest)
-            return nextRequestDate
+            return nextRequestDate.toLocaleDateString()
         }
 
         const updatedData = {
@@ -22,5 +26,7 @@ export default async function sendReviewRequestEmails() {
             nextRequestDate: request.emailsSent === 0 ? generateNextDate() : null
         }
         await db.reviewRequest.update({where: {id: request.id}, data: updatedData})
+
+        console.log('database record updated!')
     }))
 }

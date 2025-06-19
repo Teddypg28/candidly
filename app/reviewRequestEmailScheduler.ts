@@ -1,13 +1,15 @@
 import { CronJob } from 'cron';
-import db from './db.server'
+import sendReviewRequestEmails from './sendReviewRequestEmails.server';
+
+// '30 8 * * *'
 
 const job = new CronJob(
-  '30 8 * * *', 
+  '43 00 * * *', 
   async function () {
-    
-    const todayScheduledReviewRequests = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date()}}})
 
+    console.log('cron job started!')
     
+    await sendReviewRequestEmails()
 
   },
   null, // optional onComplete callback if needed

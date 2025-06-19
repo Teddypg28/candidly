@@ -113,6 +113,7 @@ export interface SettingsTab {
 }
 
 export interface RadioAnswerChoice {
+    id?: string;
     value: string;
     display: boolean;
     label?: string;
@@ -281,11 +282,12 @@ export interface ReviewRequestEmailData {
     firstName?: string
     companyName?: string
     maxReward?: string
-    lineItems?: {
+    lineItems: {
         productId: string
         productName: string
         productImage: string
     }[]
+    configuredQuestions: string[][]
 }
 
 export interface ReviewRequestEmailSettings {

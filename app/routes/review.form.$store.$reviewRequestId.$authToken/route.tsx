@@ -23,11 +23,10 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const searchParams = url.searchParams
     const stars = parseInt(searchParams.get('stars') as string)
 
-    // use these productIds to retrieve the proper questions
-    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: store}, authToken: {equals: authToken}}}})
+    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: `${store}.myshopify.com`}, authToken: {equals: authToken}}}})
     if (!reviewRequest) return redirect('/')
     
-    const matchingProductReviews = await db.productReview.findMany({where: {store: {equals: store}, AND: {reviewRequestId: {equals: reviewRequest.id}}}})
+    const matchingProductReviews = await db.productReview.findMany({where: {store: {equals: `${store}.myshopify.com`}, AND: {reviewRequestId: {equals: reviewRequest.id}}}})
     const alreadyReviewedProducts = matchingProductReviews.map(review => review.productId)
 
     // see how many product ids are included
@@ -47,10 +46,10 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     if (productDataObjects.length === 0) return redirect('/')
    
     const productIds = productDataObjects.map(product => product.id)
-    const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: store}, OR: [{productConfiguration: {equals: ['all']}}, {productIds: {hasSome: productIds}}]}, include: {radioAnswerChoices: true}})
+    const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: `${store}.myshopify.com`}, AND: [{productConfiguration: {equals: ['all']}}, {productIds: {hasSome: productIds}}]}, include: {radioAnswerChoices: true}})
 
-    const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: store}}, omit: {id: true}}) as ReviewFormSettings
-    const rewardsTiers = await fetchRewardTiers(store) as string[]
+    const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
+    const rewardsTiers = await fetchRewardTiers(`${store}.myshopify.com`) as string[]
 
     return {
         formSettings, 
@@ -359,7 +358,7 @@ export default function ReviewForm() {
 
             uploadedMedia.forEach(file => reviewFormData.append("media", file))
 
-            const res = await fetch('/api/review/create', {method: 'POST', body: reviewFormData})
+            const res = await fetch('/api/review/request/create', {method: 'POST', body: reviewFormData})
             if (res.status !== 200) {
                 setErrors({'submission': true})
             } else {
@@ -399,7 +398,7 @@ export default function ReviewForm() {
                                 }
                             </div>
                         </div>
-                        {errors[question.id] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>This question is required</p>}
+                        {errors[question.id] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>This question is required</p>}
                     </div>
                 )
                 return Markup
@@ -418,7 +417,7 @@ export default function ReviewForm() {
                                 return <option key={index} value={choice.id}>{choice.value}</option>
                             })}
                         </select>
-                        {errors[question.id] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>This question is required</p>}
+                        {errors[question.id] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>This question is required</p>}
                     </div>
                 )
                 return Markup
@@ -468,7 +467,7 @@ export default function ReviewForm() {
                             <span>Perfect!</span>
                         </div>}
                     </div>
-                    {errors['headline'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Headline is required</p>}
+                    {errors['title'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Headline is required</p>}
                 </div>
                 {!noRewardsConfigured &&
                 <div style={{marginBottom: '10px'}}>
@@ -487,7 +486,7 @@ export default function ReviewForm() {
                             <span>Perfect!</span>
                         </div>}
                     </div>
-                    {errors['body'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Review is required</p>}
+                    {errors['body'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Review is required</p>}
                 </div>
                 {!noRewardsConfigured &&
                 <div>
@@ -502,27 +501,27 @@ export default function ReviewForm() {
                     <div className={styles.reviewNameEmailContainer}>
                         <label>Your First Name *</label>
                         <input type='name' name='name' value={userInputState.firstName || ""} onChange={(e) => setUserInputState({...userInputState, firstName: e.target.value})} />
-                        {errors['firstName'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>First name is required</p>}
+                        {errors['firstName'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>First name is required</p>}
                     </div>
                     <div className={styles.reviewNameEmailContainer}>
                         <label>Your Email Address *</label>
                         <input type='email' name='email' value={userInputState.email || ""} onChange={(e) => setUserInputState({...userInputState, email: e.target.value})} />
-                        {errors['email'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>Email is required</p>}
+                        {errors['email'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Email is required</p>}
                     </div>
                 </div>
                 <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
                     <label className={styles.uploadMediaLabel}>
                         <p>Upload Media</p>
-                        <svg viewBox="0 0 1024 1024" className={styles.uploadIcon} version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z" fill="#000000"></path><path d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z" fill="#39393A"></path><path d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z" fill="#000000"></path></g></svg>            
+                        <i className="fa-solid fa-upload"></i>            
                     </label>
                     <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
-                    <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
+                    <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn}accept='image/png, image/jpg, image/jpeg, video/*' multiple />
                     {!noRewardsConfigured && tierData.media.tier === 3 && 
                     <div className={styles.characterCountContainer} style={{backgroundColor: tierData.media.color, bottom: '5px', padding: '5px 10px'}}>
                         <span>Perfect!</span>
                     </div>}
                 </div>
-                {uploadMediaError && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>{uploadMediaError}</p>}
+                {uploadMediaError && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>{uploadMediaError}</p>}
                 {!noRewardsConfigured && 
                 <>
                     <div>
@@ -557,7 +556,7 @@ export default function ReviewForm() {
                 style={{backgroundColor: data.formSettings.primaryFormColor}}>
                     Submit Review
                 </button>
-                {errors['submission'] && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px', textAlign: 'center'}}>Error submitting review</p>}
+                {errors['submission'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Error submitting review</p>}
             </div>
         </div>
     )

@@ -1,9 +1,8 @@
-import { Banner, BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
+import { BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
-import { ImageIcon } from '@shopify/polaris-icons';
 
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 
@@ -227,13 +226,16 @@ export default function EmailTemplate() {
         logo: settings.logo,
         companyName: settings.companyName,
         store: settings.store,
-        maxReward: data.maxReward
+        maxReward: data.maxReward,
+        lineItems: [],
+        configuredQuestions: []
     }
 
     const sendTestEmail = () => { 
         const formData = new FormData()
         formData.append('emailBody', emailBody)
         formData.append('emailData', JSON.stringify(emailData))
+        formData.append('store', data.settings.store)
         submit(formData, {action: '/api/reviewRequestEmail/test/send', method: 'POST', encType: 'multipart/form-data', navigate: false})
     }
 

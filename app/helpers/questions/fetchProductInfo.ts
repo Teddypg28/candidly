@@ -1,10 +1,10 @@
-import { AdminApiContext } from "node_modules/@shopify/shopify-app-remix/dist/ts/server/clients";
+import { AdminApiContextWithRest } from "node_modules/@shopify/shopify-app-remix/dist/ts/server/clients";
 
 import { ImageIcon } from "@shopify/polaris-icons";
 import { SelectedProduct } from "~/types/types";
 
 // fetches product info to display which products are connected to a custom question
-export default async function fetchProductInfo(admin: AdminApiContext, productIds: string[]) {
+export default async function fetchProductInfo(admin: AdminApiContextWithRest, productIds: string[]) {
 
     const query = `query getProductDetails($id: ID!) {
         product(id: $id) {

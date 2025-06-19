@@ -131,7 +131,7 @@ model ReviewFormSettings {
 }
 
 model ReviewRequest {
-  id                String    @id @default(uuid())
+  id                String   @id @default(uuid())
   store             String
   createdAt         DateTime
   orderName         String
@@ -139,10 +139,10 @@ model ReviewRequest {
   firstName         String
   email             String
   fulfillmentStatus String?
-  reviewStatus      String    @default("waiting")
-  nextRequestDate   DateTime?
-  emailsSent        Int       @default(0)
-  authToken         String?
+  reviewStatus      String   @default("waiting")
+  nextRequestDate   String?
+  emailsSent        Int      @default(0)
+  authToken         String
 }
 
 model Reward {

@@ -134,7 +134,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     const reviewRequests: ReviewRequestData[] = []
 
-    results.forEach(result => {
+    results.forEach((result: any) => {
         result.forEach((requestObject: any) => {
             reviewRequests.push(requestObject)
         })
