@@ -4,25 +4,24 @@ export default function generateEmailBody(emailBody: string, data: ReviewRequest
 
     let queryString = ''
     data.lineItems.forEach((lineItem, index) => {
-        queryString += `productId${index+1}=${lineItem.productId.split('Product/')[1]}&productTitle${index+1}=${lineItem.title}&productImage${index+1}=${lineItem.image || ''}${index !== data.lineItems.length - 1 ? '&' : ''}`
+        queryString += `productId${index+1}=${lineItem.productId.split('Product/')[1]}&productTitle${index+1}=${lineItem ? lineItem.title : ""}&productImage${index+1}=${lineItem.image || ''}&`
     })
-    queryString += `&numProductIds=${data.lineItems.length}&`
 
     let questionQueryString = ''
     data.configuredQuestions.forEach((productQuestionSet, productIndex) => {
         productQuestionSet.forEach((questionId, questionIndex) => {
-            questionQueryString += `numProduct${productIndex+1}Questions=${productQuestionSet.length}&product${productIndex+1}question${questionIndex+1}Id=${questionId}${questionIndex !== productQuestionSet.length - 1 || productIndex !== data.configuredQuestions.length - 1 ? '&' : ''}`
+            questionQueryString += `numProduct${productIndex+1}Questions=${productQuestionSet.length}&product${productIndex+1}Question${questionIndex+1}Id=${questionId}${questionIndex !== productQuestionSet.length - 1 || productIndex !== data.configuredQuestions.length - 1 ? '&' : ''}`
         }) 
     })
     queryString += questionQueryString
 
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://sunset-bearing-investigators-allied.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
+    const href = data.reviewRequestId ? `https://opponents-ada-guild-apart.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,
         companyName: data.companyName,
-        productName: data.lineItems[0].title,
+        productName: data.lineItems.length > 0 ? data.lineItems[0].title : "",
         maxReward: data.maxReward?.toLowerCase(),
         stars: (
             `<div style="display: flex; justify-content: center; width: fit-content; gap: 5px; margin: 0px auto; padding: 0px">

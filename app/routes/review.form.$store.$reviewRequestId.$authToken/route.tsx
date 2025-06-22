@@ -23,8 +23,8 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const searchParams = url.searchParams
     const stars = parseInt(searchParams.get('stars') as string)
 
-    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: `${store}.myshopify.com`}, authToken: {equals: authToken}}}})
-    if (!reviewRequest) return redirect('/')
+    const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId}, AND: {store: {equals: `${store}.myshopify.com`}, authToken: {equals: authToken}}, isComplete: false}})
+    if (!reviewRequest) return redirect(`/404`)
     
     const matchingProductReviews = await db.productReview.findMany({where: {store: {equals: `${store}.myshopify.com`}, AND: {reviewRequestId: {equals: reviewRequest.id}}}})
     const alreadyReviewedProducts = matchingProductReviews.map(review => review.productId)
@@ -46,7 +46,15 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     if (productDataObjects.length === 0) return redirect('/')
    
     const productIds = productDataObjects.map(product => product.id)
-    const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: `${store}.myshopify.com`}, AND: [{productConfiguration: {equals: ['all']}}, {productIds: {hasSome: productIds}}]}, include: {radioAnswerChoices: true}})
+
+    const questions = await Promise.all(productIds.map(async (id, index) => {
+        const numConfigProductQuestions = parseInt(searchParams.get(`numProduct${index+1}Questions`) as string)
+        if (numConfigProductQuestions > 0) {
+            const questionId = searchParams.get(`product${index+1}Question${index+1}Id`) as string
+            return await db.reviewFormQuestion.findFirst({where: {id: {equals: questionId}}, include: {radioAnswerChoices: true}}) || null
+        }
+        return null
+    })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
     const rewardsTiers = await fetchRewardTiers(`${store}.myshopify.com`) as string[]
@@ -320,7 +328,7 @@ export default function ReviewForm() {
             if (key !== "selectedAnswerChoices" && userInputState[key as keyof typeof userInputState] === "") {
                 errors[key] = true
             } else {
-                const requiredQuestions = data.questions.filter(question => question.productIds.includes(productsToReview[0].id) || question.productConfiguration[0] === 'all' && question.isRequired[0] === "true")
+                const requiredQuestions = data.questions.filter(question => question.isRequired[0] === 'true')
                 const requiredQuestionIds = requiredQuestions.map(question => question.id)
                 requiredQuestionIds.forEach(questionId => {
                     if (!userInputState["selectedAnswerChoices"][questionId] || userInputState["selectedAnswerChoices"][questionId].length === 0) {
@@ -354,13 +362,14 @@ export default function ReviewForm() {
             reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
             reviewFormData.append('productId', productsToReview[0].id)
             reviewFormData.append('rating', rating.current.toString())
-            reviewFormData.append('store', data.reviewData.store)
+            reviewFormData.append('reviewScore', tierData.score.toString())
 
             uploadedMedia.forEach(file => reviewFormData.append("media", file))
 
             const res = await fetch('/api/review/request/create', {method: 'POST', body: reviewFormData})
             if (res.status !== 200) {
-                setErrors({'submission': true})
+                const data = await res.json()
+                setErrors({'submission': true, message: data.status})
             } else {
                 setReviewSuccessfullySubmitted(true)
                 const productsLeftToReview = productsToReview.filter(product => product.id !== productsToReview[0].id)
@@ -375,53 +384,51 @@ export default function ReviewForm() {
     }
 
     const CustomQuestionMarkup  = data.questions.map((question, index) => {
-        if (question.productConfiguration[0] === "all" || question.productIds.includes(productsToReview[0]?.id)) {
-            if (question.radioAllowMultipleAnswers[0] === 'true') {
-                const Markup = (
-                    <div key={index} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                        <label htmlFor={`multipleChoicesContainer-${question.id}`} className={styles.customQuestionTitle}>{question.title} {question.isRequired[0] === "true" ? '*' : ''}</label>
-                        <div id={`multipleChoicesContainer-${question.id}`} className={styles.multipleChoicesContainer}>
-                            <div data-status="closed" className={styles.dropdownTop} id={`dropdownTop-${question.id}`}>
-                                <p className={styles.selectedOptionsContainer} id={`selectedOptionsContainer-${question.id}`}>{userInputState.selectedAnswerChoices[question.id]?.length > 0 ? userInputState.selectedAnswerChoices[question.id].map(choice => choice.value).join(', ') : 'Select'}</p>
-                                <span id={`chevronContainer-${question.id}`}> 
-                                    <i className="fa-solid fa-chevron-down" style={{ color: "black" }}> </i>
-                                </span>
-                            </div>
-                            <div className={styles.dropdownItemsContainer} style={{display: 'none'}} id={`dropdownItemsContainer-${question.id}`}>
-                                {question.radioAnswerChoices.map((choice, index) => {
-                                    return (
-                                        <div key={index} data-answerchoicevalue={choice.value} data-clicked="false" data-choiceid={choice.id} className={styles.dropdownItem} id={`dropdownQuestion${question.id}Item`}>
-                                            {choice.value}
-                                            <div className={styles.checkbox} data-choiceidcheckbox={choice.id}></div>
-                                        </div>
-                                    )})
-                                }
-                            </div>
+        if (question.radioAllowMultipleAnswers[0] === 'true') {
+            const Markup = (
+                <div key={index} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                    <label htmlFor={`multipleChoicesContainer-${question.id}`} className={styles.customQuestionTitle}>{question.title} {question.isRequired[0] === "true" ? '*' : ''}</label>
+                    <div id={`multipleChoicesContainer-${question.id}`} className={styles.multipleChoicesContainer}>
+                        <div data-status="closed" className={styles.dropdownTop} id={`dropdownTop-${question.id}`}>
+                            <p className={styles.selectedOptionsContainer} id={`selectedOptionsContainer-${question.id}`}>{userInputState.selectedAnswerChoices[question.id]?.length > 0 ? userInputState.selectedAnswerChoices[question.id].map(choice => choice.value).join(', ') : 'Select'}</p>
+                            <span id={`chevronContainer-${question.id}`}> 
+                                <i className="fa-solid fa-chevron-down" style={{ color: "black" }}> </i>
+                            </span>
                         </div>
-                        {errors[question.id] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>This question is required</p>}
-                    </div>
-                )
-                return Markup
-            } else {
-                const Markup = (
-                    <div key={index} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
-                        <label htmlFor={`answerChoicesContainer-${question.id}`} className={styles.customQuestionTitle}>{question.title} {question.isRequired[0] === "true" ? '*' : ''}</label>
-                        <select 
-                        key={index}
-                        onChange={(e: any) => setUserInputState({...userInputState, selectedAnswerChoices: {...userInputState['selectedAnswerChoices'], [question.id]: e.target.value}})} 
-                        data-name={`customQuestion-${question.id}`} 
-                        className={styles.customQuestionDropdown} 
-                        id={`answerChoicesContainer-${question.id}`}>
-                            <option value="">Select one</option>
+                        <div className={styles.dropdownItemsContainer} style={{display: 'none'}} id={`dropdownItemsContainer-${question.id}`}>
                             {question.radioAnswerChoices.map((choice, index) => {
-                                return <option key={index} value={choice.id}>{choice.value}</option>
-                            })}
-                        </select>
-                        {errors[question.id] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>This question is required</p>}
+                                return (
+                                    <div key={index} data-answerchoicevalue={choice.value} data-clicked="false" data-choiceid={choice.id} className={styles.dropdownItem} id={`dropdownQuestion${question.id}Item`}>
+                                        {choice.value}
+                                        <div className={styles.checkbox} data-choiceidcheckbox={choice.id}></div>
+                                    </div>
+                                )})
+                            }
+                        </div>
                     </div>
-                )
-                return Markup
-            }
+                    {errors[question.id] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>This question is required</p>}
+                </div>
+            )
+            return Markup
+        } else {
+            const Markup = (
+                <div key={index} style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                    <label htmlFor={`answerChoicesContainer-${question.id}`} className={styles.customQuestionTitle}>{question.title} {question.isRequired[0] === "true" ? '*' : ''}</label>
+                    <select 
+                    key={index}
+                    onChange={(e: any) => setUserInputState({...userInputState, selectedAnswerChoices: {...userInputState['selectedAnswerChoices'], [question.id]: e.target.value}})} 
+                    data-name={`customQuestion-${question.id}`} 
+                    className={styles.customQuestionDropdown} 
+                    id={`answerChoicesContainer-${question.id}`}>
+                        <option value="">Select one</option>
+                        {question.radioAnswerChoices.map((choice, index) => {
+                            return <option key={index} value={choice.id}>{choice.value}</option>
+                        })}
+                    </select>
+                    {errors[question.id] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>This question is required</p>}
+                </div>
+            )
+            return Markup
         }
     })
     
@@ -556,7 +563,7 @@ export default function ReviewForm() {
                 style={{backgroundColor: data.formSettings.primaryFormColor}}>
                     Submit Review
                 </button>
-                {errors['submission'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Error submitting review</p>}
+                {errors['submission'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>{errors.message}</p>}
             </div>
         </div>
     )

@@ -139,7 +139,7 @@ model ReviewRequest {
   firstName         String
   email             String
   fulfillmentStatus String?
-  reviewStatus      String   @default("waiting")
+  isComplete        Boolean  @default(false)
   nextRequestDate   String?
   emailsSent        Int      @default(0)
   authToken         String

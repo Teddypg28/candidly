@@ -30,15 +30,10 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
     const noRewardsConfigured = rewards.every(reward => reward === "No Reward")
 
     if (reviewHeadlineWordList.length <= 3) {
-
         reviewHeadlineTier = 1
-
     } else if (reviewHeadlineWordList.length > 3 && reviewHeadlineWordList.length <= 9) {
-
         reviewHeadlineTier = 2
-
     } else {
-
         reviewHeadlineTier = 3
         reviewHeadlineStatusColor = "#67af98"
     }
@@ -49,18 +44,12 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
     let reviewBodyStatusColor = primaryColor
 
     if (reviewBodyWordList.length <= 14) {
-
         reviewBodyTier = 1
-
     } else if (reviewBodyWordList.length > 14 && reviewBodyWordList.length <= 39) {
-
         reviewBodyTier = 2
-
     } else {
-
         reviewBodyTier = 3
         reviewBodyStatusColor = '#67af98'
-
     }
 
     let uploadedMediaTier

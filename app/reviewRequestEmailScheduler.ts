@@ -4,7 +4,7 @@ import sendReviewRequestEmails from './sendReviewRequestEmails.server';
 // '30 8 * * *'
 
 new CronJob(
-  '03 12 * * *', 
+  '07 18 * * *', 
   async function () {
     
     await sendReviewRequestEmails()

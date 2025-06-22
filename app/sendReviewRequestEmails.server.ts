@@ -2,11 +2,11 @@ import db from './db.server'
 import { AppSettings } from './types/types'
 
 export default async function sendReviewRequestEmails() {
-    const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date().toLocaleDateString()}, AND: {reviewStatus: {equals: 'waiting'}}}})
+    const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date().toLocaleDateString()}, AND: {isComplete: {equals: false}}}})
 
     await Promise.all(requestsToSendToday.map(async (request) => {
 
-        await fetch(`https://sunset-bearing-investigators-allied.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
+        await fetch(`https://opponents-ada-guild-apart.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
 
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: request.store}}}) as AppSettings
 

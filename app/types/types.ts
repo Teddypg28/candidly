@@ -20,10 +20,10 @@ export const initialRewardState: Reward = {
 export const sampleReviewData = [
     ['title, body', 'firstName', 'email', 'rating', 'date', 'isPublished'],
     [
-        'Blizzard Bites are awesome!',
-        'They are definitely some of the best protein bites on the market! Looking forward to trying more soon!',
+        'PowderedSlopes is awesome!',
+        "This is definitely one of the best snowboards I've ever tried",
         'Katie',
-        'katielovesblizzardbites@gmail.com',
+        'katielovessnowboarding@gmail.com',
         5,
         new Date().toLocaleDateString(),
         false
@@ -61,7 +61,7 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     ),
     followUpEmailBody: (
         `
-            We hope you’re doing well! We wanted to follow up on our previous email about your {{productName}} experience. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
+            We hope you’re doing well! We wanted to follow up on our previous email about your experience with the: {{productName}}. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
 
             Remember: Completing the quick review form takes just a minute, and as a thank-you, you’ll be eligible for a reward of up to {{maxReward}}!
 

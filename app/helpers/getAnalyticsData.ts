@@ -1,10 +1,10 @@
-import { AdminApiContext } from 'node_modules/@shopify/shopify-app-remix/dist/ts/server/clients'
+import { AdminApiContextWithRest } from 'node_modules/@shopify/shopify-app-remix/dist/ts/server/clients'
 import db from '../db.server'
 import { SessionParams } from 'node_modules/@shopify/shopify-api/dist/ts/lib/session/types'
 import { startOfDay } from 'date-fns'
 import { AnalyticsData } from '~/types/types'
 
-const getProductName = async (productId: string, admin: AdminApiContext) => {
+const getProductName = async (productId: string, admin: AdminApiContextWithRest) => {
     const query = `
         query getProductName($id: ID!) {
             product(id: $id) {
@@ -17,7 +17,7 @@ const getProductName = async (productId: string, admin: AdminApiContext) => {
     return data.data.product ? {title: data.data.product.title} : {title: 'Product Deleted'}
 }
 
-export default async function getAnalyticsData(session: SessionParams, admin: AdminApiContext, dateRange: string) {
+export default async function getAnalyticsData(session: SessionParams, admin: AdminApiContextWithRest, dateRange: string) {
     // initialize totalReviews object
     let totalReviews: {
         id: string;
@@ -59,7 +59,8 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
         totalReviews = dateRange === 'all' ? totalReviews :  await db.productReview.findMany({where: {store: {equals: session.shop}, AND: {date: {gte: startOfDay(date)}}}})
         // read num of review request and num of review requests sent
         const totalReviewRequests = (await db.reviewRequest.findMany({where: {store: {equals: session.shop}, AND: {createdAt: {gte: startOfDay(date)}}}})).length
-        const totalReviewRequestsSent = (await db.reviewRequest.findMany({where: {nextRequestDate: {not: null}}})).length
+        let totalReviewRequestsSent = 0;
+        totalReviewRequestsSent = (await db.reviewRequest.findMany({where: {nextRequestDate: {not: null}}})).reduce((accumulator, currentValue) => accumulator + currentValue.emailsSent, totalReviewRequestsSent)
         // use reviews to get review data there are matching reviews for the provided date range
         if (totalReviews.length > 0) {
             let totalRatingValue = 0

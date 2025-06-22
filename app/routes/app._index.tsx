@@ -128,7 +128,7 @@ export default function Index() {
             }
         })
         return (
-            <InlineGrid columns={2} gap={'200'}>
+            <InlineGrid key={indice} columns={2} gap={'200'}>
                 {cards}
             </InlineGrid>
         )

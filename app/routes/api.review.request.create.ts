@@ -1,43 +1,39 @@
 import { ActionFunctionArgs, json } from "@remix-run/node"
 import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
-import { authenticate } from "~/shopify.server"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
 
-        const { session } = await authenticate.public.appProxy(request)
-
         const formData = await request.formData()
 
-        const authToken = formData.get('authToken') as 'string' | undefined
-        const reviewRequestId = formData.get('reviewRequestId') as 'string' | undefined
-        const store = formData.get('store') as 'string' | undefined
-        const productId = formData.get('productId') as 'string' | undefined
+        // convert form data to regular javascript object
+        const data: any = Object.fromEntries(formData)
+
+        const { authToken, reviewRequestId, store, productId, rating, body, title } = data
 
         // make sure the request includes all of the necessary data to submit the review
         if (!store || !reviewRequestId || !authToken || !productId) {
-            return new Response(JSON.stringify({status: 'missing required data'}), {status: 401})
+            return new Response(JSON.stringify({status: 'Missing required data'}), {status: 401})
         }
 
         // validate review request
-        const reviewRequestExists = await db.reviewRequest.findFirst({where: {authToken: {equals: authToken}, id: {equals: reviewRequestId}, store: {equals: store}}})
+        const reviewRequestExists = await db.reviewRequest.findFirst({where: {authToken: {equals: authToken}, id: {equals: reviewRequestId}, store: {equals: `${store}.myshopify.com`}}})
         if (!reviewRequestExists) {
-            return new Response(JSON.stringify({status: 'unauthorized to submit review'}), {status: 401})
+            return new Response(JSON.stringify({status: 'Unauthorized to submit review'}), {status: 401})
         }
 
         // make sure only 1 review is submitted per product
         const reviewExists = await db.productReview.findFirst({where: {reviewRequestId: {equals: reviewRequestId}, productId: {equals: productId}}})
         if (reviewExists) {
-            return new Response(JSON.stringify({status: 'review has already been submitted'}), {status: 401})
+            return new Response(JSON.stringify({status: 'Review has already been submitted'}), {status: 401})
         }
+
+        // make sure there isn't gibberish being entered for the review
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
         const uploadedMedia = formData.getAll('media') as File[]
         formData.delete('media')
-
-        // convert form data to regular javascript object
-        const data: any = Object.fromEntries(formData)
 
         // remove authToken
         delete data['authToken']
@@ -50,9 +46,9 @@ export async function action({ request } : ActionFunctionArgs) {
         delete data['customQuestionAnswers']
 
         // fetch store settings to check auto publishing rules
-        const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session?.shop}}})
-        const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
-        const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session?.shop, date: new Date(), isPublished, reviewRequestId: '12345'}})
+        const storeSettings = await db.appSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
+        const isPublished = storeSettings?.autoPublishReviews[0] === "true" && rating >= storeSettings.minReviewRating 
+        const newReview = await db.productReview.create({data: {...data, rating: parseInt(rating), store: `${store}.myshopify.com`, date: new Date(), isPublished, reviewRequestId}})
 
         // grab all of the ids connected to the selected answer choices
         const answerChoiceIds: string[] = []
@@ -85,11 +81,15 @@ export async function action({ request } : ActionFunctionArgs) {
                 return await db.answerChoiceSnapshot.create({data})
             }
         }))
-        return json({status: 'success'}, {status: 200})
+
+        // mark review request as completed
+        await db.reviewRequest.update({where: {id: reviewRequestId}, data: {isComplete: true}})
+
+        return json({status: 'Success'}, {status: 200})
     } 
         
      catch (error) {
         console.log(error)
-        return new Response(JSON.stringify({status: 'review verification failed'}), {status: 400})
+        return new Response(JSON.stringify({status: 'Review verification failed'}), {status: 400})
     }
 }
