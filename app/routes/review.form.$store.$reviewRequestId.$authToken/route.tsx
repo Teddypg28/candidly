@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { ReviewFormSettings } from "@prisma/client";
 import fetchRewardTiers from "~/helpers/rewards/fetchRewardTiers";
 
-import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
+import { FetchedReward, initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
 import calculateCurrentRewardTier from "~/helpers/rewards/calculateCurrentRewardTier";
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
 
@@ -57,7 +57,7 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
-    const rewardsTiers = await fetchRewardTiers(`${store}.myshopify.com`) as string[]
+    const rewardsTiers = await fetchRewardTiers(`${store}.myshopify.com`) as FetchedReward[]
 
     return {
         formSettings, 
@@ -101,7 +101,7 @@ export default function ReviewForm() {
     const tierData = calculateCurrentRewardTier(userInputState.title, userInputState.body, uploadedMediaRef, data.formSettings.primaryFormColor)
 
     const rewards = [data.rewardsTiers[0], data.rewardsTiers[1], data.rewardsTiers[2]]
-    const noRewardsConfigured = rewards.every(reward => reward === "No Reward")
+    const noRewardsConfigured = rewards.every(reward => reward === null)
 
     const renderStars = (rating: number) => {
         for (let i = 1; i<=5; i++) {
@@ -545,13 +545,13 @@ export default function ReviewForm() {
                     <div>
                         <div className={styles.rewardTiersContainer}>
                             <div className={styles.rewardTierOne} style={{backgroundColor: tierData.score === 1 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 1 ? 'none' : "blur(1px)"}}>
-                                <p className={styles.rewardTierText}>{rewards[0]}</p>
+                                <p className={styles.rewardTierText}>{rewards[0].name || "No Reward"}</p>
                             </div>
                             <div className={styles.rewardTierTwo} style={{backgroundColor: tierData.score === 2 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 2 ? 'none' : "blur(1px)"}}> 
-                                <p className={styles.rewardTierText}>{rewards[1]}</p>
+                                <p className={styles.rewardTierText}>{rewards[1].name || "No Reward"}</p>
                             </div>
                             <div className={styles.rewardTierThree} style={{backgroundColor: tierData.score === 3 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 3 ? 'none' : "blur(1px)"}}>
-                                <p className={styles.rewardTierText}>{rewards[2]}</p>
+                                <p className={styles.rewardTierText}>{rewards[2].name || "No Reward"}</p>
                             </div>
                         </div>
                     </div> 

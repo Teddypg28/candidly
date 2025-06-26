@@ -14,7 +14,9 @@ export const initialRewardState: Reward = {
     minPurchaseType: 'none', 
     minPurchaseDollarValue: 1, 
     minPurchaseQuantityValue: 1,
-    excludedProducts: []
+    productCollectionConfiguration: "all",
+    eligibleProducts: [],
+    eligibleCollections: []
 }
 
 export const sampleReviewData = [
@@ -172,14 +174,22 @@ export interface EmailCompanyData {
     logo: string | null
 }
 
-export interface ExcludedProduct {
+export interface EligibleProduct {
     productId: string
+}
+
+export interface EligibleCollection {
+    collectionId: string
 }
 
 export interface EmailOrderData {
     customerFirstName: string
     productName: string
     productImage: string
+}
+
+export interface FetchedReward {
+    name: string | null
 }
 
 export interface Import3rdPartyReviewsFormState {
@@ -303,7 +313,9 @@ export interface Reward {
     minPurchaseType: string
     minPurchaseDollarValue: number
     minPurchaseQuantityValue: number
-    excludedProducts: ExcludedProduct[]
+    productCollectionConfiguration: string
+    eligibleProducts: EligibleProduct[]
+    eligibleCollections: EligibleCollection[]
 }
 
 export interface RewardState {
@@ -314,13 +326,14 @@ export interface RewardState {
 
 export interface ReviewRequestData {
     store: string 
-    date: Date 
+    createdAt: Date 
     fulfillmentStatus: string | null 
-    reviewStatus: string 
+    isComplete: boolean 
     emailsSent: number 
-    product: string 
+    email: string
     orderId: number 
     orderName: string
+    firstName: string
 }
 
 export interface SettingsTab {
@@ -358,6 +371,11 @@ export interface SelectedProduct_Reward {
     images: {
         originalSrc: string
     }[]
+}
+
+export interface SelectedCollection_Reward {
+    id: string
+    title: string
 }
 
 export const initialUserReviewFormInputState: UserReviewFormInputState = {

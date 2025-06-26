@@ -1,16 +1,19 @@
 
 export default function calculateCurrentRewardTier(headline: string, body: string, uploadedMediaRef: React.MutableRefObject<any>, primaryFormColor: string) {
+    
     const reviewHeadlineWordList = headline.trim().split(/\s+/).filter(word => word !== "")
     let reviewHeadlineTier
     let reviewHeadlineStatusColor
 
-    if (reviewHeadlineWordList.length <= 3) {
+    if (reviewHeadlineWordList.length >= 2 && reviewHeadlineWordList.length < 5) {
         reviewHeadlineTier = 1
-    } else if (reviewHeadlineWordList.length > 3 && reviewHeadlineWordList.length <= 9) {
+    } else if (reviewHeadlineWordList.length >= 5 && reviewHeadlineWordList.length <= 9) {
         reviewHeadlineTier = 2
-    } else {
+    } else if (reviewHeadlineWordList.length > 9) {
         reviewHeadlineTier = 3
         reviewHeadlineStatusColor = "#67af98"
+    } else {
+        reviewHeadlineTier = 0
     }
 
     const reviewBodyWordList = body.trim().split(/\s+/).filter(word => word !== "")
@@ -18,13 +21,15 @@ export default function calculateCurrentRewardTier(headline: string, body: strin
     let reviewBodyTier
     let reviewBodyStatusColor = primaryFormColor
 
-    if (reviewBodyWordList.length <= 14) {
+    if (reviewBodyWordList.length >= 10 && reviewBodyWordList.length < 20) {
         reviewBodyTier = 1
-    } else if (reviewBodyWordList.length > 14 && reviewBodyWordList.length <= 39) {
+    } else if (reviewBodyWordList.length >= 20 && reviewBodyWordList.length < 40) {
         reviewBodyTier = 2
-    } else {
+    } else if (reviewBodyWordList.length > 40) {
         reviewBodyTier = 3
         reviewBodyStatusColor = '#67af98'
+    } else {
+        reviewBodyTier = 0
     }
 
     let uploadedMediaTier
@@ -32,7 +37,7 @@ export default function calculateCurrentRewardTier(headline: string, body: strin
 
     if (uploadedMediaRef.current.length === 0) {
         uploadedMediaTier = 1
-    } else if (uploadedMediaRef.current.length > 0 && uploadedMediaRef.current.length <= 1) {
+    } else if (uploadedMediaRef.current.length === 1) {
         uploadedMediaTier = 2
     } else {
         uploadedMediaTier = 3

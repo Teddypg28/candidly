@@ -113,13 +113,10 @@ export async function loader({ request } : LoaderFunctionArgs) {
         const currentOrderObjects = await retrieveCurrentOrders(query)
         
         await Promise.all(currentOrderObjects.map(async (orderObject: any) => {
-
             return db.reviewRequest.create({data: orderObject})
-
         }))
 
         await db.currentOrdersStatus.updateMany({where: {store: {equals: session.shop}}, data: {handled: true}})
-
     }
 
     // Retrieve review request data
@@ -127,9 +124,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
     const reviewRequestData = await db.reviewRequest.findMany({where: {store: {equals: session.shop}}})
 
     const results = await Promise.all(reviewRequestData.map(async (request) => {
-
         return createEachProductReviewRequest(request, admin)
-
     }))
 
     const reviewRequests: ReviewRequestData[] = []
@@ -162,25 +157,16 @@ export async function action({ request } : ActionFunctionArgs) {
     }
 
     if (action === 'create') {
-
         await db.savedReviewRequestTableView.create({ data: { ...state, store: session.shop } })
-
     } else if (action === 'update') {
-
         if (nameToUpdate) {
-
             await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: nameToUpdate}}}, data : { ...state, store: session.shop } })
-
         } else {
-
             await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: state.name}}}, data : { ...state, store: session.shop } })
-
         }
 
     } else {
-
         await db.savedReviewRequestTableView.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: data.viewNameToDelete}}}})
-
     }
 
     return true
@@ -202,20 +188,11 @@ export default function ReviewRequests() {
     // Filter reviews based on selected filters
     let filteredReviewRequests = reviewRequests.filter(request => {
         return request.orderName.includes(indexTableState.queryValue.trim()) || 
-               new Date(request.date).toLocaleDateString().includes(indexTableState.queryValue.trim())
-    }).filter(request => {
-        if (indexTableState.selectedProductFilters.length > 0) {
-            return indexTableState.selectedProductFilters.includes(request.product)
-        }
-        return request
+        new Date(request.createdAt).toLocaleDateString().includes(indexTableState.queryValue.trim()) ||
+        request.email.toLowerCase().includes(indexTableState.queryValue.trim().toLowerCase())
     }).filter(request => {
         if (indexTableState.selectedFulfillmentFilters.length > 0) {
             return indexTableState.selectedFulfillmentFilters.includes(request.fulfillmentStatus || 'pending')
-        }
-        return request
-    }).filter(request => {
-        if (indexTableState.selectedReviewStatusFilters.length > 0) {
-            return indexTableState.selectedReviewStatusFilters.includes(request.reviewStatus)
         }
         return request
     }).sort((a, b) => {
@@ -223,9 +200,9 @@ export default function ReviewRequests() {
             const sortValue = indexTableState.sortSelected[0]
             switch(sortValue) {
                 case 'date asc':
-                    return new Date(a.date).getTime() - new Date(b.date).getTime()
+                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
                 case 'date desc':
-                    return new Date(b.date).getTime() - new Date(a.date).getTime()
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 case 'numEmails asc':
                     return a.emailsSent - b.emailsSent
                 case 'numEmails desc':
@@ -254,8 +231,8 @@ export default function ReviewRequests() {
         return (
 
             <IndexTable.Row key={index} position={index} id={index.toString()}>
-                <IndexTable.Cell>{reviewRequest.product}</IndexTable.Cell>
-                <IndexTable.Cell>{new Date(reviewRequest.date).toLocaleDateString()}</IndexTable.Cell>
+                <IndexTable.Cell>{new Date(reviewRequest.createdAt).toLocaleDateString()}</IndexTable.Cell>
+                <IndexTable.Cell>{reviewRequest.email}</IndexTable.Cell>
                 <IndexTable.Cell>
                     <Link target="_blank" url={orderUrl}>{reviewRequest.orderName}</Link>
                 </IndexTable.Cell>
@@ -265,8 +242,8 @@ export default function ReviewRequests() {
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Badge tone={reviewRequest.reviewStatus === "waiting" ? "enabled" : "success" }>
-                        {reviewRequest.reviewStatus}
+                    <Badge tone={reviewRequest.isComplete ? "success" : "info" }>
+                        {reviewRequest.isComplete ? "complete" : "waiting"}
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>{reviewRequest.emailsSent}</IndexTable.Cell>
@@ -279,26 +256,7 @@ export default function ReviewRequests() {
     const {mode, setMode} = useSetIndexFiltersMode();
     const submit = useSubmit()
 
-    const productNames = reviewRequests.map(request => request.product)
-    const filteredProductNames = productNames.filter((name, index) => productNames.indexOf(name) === index).map(
-        name => { return  {label: name, value: name} }
-    )
     const filters: IndexFiltersProps['filters'] = [
-        {
-            key: 'product',
-            label: 'Product',
-            filter: (
-                <ChoiceList 
-                title=''
-                titleHidden
-                allowMultiple
-                choices={filteredProductNames}
-                onChange={(selected, name) => setIndexTableState({...indexTableState, selectedProductFilters: selected})}
-                selected={indexTableState.selectedProductFilters}
-                />
-            ),
-            
-        },
         {
             key: 'fulfillmentStatus',
             label: 'Fulfillment Status',
@@ -461,7 +419,7 @@ export default function ReviewRequests() {
                 <IndexTable 
                 pagination={pagination}
                 selectable={false}
-                headings={[{title: 'Customer Name'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Products(s) Purchased'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
+                headings={[{title: 'Order Date'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
                 itemCount={filteredReviewRequests.length}
                 >
                     {IndexTableMarkup}

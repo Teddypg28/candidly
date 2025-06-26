@@ -1,6 +1,6 @@
-import { AdminApiContext } from "node_modules/@shopify/shopify-app-remix/dist/ts/server/clients"
+import { AdminApiContextWithRest } from "node_modules/@shopify/shopify-app-remix/dist/ts/server/clients"
 
-export const createEachProductReviewRequest = async (request: any, admin: AdminApiContext) => {
+export const createEachProductReviewRequest = async (request: any, admin: AdminApiContextWithRest) => {
 
     const query = `
     {

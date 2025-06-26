@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://opponents-ada-guild-apart.trycloudflare.com"
+application_url = "https://tribe-treated-honey-mls.trycloudflare.com"
 embedded = true
 
 [build]
@@ -13,20 +13,20 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customers,read_orders,read_products,read_themes,write_products"
+scopes = "read_customers,read_orders,read_products,read_themes,write_products,write_discounts"
 
 [auth]
 redirect_urls = [
-  "https://opponents-ada-guild-apart.trycloudflare.com/auth/callback",
-  "https://opponents-ada-guild-apart.trycloudflare.com/auth/shopify/callback",
-  "https://opponents-ada-guild-apart.trycloudflare.com/api/auth/callback"
+  "https://tribe-treated-honey-mls.trycloudflare.com/auth/callback",
+  "https://tribe-treated-honey-mls.trycloudflare.com/auth/shopify/callback",
+  "https://tribe-treated-honey-mls.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://opponents-ada-guild-apart.trycloudflare.com/api"
+url = "https://tribe-treated-honey-mls.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

@@ -1,11 +1,11 @@
-import { json, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, Button, Card, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
 
 import db from '../db.server'
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
 import { AnalyticsData } from "~/types/types";
@@ -20,10 +20,15 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
     const analyticsData = await getAnalyticsData(session, admin, 'all')
     const isReviewWidgetEnabled = await isBlockEnabled(request, 'reviews', 'appBlock')
-
+    
     const themes = await admin.rest.resources.Theme.all({ session })
     const activeTheme = themes.data.find(theme => theme.role === "main")
     const activeThemeId = activeTheme?.id
+    
+    let dismissalState = await db.onboardingDismissalState.findFirst({where: {store: {equals: session.shop}}})
+    if (!dismissalState) {
+        dismissalState = await db.onboardingDismissalState.create({data: {store: session.shop}})
+    }
 
     return json(
         {
@@ -31,6 +36,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             reviewRequestEmailSettings, 
             reviewFormDesignSettings, 
             rewardSettings, 
+            isDismissed: dismissalState.isDismissed,
             analyticsData, 
             isReviewWidgetEnabled, 
             activeThemeId, 
@@ -39,11 +45,16 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     )
 }
 
+// change dismissed state
+export const action = async ({ request } : ActionFunctionArgs) => {
+    const { session } = await authenticate.admin(request)
+    return await db.onboardingDismissalState.updateMany({where: {store: {equals: session.shop}}, data: {isDismissed: true}})
+}
+
 export default function Index() {
 
     const data = useLoaderData<typeof loader>()
 
-    const [stepsDismissed, setStepsDismissed] = useState(false)
     const [dateRange, setDateRange] = useState('all')
     const [analyticsData, setAnalyticsData] = useState(data.analyticsData)
 
@@ -55,6 +66,8 @@ export default function Index() {
        }
        getAnalyticsData()
     }, [dateRange])
+
+    const submit = useSubmit()
 
     const onboardingSteps = [
         {
@@ -140,7 +153,7 @@ export default function Index() {
         primaryAction={{content: 'Support'}}
         >
             <BlockStack gap={'200'}>
-                {!stepsDismissed &&
+                {!data.isDismissed &&
                 <>
                     <Text as="h1" variant="headingLg">Setup</Text>
                     <Card>
@@ -153,7 +166,7 @@ export default function Index() {
                                         Feel free to ask us any questions using the support button in the upper right corner! Our goal is to help you achieve your goals!
                                     </Text>
                                 </BlockStack>
-                                <Button variant="plain" onClick={() => setStepsDismissed(true)}>Dismiss</Button>
+                                <Button variant="plain" onClick={() => submit('/', {method: 'POST'})}>Dismiss</Button>
                             </InlineStack>
                             :
                             <BlockStack gap='050'>

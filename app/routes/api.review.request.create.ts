@@ -1,6 +1,8 @@
 import { ActionFunctionArgs, json } from "@remix-run/node"
 import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
+import isGibberish from "~/helpers/gibberish/isGibberish"
+import fetchRewardTiers from "~/helpers/rewards/fetchRewardTiers"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
@@ -10,11 +12,11 @@ export async function action({ request } : ActionFunctionArgs) {
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
 
-        const { authToken, reviewRequestId, store, productId, rating, body, title } = data
+        const { authToken, reviewRequestId, store, productId, rating, reviewScore, body, title } = data
 
         // make sure the request includes all of the necessary data to submit the review
         if (!store || !reviewRequestId || !authToken || !productId) {
-            return new Response(JSON.stringify({status: 'Missing required data'}), {status: 401})
+            return new Response(JSON.stringify({status: 'Missing required data'}), {status: 400})
         }
 
         // validate review request
@@ -30,6 +32,9 @@ export async function action({ request } : ActionFunctionArgs) {
         }
 
         // make sure there isn't gibberish being entered for the review
+        if (isGibberish(title) || isGibberish(body)) {
+            return new Response(JSON.stringify({status: 'Uh oh! We detected some gibberish in your review!'}), {status: 400})
+        }
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
         const uploadedMedia = formData.getAll('media') as File[]
@@ -85,6 +90,38 @@ export async function action({ request } : ActionFunctionArgs) {
         // mark review request as completed
         await db.reviewRequest.update({where: {id: reviewRequestId}, data: {isComplete: true}})
 
+        // send customer a discount reward email if there is one configured
+        if (reviewScore > 0) {
+            const rewards = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
+            if (rewards) {
+                const rewardTierIds = [rewards.subparId, rewards.goodId, rewards.perfectId]
+                const rewardSettings = await db.rewardSetting.findFirst({where: {id: {equals: rewardTierIds[reviewScore-1]}}})
+                if (rewardSettings && rewardSettings.selectedRewardType !== "none") {
+                    switch (rewardSettings.selectedRewardType) {
+                        case "free-shipping":
+                            
+                            break;
+                        
+                        case "dollar":
+
+                            break;
+
+                        case "percent":
+
+                            break;
+
+                        case "bogo":
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            
+            }
+        }
+        
         return json({status: 'Success'}, {status: 200})
     } 
         

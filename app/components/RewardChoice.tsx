@@ -11,13 +11,9 @@ interface Props {
 export default function RewardChoice({type, state, setState} : Props) {
 
     const handleDollarAmountBlur = () => {
-
         if (isNaN(state[type as keyof RewardState].minPurchaseDollarValue)) {
-
             setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState], minPurchaseDollarValue: (0).toFixed(2)}}})
-
         } else {
-
             setState({...state, [type]: {...state[type as keyof RewardState], minPurchaseRequirements: {...state[type as keyof RewardState], minPurchaseDollarValue: Math.abs(parseFloat(state[type as keyof RewardState].minPurchaseDollarValue.toFixed(2)))}}})
         }
     }
@@ -43,8 +39,8 @@ export default function RewardChoice({type, state, setState} : Props) {
     const rewardDescription = type === 'perfect' ? 
     'A perfect review earns the best reward with a headline that has a mininum of 10 words, a body with a minimum of 40 words, and 2 or more images/videos' :
     type === 'good' ?
-    'A good review contains a headline with a minimum of 4 words, a body with a minimum of 15 words, and at least 1 image/video' :
-    'A subpar review has a headline with a maximum of 3 words, a body with a maximum of 10 words, and no images/videos.'
+    'A good review contains a headline with a minimum of 5 words, a body with a minimum of 20 words, and at least 1 image/video' :
+    'A subpar review has a headline with a minimum of 2 words, a body with a minimum of 10 words, and no images/videos.'
 
     return (
     <BlockStack gap={'200'}>

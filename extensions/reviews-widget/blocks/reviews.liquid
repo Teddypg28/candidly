@@ -6,7 +6,6 @@
 {% assign rating_count = block.settings.product.metafields.reviews.rating_count.value %}
 {% assign shop_name = shop.myshopify_domain %}
 
-{{ 'renderCurrentPage.js' | asset_url | script_tag }}
 {{ 'createReviewStars.js' | asset_url | script_tag }}
 {{ 'reviewFormFunctions.js' | asset_url | script_tag }}
 {{ 'reviewWidgetFunctions.js' | asset_url | script_tag }}

@@ -58,9 +58,8 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
     }      
         totalReviews = dateRange === 'all' ? totalReviews :  await db.productReview.findMany({where: {store: {equals: session.shop}, AND: {date: {gte: startOfDay(date)}}}})
         // read num of review request and num of review requests sent
-        const totalReviewRequests = (await db.reviewRequest.findMany({where: {store: {equals: session.shop}, AND: {createdAt: {gte: startOfDay(date)}}}})).length
-        let totalReviewRequestsSent = 0;
-        totalReviewRequestsSent = (await db.reviewRequest.findMany({where: {nextRequestDate: {not: null}}})).reduce((accumulator, currentValue) => accumulator + currentValue.emailsSent, totalReviewRequestsSent)
+        const totalReviewRequests = dateRange === 'all' ? await db.reviewRequest.findMany({where: {store: {equals: session.shop}}}) : await db.reviewRequest.findMany({where: {store: {equals: session.shop}, AND: {createdAt: {gte: startOfDay(date)}}}})
+        const totalReviewRequestsSent = totalReviewRequests.reduce((accumulator, currentValue) => accumulator + currentValue.emailsSent, 0)
         // use reviews to get review data there are matching reviews for the provided date range
         if (totalReviews.length > 0) {
             let totalRatingValue = 0
@@ -99,18 +98,18 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
                 {heading: 'Average Product Rating', value: totalAvgProductRating, key: 'avgProductRating'},
                 {heading: 'Best Rated Product', value: bestProductTitleHandle.title, link: `https://admin.shopify.com/store/powderedslopes/products/${bestProductId.split('Product/')[1]}`, key: 'bestProduct'},
                 {heading: 'Worst Rated Product', value: worstProductTitleHandle?.title || '-', link: `https://admin.shopify.com/store/powderedslopes/products/${worstProductData.productId.split('Product/')[1]}`, key: 'worstProduct'},
-                {heading: 'Total Review Requests', value: totalReviewRequests, key: 'totalReviewRequests'},
+                {heading: 'Total Review Requests', value: totalReviewRequests.length, key: 'totalReviewRequests'},
                 {heading: 'Total Review Requests Sent', value: totalReviewRequestsSent, key: 'totalReviewRequestsSent'}
             ]
             // return data
             return analyticsData
         }
         return [
+            {heading: 'Total Reviews', value: totalReviews.length, key: 'totalReviews'},
             {heading: 'Average Product Rating', value: '-', key: 'avgProductRating'},
             {heading: 'Best Rated Product', value: '-', handle: null, key: 'bestProduct'},
             {heading: 'Worst Rated Product', value: '-', handle: null, key: 'worstProduct'},
-            {heading: 'Total Reviews', value: totalReviews.length, key: 'totalReviews'},
-            {heading: 'Total Review Requests', value: totalReviewRequests, key: 'totalReviewRequests'},
+            {heading: 'Total Review Requests', value: totalReviewRequests.length, key: 'totalReviewRequests'},
             {heading: 'Total Review Requests Sent', value: totalReviewRequestsSent, key: 'totalReviewRequestsSent'}
         ]
 }
