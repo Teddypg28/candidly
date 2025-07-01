@@ -3,7 +3,7 @@ import { ImageIcon } from "@shopify/polaris-icons";
 
 import { useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
-import { Reward as RewardStateReward, RewardState, initialRewardState, SelectedProduct_Reward, EligibleProduct, SelectedCollection_Reward } from "~/types/types";
+import { Reward as RewardStateReward, RewardState, initialRewardState, SelectedProduct_Reward, EligibleProduct, SelectedCollection_Reward, EligibleCollection } from "~/types/types";
 import { Reward as RewardShape } from "@prisma/client";
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
@@ -24,26 +24,52 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     const currentReward = await db.reward.findFirst({where: {store: {equals: session.shop}}}) as RewardShape
 
     await Promise.all(['subpar', 'good', 'perfect'].map(async (reviewType) => {
-        // grab the eligible products (if any) from request data
+        // grab the eligible products and collections (if any) from request data
         const eligibleProducts = payload[reviewType].eligibleProducts as EligibleProduct[]
+        const eligibleCollections = payload[reviewType].eligibleCollections as EligibleCollection[]
+        // delete both from payload object so that rewardSetting records can be updated
         delete payload[reviewType]['eligibleProducts']
+        delete payload[reviewType]['eligibleCollections']
         // update reward setting
         const updatedRewardSetting = await db.rewardSetting.update({where: {id: currentReward[`${reviewType}Id` as keyof typeof Reward]}, data: {...payload[reviewType]}})
         // delete db records of eligible products that are no longer in the updated data
-        const currentDbRecords = await db.eligibleProduct.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
+        const currentEligibleProductDbRecords = await db.eligibleProduct.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
         // updated data showing just the ids of the products
         let updatedEligibleProductIds = eligibleProducts.map(product => product.productId)
-        await Promise.all(currentDbRecords.map(async (currentDbRecord) => {
+        await Promise.all(currentEligibleProductDbRecords.map(async (currentDbRecord) => {
             // if product id of eligible product from db not in updated eligible product ids, delete it from db
             if (!updatedEligibleProductIds.includes(currentDbRecord.productId)) {
                 await db.eligibleProduct.delete({where: {id: currentDbRecord.id}})
+            } else {
+                // check if variant ids are different and update accordingly
+                const eligibleProductData = eligibleProducts.find(eligibleProduct => eligibleProduct.productId === currentDbRecord.productId)
+                if (!currentDbRecord.variantIds.every(variantId => eligibleProductData?.variantIds.includes(variantId))
+                    || !eligibleProductData?.variantIds.every(variantId => currentDbRecord.variantIds.includes(variantId))
+                    ) {
+                    await db.eligibleProduct.update({where: {id: currentDbRecord.id}, data: {variantIds: eligibleProductData?.variantIds}})
+                }
             }
             updatedEligibleProductIds = updatedEligibleProductIds.filter(productId => productId !== currentDbRecord.productId)
         }))
-        // the remaining product ids need to be created 
+        // delete db records of eligible collections that are no longer in the updated data
+        const currentEligibleCollectionDbRecords = await db.eligibleCollection.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
+        // updated data showing just the ids of the products
+        let updatedEligibleCollectionIds = eligibleCollections.map(collection => collection.collectionId)
+        await Promise.all(currentEligibleCollectionDbRecords.map(async (currentDbRecord) => {
+            // if product id of eligible product from db not in updated eligible product ids, delete it from db
+            if (!updatedEligibleCollectionIds.includes(currentDbRecord.collectionId)) {
+                await db.eligibleCollection.delete({where: {id: currentDbRecord.id}})
+            }
+            updatedEligibleCollectionIds = updatedEligibleCollectionIds.filter(collectionId => collectionId !== currentDbRecord.collectionId)
+        }))
+        // the remaining product and collection ids need to be created 
         await Promise.all(updatedEligibleProductIds.map(async (productId) => {
             const data = eligibleProducts.find(product => product.productId === productId) as EligibleProduct
             await db.eligibleProduct.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
+        }))
+        await Promise.all(updatedEligibleCollectionIds.map(async (collectionId) => {
+            const data = eligibleCollections.find(collection => collection.collectionId === collectionId) as EligibleCollection
+            await db.eligibleCollection.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
         }))
     }))
     return true
@@ -56,9 +82,9 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
         include: 
             {
-                subpar: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}}}},
-                good: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}}}},
-                perfect: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}}}}
+                subpar: {include: {eligibleProducts: {select: {productId: true, variantIds: true}}, eligibleCollections: {select: {collectionId: true}}}},
+                good: {include: {eligibleProducts: {select: {productId: true, variantIds: true}}, eligibleCollections: {select: {collectionId: true}}}},
+                perfect: {include: {eligibleProducts: {select: {productId: true, variantIds: true}}, eligibleCollections: {select: {collectionId: true}}}}
             },
         omit: {
                 subparId: true,
@@ -113,7 +139,8 @@ export default function Reward() {
     const [currentTab, setCurrentTab] = useState('subpar')
     const [rewardState, setRewardState] = useState<RewardState>(data.rewardSettings)
     const cleanRewardState = data.rewardSettings
-
+    const [productCollectionErrors, setProductCollectionErrors] = useState(false)
+   
     const isStateDirty = JSON.stringify(rewardState) !== JSON.stringify(cleanRewardState)
 
     const [selectedProductsCollections, setSelectedProductsCollections] = useState<{
@@ -162,7 +189,6 @@ export default function Reward() {
             action: 'select',
             multiple: true
         })
-
         if (collections) {
             setSelectedProductsCollections({...selectedProductsCollections, collections: {...selectedProductsCollections["collections"], [currentTab]: collections}})
             const eligibleCollectionData = collections.map(collection => {
@@ -173,17 +199,29 @@ export default function Reward() {
             setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], eligibleCollections: eligibleCollectionData}})
         }
     }
-
+        
     const saveChanges = () => {
+        if (rewardState[currentTab as keyof typeof rewardState].productCollectionConfiguration === "products" && selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].length === 0 ||
+        rewardState[currentTab as keyof typeof rewardState].productCollectionConfiguration === "collections" && selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].length === 0
+        ) return setProductCollectionErrors(true)
+        
         submit(JSON.stringify(rewardState), {method: 'POST', encType: 'application/json'})
     }
 
     const removeEligibleProduct = (productId: string) => {
-        const updatedSelectedProducts = selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].filter((product: any) => product.id !== productId)
-        const updatedRewardState = rewardState[currentTab as keyof typeof rewardState].eligibleProducts.filter((product: any) => product.productId !== productId)
+        const updatedSelectedProducts = selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].filter((product) => product.id !== productId)
+        const updatedRewardState = rewardState[currentTab as keyof typeof rewardState].eligibleProducts.filter((product) => product.productId !== productId)
 
-        setSelectedProductsCollections({...selectedProductsCollections, collections: {...selectedProductsCollections["collections"], [currentTab]: updatedSelectedProducts}})
+        setSelectedProductsCollections({...selectedProductsCollections, products: {...selectedProductsCollections["products"], [currentTab]: updatedSelectedProducts}})
         setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], eligibleProducts: updatedRewardState}})
+    }
+
+    const removeEligibleCollection = (collectionId: string) => {
+        const updatedSelectedCollections = selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].filter((collection) => collection.id !== collectionId)
+        const updatedRewardState = rewardState[currentTab as keyof typeof rewardState].eligibleCollections.filter((collection) => collection.collectionId !== collectionId)
+
+        setSelectedProductsCollections({...selectedProductsCollections, collections: {...selectedProductsCollections["collections"], [currentTab]: updatedSelectedCollections}})
+        setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], eligibleCollections: updatedRewardState}})
     }
 
     return (
@@ -196,7 +234,7 @@ export default function Reward() {
             open={isStateDirty} 
             >
                 <button variant={'primary'} onClick={saveChanges}></button>
-                <button onClick={() => { setRewardState(cleanRewardState); setSelectedProductsCollections(cleanSelectedProductsCollections)}}></button>
+                <button onClick={() => { setRewardState(cleanRewardState); setSelectedProductsCollections(cleanSelectedProductsCollections); setProductCollectionErrors(false)}}></button>
             </SaveBar>
             <Layout>
                 <Layout.Section variant="oneHalf">
@@ -240,6 +278,8 @@ export default function Reward() {
                                 </Text>
                                 <Select
                                 label=''
+                                onChange={(val) => setRewardState({...rewardState, [currentTab]: {...rewardState[currentTab as keyof typeof rewardState], productCollectionConfiguration: val}})}
+                                value={rewardState[currentTab as keyof RewardState].productCollectionConfiguration}
                                 options={[
                                     {label: 'Products', value: 'products'},
                                     {label: 'Collections', value: 'collections'},
@@ -247,19 +287,25 @@ export default function Reward() {
                                 ]}
                                 />
                             </BlockStack>
-                            <InlineStack>
+                            <InlineStack gap={'100'}>
                                 {
                                     rewardState[currentTab as keyof RewardState].productCollectionConfiguration === "products" ?
-                                    <Button variant={'primary'} onClick={selectProducts}>Select Products</Button> :
+                                    <>
+                                        <Button variant={'primary'} onClick={selectProducts}>Select Products</Button> 
+                                        {productCollectionErrors && <Text tone="critical" as="p">You must select at least one product or collection</Text>}
+                                    </> :
                                     rewardState[currentTab as keyof RewardState].productCollectionConfiguration === "collections" ? 
-                                    <Button variant={'primary'} onClick={selectCollections}>Select Collections</Button> : ""
+                                    <>
+                                        <Button variant={'primary'} onClick={selectCollections}>Select Collections</Button>
+                                        {productCollectionErrors && <Text tone="critical" as="p">You must select at least one product or collection</Text>}
+                                    </> :
+                                    ""
                                 }
-
                             </InlineStack>
                             
                             {selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].length > 0 && 
                             <BlockStack gap={'200'}>
-                                {selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].map((product: any, index: number) => {
+                                {rewardState[currentTab as keyof RewardState].productCollectionConfiguration === "products" && selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].map((product, index: number) => {
 
                                     const productImage = product.images.length > 0 ? product.images[0].originalSrc : ImageIcon
 
@@ -270,7 +316,7 @@ export default function Reward() {
                                                 <BlockStack>
                                                     <Text fontWeight="bold" as="p">{product.title}</Text>
                                                     <InlineStack gap={'200'}>
-                                                        <Text as="p">Variants: {product.totalVariants === product.variants.length ? 'All' : product.variants.map((variant: any) => {
+                                                        <Text as="p">Variants: {product.totalVariants === product.variants.length ? 'All' : product.variants.map((variant) => {
                                                             return variant.title
                                                         }).join(', ')}
                                                         </Text>
@@ -279,6 +325,23 @@ export default function Reward() {
                                                 </BlockStack>
                                             </InlineStack>
                                             {index !== selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].length - 1 && <hr style={{width: '100%', backgroundColor: 'lightgray', height: '0.5px', border: 'none'}} />}
+                                        </>
+                                    )
+                                })}
+                            </BlockStack>
+                            }
+                            {rewardState[currentTab as keyof RewardState].productCollectionConfiguration === "collections" && selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].length > 0 && 
+                            <BlockStack gap={'200'}>
+                                {selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].map((collection, index: number) => {
+                                    return (
+                                        <>
+                                            <InlineStack key={index} gap={'200'} blockAlign="center">
+                                                <BlockStack gap={'150'}>
+                                                    <Text fontWeight="bold" as="p">{collection.title}</Text>
+                                                </BlockStack>
+                                                <Button onClick={() => removeEligibleCollection(collection.id)} variant="primary" tone="critical">Remove Collection</Button>
+                                            </InlineStack>
+                                            {index !== selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].length - 1 && <hr style={{width: '100%', backgroundColor: 'lightgray', height: '0.5px', border: 'none'}} />}
                                         </>
                                     )
                                 })}

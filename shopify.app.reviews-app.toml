@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://tribe-treated-honey-mls.trycloudflare.com"
+application_url = "https://sg-obesity-consist-michelle.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://tribe-treated-honey-mls.trycloudflare.com/auth/callback",
-  "https://tribe-treated-honey-mls.trycloudflare.com/auth/shopify/callback",
-  "https://tribe-treated-honey-mls.trycloudflare.com/api/auth/callback"
+  "https://sg-obesity-consist-michelle.trycloudflare.com/auth/callback",
+  "https://sg-obesity-consist-michelle.trycloudflare.com/auth/shopify/callback",
+  "https://sg-obesity-consist-michelle.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://tribe-treated-honey-mls.trycloudflare.com/api"
+url = "https://sg-obesity-consist-michelle.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

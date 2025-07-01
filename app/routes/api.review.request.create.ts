@@ -2,7 +2,7 @@ import { ActionFunctionArgs, json } from "@remix-run/node"
 import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
 import isGibberish from "~/helpers/gibberish/isGibberish"
-import fetchRewardTiers from "~/helpers/rewards/fetchRewardTiers"
+import { fetchRewardCreationMutation } from "~/helpers/rewards/fetchRewardCreationMutation"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
@@ -14,8 +14,11 @@ export async function action({ request } : ActionFunctionArgs) {
 
         const { authToken, reviewRequestId, store, productId, rating, reviewScore, body, title } = data
 
+        const storeSessionDetails = await db.session.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
+        const accessToken = storeSessionDetails?.accessToken
+
         // make sure the request includes all of the necessary data to submit the review
-        if (!store || !reviewRequestId || !authToken || !productId) {
+        if (!store || !reviewRequestId || !authToken || !productId || !accessToken) {
             return new Response(JSON.stringify({status: 'Missing required data'}), {status: 400})
         }
 
@@ -32,9 +35,9 @@ export async function action({ request } : ActionFunctionArgs) {
         }
 
         // make sure there isn't gibberish being entered for the review
-        if (isGibberish(title) || isGibberish(body)) {
-            return new Response(JSON.stringify({status: 'Uh oh! We detected some gibberish in your review!'}), {status: 400})
-        }
+        // if (isGibberish(title) || isGibberish(body)) {
+        //     return new Response(JSON.stringify({status: 'Uh oh! We detected some gibberish in your review!'}), {status: 400})
+        // }
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
         const uploadedMedia = formData.getAll('media') as File[]
@@ -49,6 +52,7 @@ export async function action({ request } : ActionFunctionArgs) {
         // remove it from main data object, so that review can be created
         delete data['selectedAnswerChoices']
         delete data['customQuestionAnswers']
+        delete data['reviewScore']
 
         // fetch store settings to check auto publishing rules
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
@@ -99,7 +103,26 @@ export async function action({ request } : ActionFunctionArgs) {
                 if (rewardSettings && rewardSettings.selectedRewardType !== "none") {
                     switch (rewardSettings.selectedRewardType) {
                         case "free-shipping":
-                            
+                            let mutationData
+                            const minPurchaseType = rewardSettings.minPurchaseType
+                            if (minPurchaseType !== "none") {
+                                const minPurchaseTypeValue = minPurchaseType === "quantity" ? rewardSettings.minPurchaseQuantityValue : rewardSettings.minPurchaseDollarValue
+                                mutationData = fetchRewardCreationMutation("free-shipping", undefined, {type: minPurchaseType as "quantity" | "subtotal", value: minPurchaseTypeValue})
+                            } else {
+                                mutationData = fetchRewardCreationMutation("free-shipping")
+                            }
+                            if (mutationData) {
+                                const res = await fetch(`https://${store}/admin/api/2024-01/graphql.json`, {
+                                    method: 'POST', 
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Shopify-Access-Token': accessToken,
+                                    },
+                                    body: JSON.stringify({mutation: mutationData.mutation, variables: mutationData.variables})
+                                })
+                                const resData = await res.json()
+                                console.log(resData)
+                            }
                             break;
                         
                         case "dollar":

@@ -14,7 +14,7 @@ export default async function fetchSelectedCollectionData(rewardSettings: Reward
             const res = await admin.graphql(query)
             const data = await res.json()
             selectedCollections[reviewType as keyof typeof selectedCollections].push({
-                title: data.data.product.title,
+                title: data.data.collection.title,
                 id: collection.collectionId
             })
 

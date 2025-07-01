@@ -2,7 +2,7 @@ import fetchRewardTiers from './fetchRewardTiers'
 
 export default async function fetchMaxReward(shop: string) {
     const rewardTiers = await fetchRewardTiers(shop)
-    if (rewardTiers.every(tier => tier.name === rewardTiers[0].name)) {
+    if (rewardTiers.every(tier => tier.name === null)) {
         return undefined
     }
     let maxReward: string = ''

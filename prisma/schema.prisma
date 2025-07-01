@@ -52,6 +52,7 @@ model CurrentOrdersStatus {
 model EligibleProduct {
   id              String        @id @default(uuid())
   productId       String
+  variantIds      String[]
   rewardSettingId String
   reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
 }

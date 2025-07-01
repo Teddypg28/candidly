@@ -36,7 +36,14 @@ export default async function fetchSelectedProductData(rewardSettings: RewardSta
             selectedProducts[reviewType as keyof typeof selectedProducts].push({
                 images: data.data.product.media ? [{originalSrc: data.data.product.media.edges[0].node.preview.image.url}] : [],
                 title: data.data.product.title,
-                id: product.productId
+                id: product.productId,
+                variants: data.data.product.variants.edges
+                    .filter((variant: any) => {
+                        if (product.variantIds.includes(variant.node.id)) {
+                            return variant
+                        }})
+                    .map((variant: any) => variant.node),
+                totalVariants: data.data.product.variants.edges.length
             })
 
         }))

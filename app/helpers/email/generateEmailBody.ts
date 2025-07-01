@@ -16,7 +16,7 @@ export default function generateEmailBody(emailBody: string, data: ReviewRequest
     queryString += questionQueryString
 
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://opponents-ada-guild-apart.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
+    const href = data.reviewRequestId ? `https://candle-granted-roughly-camp.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,

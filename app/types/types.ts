@@ -175,7 +175,8 @@ export interface EmailCompanyData {
 }
 
 export interface EligibleProduct {
-    productId: string
+    productId: string,
+    variantIds: string[]
 }
 
 export interface EligibleCollection {
@@ -368,6 +369,10 @@ export interface SettingsPageProps {
 export interface SelectedProduct_Reward {
     id: string
     title: string
+    totalVariants: number
+    variants: {
+        title: string
+    }[]
     images: {
         originalSrc: string
     }[]

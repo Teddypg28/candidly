@@ -317,6 +317,10 @@ export const fetchRewardCreationMutation = (type: "percent" | "dollar" | "free-s
             "usesPerOrderLimit": 1
         }
         }
+
+        return {mutation, variables}
     }
+
+    return null
 }
 
