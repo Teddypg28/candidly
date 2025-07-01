@@ -1,8 +1,6 @@
 import { ActionFunctionArgs, json } from "@remix-run/node"
 import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
-import isGibberish from "~/helpers/gibberish/isGibberish"
-import { fetchRewardCreationMutation } from "~/helpers/rewards/fetchRewardCreationMutation"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
@@ -33,11 +31,6 @@ export async function action({ request } : ActionFunctionArgs) {
         if (reviewExists) {
             return new Response(JSON.stringify({status: 'Review has already been submitted'}), {status: 401})
         }
-
-        // make sure there isn't gibberish being entered for the review
-        // if (isGibberish(title) || isGibberish(body)) {
-        //     return new Response(JSON.stringify({status: 'Uh oh! We detected some gibberish in your review!'}), {status: 400})
-        // }
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
         const uploadedMedia = formData.getAll('media') as File[]
@@ -93,57 +86,6 @@ export async function action({ request } : ActionFunctionArgs) {
 
         // mark review request as completed
         await db.reviewRequest.update({where: {id: reviewRequestId}, data: {isComplete: true}})
-
-        // send customer a discount reward email if there is one configured
-        if (reviewScore > 0) {
-            const rewards = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
-            if (rewards) {
-                const rewardTierIds = [rewards.subparId, rewards.goodId, rewards.perfectId]
-                const rewardSettings = await db.rewardSetting.findFirst({where: {id: {equals: rewardTierIds[reviewScore-1]}}})
-                if (rewardSettings && rewardSettings.selectedRewardType !== "none") {
-                    switch (rewardSettings.selectedRewardType) {
-                        case "free-shipping":
-                            let mutationData
-                            const minPurchaseType = rewardSettings.minPurchaseType
-                            if (minPurchaseType !== "none") {
-                                const minPurchaseTypeValue = minPurchaseType === "quantity" ? rewardSettings.minPurchaseQuantityValue : rewardSettings.minPurchaseDollarValue
-                                mutationData = fetchRewardCreationMutation("free-shipping", undefined, {type: minPurchaseType as "quantity" | "subtotal", value: minPurchaseTypeValue})
-                            } else {
-                                mutationData = fetchRewardCreationMutation("free-shipping")
-                            }
-                            if (mutationData) {
-                                const res = await fetch(`https://${store}/admin/api/2024-01/graphql.json`, {
-                                    method: 'POST', 
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-Shopify-Access-Token': accessToken,
-                                    },
-                                    body: JSON.stringify({mutation: mutationData.mutation, variables: mutationData.variables})
-                                })
-                                const resData = await res.json()
-                                console.log(resData)
-                            }
-                            break;
-                        
-                        case "dollar":
-
-                            break;
-
-                        case "percent":
-
-                            break;
-
-                        case "bogo":
-
-                            break;
-
-                        default:
-                            break;
-                    }
-                }
-            
-            }
-        }
         
         return json({status: 'Success'}, {status: 200})
     } 

@@ -3,22 +3,6 @@ import { MutableRefObject } from "react"
 
 // variables
 
-export const initialRewardState: Reward = {
-    selectedRewardType: 'none', 
-    fixedAmount: 10, 
-    percentageAmount: 10, 
-    bogoRewardType: "free", 
-    bogoPurchaseAmount: 1, 
-    bogoReceiveAmount: 1, 
-    bogoDiscountAmount: 1, 
-    minPurchaseType: 'none', 
-    minPurchaseDollarValue: 1, 
-    minPurchaseQuantityValue: 1,
-    productCollectionConfiguration: "all",
-    eligibleProducts: [],
-    eligibleCollections: []
-}
-
 export const sampleReviewData = [
     ['title, body', 'firstName', 'email', 'rating', 'date', 'isPublished'],
     [
@@ -54,9 +38,10 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
         
         We’d be so grateful if you could take a moment to share your experience. Your feedback not only helps us improve but also guides others in making confident choices.
         
-        As a special thank-you, we’re offering a reward of up to {{maxReward}} when you offer a quick rating. It’ll only take a minute of your time—and it would mean the world to us!
+        It’ll only take a minute of your time—and it would mean the world to us!
 
         {{stars}}
+
         Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
         
         - {{companyName}}`
@@ -64,8 +49,6 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     followUpEmailBody: (
         `
             We hope you’re doing well! We wanted to follow up on our previous email about your experience with the: {{productName}}. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
-
-            Remember: Completing the quick review form takes just a minute, and as a thank-you, you’ll be eligible for a reward of up to {{maxReward}}!
 
             {{stars}}
 
@@ -174,23 +157,10 @@ export interface EmailCompanyData {
     logo: string | null
 }
 
-export interface EligibleProduct {
-    productId: string,
-    variantIds: string[]
-}
-
-export interface EligibleCollection {
-    collectionId: string
-}
-
 export interface EmailOrderData {
     customerFirstName: string
     productName: string
     productImage: string
-}
-
-export interface FetchedReward {
-    name: string | null
 }
 
 export interface Import3rdPartyReviewsFormState {
@@ -272,7 +242,6 @@ export interface ReviewRequestEmailData {
     } | null,
     firstName?: string
     companyName?: string
-    maxReward?: string
     lineItems: {
         currentQuantity: number
         productId: string
@@ -301,28 +270,6 @@ export interface ReviewRequestEmailProductData {
     title: string,
     image: string | null,
     handle: string
-}
-
-export interface Reward {
-    selectedRewardType: string
-    fixedAmount: number
-    percentageAmount: number
-    bogoRewardType: string
-    bogoPurchaseAmount: number
-    bogoReceiveAmount: number
-    bogoDiscountAmount: number
-    minPurchaseType: string
-    minPurchaseDollarValue: number
-    minPurchaseQuantityValue: number
-    productCollectionConfiguration: string
-    eligibleProducts: EligibleProduct[]
-    eligibleCollections: EligibleCollection[]
-}
-
-export interface RewardState {
-    'subpar': Reward
-    'good': Reward
-    'perfect': Reward
 }
 
 export interface ReviewRequestData {
@@ -364,23 +311,6 @@ export interface SettingsPageProps {
     state: AppSettings
     setState: React.Dispatch<React.SetStateAction<AppSettings>>
     errors: MutableRefObject<string[]>
-}
-
-export interface SelectedProduct_Reward {
-    id: string
-    title: string
-    totalVariants: number
-    variants: {
-        title: string
-    }[]
-    images: {
-        originalSrc: string
-    }[]
-}
-
-export interface SelectedCollection_Reward {
-    id: string
-    title: string
 }
 
 export const initialUserReviewFormInputState: UserReviewFormInputState = {

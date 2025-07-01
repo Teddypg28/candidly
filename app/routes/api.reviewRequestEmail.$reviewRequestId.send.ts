@@ -4,7 +4,6 @@ import db from '../db.server'
 import sendEmail from "~/helpers/email/sendEmail";
 import { AppSettings, ReviewRequest, ReviewRequestEmailSettings } from "@prisma/client";
 import { ReviewRequestEmailData } from "~/types/types";
-import fetchMaxReward from "~/helpers/rewards/fetchMaxReward.server";
 import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
 
 export async function action( { request, params } : ActionFunctionArgs) {
@@ -50,7 +49,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
     }
   
     const firstName = reviewRequest.firstName
-    const maxReward = await fetchMaxReward(store)
   
     const productDetailsQuery = `{
         order(id: "gid://shopify/Order/${reviewRequest.orderId}") {
@@ -105,7 +103,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
       companyName: storeGeneralSettings.companyName,
       store: reviewRequest.store,
       firstName,
-      maxReward,
       lineItems,
       configuredQuestions
     }
