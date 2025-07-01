@@ -6,10 +6,8 @@ import { useLoaderData } from "@remix-run/react";
 import styles from '../../styles/ReviewForm.module.css'
 import { useEffect, useRef, useState } from "react";
 import { ReviewFormSettings } from "@prisma/client";
-import fetchRewardTiers from "~/helpers/rewards/fetchRewardTiers";
 
-import { FetchedReward, initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
-import calculateCurrentRewardTier from "~/helpers/rewards/calculateCurrentRewardTier";
+import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
@@ -57,11 +55,9 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
-    const rewardsTiers = await fetchRewardTiers(`${store}.myshopify.com`) as FetchedReward[]
 
     return {
         formSettings, 
-        rewardsTiers, 
         customerData: {firstName: reviewRequest.firstName, email: reviewRequest.email}, 
         reviewData: {reviewRequestId, authToken, store},
         productDataObjects, 
@@ -97,11 +93,6 @@ export default function ReviewForm() {
     const uploadedMediaRef = useRef<File[]>([])
 
     const [uploadMediaError, setUploadMediaError] = useState('')
-
-    const tierData = calculateCurrentRewardTier(userInputState.title, userInputState.body, uploadedMediaRef, data.formSettings.primaryFormColor)
-
-    const rewards = [data.rewardsTiers[0], data.rewardsTiers[1], data.rewardsTiers[2]]
-    const noRewardsConfigured = rewards.every(reward => reward === null)
 
     const renderStars = (rating: number) => {
         for (let i = 1; i<=5; i++) {
@@ -362,7 +353,6 @@ export default function ReviewForm() {
             reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
             reviewFormData.append('productId', productsToReview[0].id)
             reviewFormData.append('rating', rating.current.toString())
-            reviewFormData.append('reviewScore', tierData.score.toString())
 
             uploadedMedia.forEach(file => reviewFormData.append("media", file))
 
@@ -469,40 +459,16 @@ export default function ReviewForm() {
                     <label> Give it a Headline * </label>
                     <div style={{position: 'relative'}}>
                         <input value={userInputState.title} onChange={(e) => setUserInputState({...userInputState, title: e.target.value})} name='title' placeholder={data.formSettings.headlinePlaceholder} />
-                        {!noRewardsConfigured && tierData.headline.tier === 3 && 
-                        <div className={styles.characterCountContainer} style={{backgroundColor: tierData.headline.color, padding: '5px 10px'}}>
-                            <span>Perfect!</span>
-                        </div>}
                     </div>
                     {errors['title'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Headline is required</p>}
                 </div>
-                {!noRewardsConfigured &&
-                <div style={{marginBottom: '10px'}}>
-                    <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                        <div className={styles.progressBar} style={{backgroundColor: tierData.headline.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(tierData.headline.wordlist.length / 10 * 100)}%`}}> </div>
-                    </div>
-                    <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.headline.tier == 3 ? tierData.headline.color : 'black'}}>{tierData.headline.tier === 3 ? "You wrote a perfect headline!" : `You are ${Math.round(tierData.headline.wordlist.length / 10 * 100)}% of the way to writing the perfect headline`}</p>
-                </div>
-                }
                 <div className={styles.reviewFieldWrapper}>
                     <label>Review *</label>
                     <div style={{position: 'relative'}}>
                         <textarea value={userInputState.body} onChange={(e) => setUserInputState({...userInputState, body: e.target.value})} name='body' className={styles.reviewTextArea} placeholder={data.formSettings.reviewPlaceholder} />
-                        {!noRewardsConfigured && tierData.body.tier === 3 && 
-                        <div className={styles.characterCountContainer} style={{backgroundColor: tierData.body.color, padding: '5px 10px'}}>
-                            <span>Perfect!</span>
-                        </div>}
                     </div>
                     {errors['body'] && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>Review is required</p>}
                 </div>
-                {!noRewardsConfigured &&
-                <div>
-                    <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                        <div className={styles.progressBar} style={{backgroundColor: tierData.body.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(tierData.body.wordList.length / 40 * 100)}%`}}> </div>
-                    </div>
-                    <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.body.tier == 3 ? tierData.body.color : 'black'}}>{tierData.body.tier !== 3 ? `You are ${Math.round(tierData.body.wordList.length / 40 * 100)}% of the way to writing the perfect body` : "You wrote the perfect body!"}</p>
-                </div>
-                }
                 {CustomQuestionMarkup}
                 <div className={styles.reviewNameEmailWrapper}>
                     <div className={styles.reviewNameEmailContainer}>
@@ -523,40 +489,8 @@ export default function ReviewForm() {
                     </label>
                     <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
                     <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn}accept='image/png, image/jpg, image/jpeg, video/*' multiple />
-                    {!noRewardsConfigured && tierData.media.tier === 3 && 
-                    <div className={styles.characterCountContainer} style={{backgroundColor: tierData.media.color, bottom: '5px', padding: '5px 10px'}}>
-                        <span>Perfect!</span>
-                    </div>}
                 </div>
                 {uploadMediaError && <p style={{backgroundColor: 'rgb(240, 220, 220)', borderRadius: '0.25rem', textAlign: 'left', color: 'darkred', padding: '10px 5px', margin: 0, fontSize: '14px', marginTop: '5px'}}>{uploadMediaError}</p>}
-                {!noRewardsConfigured && 
-                <>
-                    <div>
-                        <div style={{borderRadius: '5px', width: '100%', height: '17px', backgroundColor: '#e2e2e2', overflow: 'hidden'}}>
-                            <div className={styles.progressBar} style={{backgroundColor: tierData.media.tier === 3 ? '#67af98' : data.formSettings.primaryFormColor, height: '100%', width: `${Math.round(uploadedMediaRef.current.length / 2 * 100)}%`}}> </div>
-                        </div>
-                        <p style={{margin: 0, padding: 0, marginTop: 5, fontSize: '14px', color: tierData.media.tier == 3 ? tierData.media.color : 'black'}}>{tierData.media.tier === 3 ? "You uploaded the perfect amount of media!" : `You are ${Math.round(uploadedMediaRef.current.length / 2 * 100)}% of the way to the perfect media upload`}</p>
-                    </div>
-                    <hr style={{width: '100%', backgroundColor: 'lightgray', border: 'none', height: '0.20px'}} />
-                    <div>
-                        <p style={{fontWeight: 'bold', margin: 0}}>Reward Tiers</p>
-                        <p style={{margin: 0, marginTop: '3px', fontSize: '14px'}}>The better your review, the better your reward</p>
-                    </div>
-                    <div>
-                        <div className={styles.rewardTiersContainer}>
-                            <div className={styles.rewardTierOne} style={{backgroundColor: tierData.score === 1 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 1 ? 'none' : "blur(1px)"}}>
-                                <p className={styles.rewardTierText}>{rewards[0].name || "No Reward"}</p>
-                            </div>
-                            <div className={styles.rewardTierTwo} style={{backgroundColor: tierData.score === 2 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 2 ? 'none' : "blur(1px)"}}> 
-                                <p className={styles.rewardTierText}>{rewards[1].name || "No Reward"}</p>
-                            </div>
-                            <div className={styles.rewardTierThree} style={{backgroundColor: tierData.score === 3 ? data.formSettings.primaryFormColor : 'lightgray', filter: tierData.score === 3 ? 'none' : "blur(1px)"}}>
-                                <p className={styles.rewardTierText}>{rewards[2].name || "No Reward"}</p>
-                            </div>
-                        </div>
-                    </div> 
-                </>
-                }
                 <button 
                 onClick={submitReview} 
                 className={styles.submitReviewBtn} 
