@@ -2,7 +2,6 @@ import { Card } from "@shopify/polaris"
 
 import styles from '../styles/ReviewPreview.module.css'
 import { useEffect, useRef, useState } from "react"
-import { FetchedReward } from "~/types/types"
 
 interface Props {
     heading: string,
@@ -10,10 +9,9 @@ interface Props {
     headlinePlaceholder: string
     reviewPlaceholder: string
     primaryColor: string
-    rewards: FetchedReward[]
 }
 
-const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor, rewards } : Props ) => {
+const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor } : Props ) => {
 
     const [reviewBody, setReviewBody] = useState('')
     const [reviewHeadline, setReviewHeadline] = useState('')

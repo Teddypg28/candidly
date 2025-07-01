@@ -20,7 +20,6 @@ import uploadLogo from "~/utils/uploadLogo";
 
 import standardizeLineBreaks from "~/helpers/email/standardizeLineBreaks";
 import generateEmailBody from "~/helpers/email/generateEmailBody";
-import fetchMaxReward from "~/helpers/rewards/fetchMaxReward.server";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
@@ -110,12 +109,12 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         
         // convert each email body to consistent line break format
         standardizeLineBreaks(settings)
-        return json({settings: {...settings, companyName}, productData, maxReward: await fetchMaxReward(settings.store)})
+        return json({settings: {...settings, companyName}, productData})
     }
     const defaultSettings = await db.reviewRequestEmailSettings.create({data: {...defaultReviewRequestEmailSettings, logo: undefined, store: session.shop}, include: {logo: {omit: {id: true, reviewRequestEmailSettingsId: true}}}})
     // convert each email body to consistent line break format
     standardizeLineBreaks(defaultSettings)
-    return json({settings: {...defaultSettings, companyName}, productData: [] as ReviewRequestEmailProductData[], maxReward: await fetchMaxReward(defaultSettings.store)})
+    return json({settings: {...defaultSettings, companyName}, productData: [] as ReviewRequestEmailProductData[]})
 }
 
 export default function EmailTemplate() {
@@ -226,7 +225,6 @@ export default function EmailTemplate() {
         logo: settings.logo,
         companyName: settings.companyName,
         store: settings.store,
-        maxReward: data.maxReward,
         lineItems: [],
         configuredQuestions: []
     }
@@ -309,9 +307,6 @@ export default function EmailTemplate() {
                         <br />
                         <br />
                         <strong>{`{{productName}}`}</strong> - optional; replaced with the name of the product for which the review request is for
-                        <br />
-                        <br />
-                        <strong>{`{{maxReward}}`}</strong> - optional; replaced with the max reward that you are offering
                     </Text>
                 </Card>
             </Modal>

@@ -17,7 +17,6 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewFormDesignSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
-    const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
     const analyticsData = await getAnalyticsData(session, admin, 'all')
     const isReviewWidgetEnabled = await isBlockEnabled(request, 'reviews', 'appBlock')
     
@@ -35,7 +34,6 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             appSettings, 
             reviewRequestEmailSettings, 
             reviewFormDesignSettings, 
-            rewardSettings, 
             isDismissed: dismissalState.isDismissed,
             analyticsData, 
             isReviewWidgetEnabled, 
@@ -81,12 +79,6 @@ export default function Index() {
             description: 'Make any necessary changes to the default settings that are currently in place', 
             complete: data.appSettings,
             url: '/app/settings/general'
-        },
-        {
-            name: 'Create some rewards!', 
-            description: 'Choose how you want to reward your customers when they submit reviews for your products.', 
-            complete: data.rewardSettings,
-            url: '/app/rewards'
         },
         {
             name: 'Customize Your Review Request Email Template', 
