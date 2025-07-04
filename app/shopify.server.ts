@@ -4,10 +4,14 @@ import {
   AppDistribution,
   DeliveryMethod,
   shopifyApp,
+  BillingInterval
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
 import prisma from "./db.server";
+
+export const MONTHLY_BASIC_PLAN = "Monthly Basic Subscription"
+export const MONTHLY_ADV_PLAN = "Monthly Advanced Subscription"
 
 import './reviewRequestEmailScheduler'
 
@@ -43,6 +47,26 @@ const shopify = shopifyApp({
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
   restResources,
+  billing: {
+    [MONTHLY_BASIC_PLAN]: {
+      lineItems: [
+        {
+          amount: 9.99,
+          currencyCode: 'USD',
+          interval: BillingInterval.Every30Days,
+        }
+      ]
+    },
+    [MONTHLY_ADV_PLAN]: {
+      lineItems: [
+        {
+          amount: 19.99,
+          currencyCode: 'USD',
+          interval: BillingInterval.Annual,
+        }
+      ]
+    },
+  },
   future: {
     unstable_newEmbeddedAuthStrategy: true,
   },

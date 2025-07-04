@@ -117,6 +117,7 @@ model ReviewRequestEmailSettings {
   productIds        String[]
   initialEmailBody  String
   followUpEmailBody String
+  subject           String                  @default("Tell Us How You Feel")
 }
 
 model ReviewFormSettings {
@@ -142,6 +143,12 @@ model ReviewRequest {
   nextRequestDate   String?
   emailsSent        Int      @default(0)
   authToken         String
+}
+
+model Subscriptions {
+  id   String @id @default(uuid())
+  shop String
+  type String
 }
 
 model Session {

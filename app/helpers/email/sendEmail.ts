@@ -28,7 +28,7 @@ export default async function sendEmail(emailBody: string, emailData: ReviewRequ
             },
           },
           Subject: {
-            Data: 'Tell Us How You Feel',
+            Data: emailData.subject,
             Charset: 'UTF-8',
           },
         },

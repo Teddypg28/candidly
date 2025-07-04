@@ -43,9 +43,9 @@ export async function action( { request, params } : ActionFunctionArgs) {
   
     let emailBody
     if (reviewRequest.emailsSent === 0) {
-        emailBody = storeEmailSettings.initialEmailBody
+      emailBody = storeEmailSettings.initialEmailBody
     } else {
-        emailBody = storeEmailSettings.followUpEmailBody
+      emailBody = storeEmailSettings.followUpEmailBody
     }
   
     const firstName = reviewRequest.firstName
@@ -102,6 +102,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
       logo: storeEmailSettings.logo,
       companyName: storeGeneralSettings.companyName,
       store: reviewRequest.store,
+      subject: storeEmailSettings.subject,
       firstName,
       lineItems,
       configuredQuestions

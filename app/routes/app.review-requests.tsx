@@ -195,7 +195,14 @@ export default function ReviewRequests() {
             return indexTableState.selectedFulfillmentFilters.includes(request.fulfillmentStatus || 'pending')
         }
         return request
-    }).sort((a, b) => {
+    })
+      .filter(request => {
+        if (indexTableState.selectedReviewStatusFilters.length > 0) {
+            return request.isComplete ? indexTableState.selectedReviewStatusFilters.includes('submitted') : indexTableState.selectedReviewStatusFilters.includes('waiting')
+        }
+        return request
+      })
+        .sort((a, b) => {
         if (indexTableState.sortSelected) {
             const sortValue = indexTableState.sortSelected[0]
             switch(sortValue) {

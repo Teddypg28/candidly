@@ -6,7 +6,7 @@ export default async function sendReviewRequestEmails() {
 
     await Promise.all(requestsToSendToday.map(async (request) => {
 
-        await fetch(`https://candle-granted-roughly-camp.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
+        await fetch(`https://${process.env.APP_BASE_URL}.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
 
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: request.store}}}) as AppSettings
 

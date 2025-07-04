@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Button, Card, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
-import { authenticate } from "~/shopify.server";
+import { Banner, BlockStack, Button, Card, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
+import { authenticate, MONTHLY_BASIC_PLAN, MONTHLY_ADV_PLAN } from "~/shopify.server";
 
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
 
@@ -12,7 +12,13 @@ import { AnalyticsData } from "~/types/types";
 import isBlockEnabled from "~/helpers/isBlockEnabled";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
-    const { session, admin } = await authenticate.admin(request)
+    const { session, admin, billing } = await authenticate.admin(request)
+
+    // const billingDetails = await billing.require({
+    //     plans: [MONTHLY_BASIC_PLAN, MONTHLY_ADV_PLAN],
+    //     isTest: true,
+    //     onFailure: async () => billing.request({ plan: MONTHLY_BASIC_PLAN }),
+    // });
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
@@ -142,9 +148,12 @@ export default function Index() {
     return (
         <Page
         title="Home Dashboard"
-        primaryAction={{content: 'Support'}}
+        primaryAction={{content: 'Support', url: 'mailto:support@trycandidly.app?subject=Support Request', target: '_parent'}}
         >
             <BlockStack gap={'200'}>
+                <Banner tone="info">
+                    Need help? Send us an email at <strong>support@trycandidly.app</strong> by clicking the "Support" button
+                </Banner>
                 {!data.isDismissed &&
                 <>
                     <Text as="h1" variant="headingLg">Setup</Text>

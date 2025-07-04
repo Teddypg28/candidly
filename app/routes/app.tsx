@@ -26,11 +26,13 @@ export default function App() {
           Home
         </Link>
         <Link to="/app/reviews">Reviews</Link>
+        <Link to="/app/review-form">Review Form</Link>
         <Link to="/app/review-requests">Review Requests</Link>
-        <Link to="/app/review-form">Review Form Design</Link>
-        <Link to="/app/email-template">Email Design</Link>
+        <Link to="/app/email-template">Review Request Email</Link>
         <Link to="/app/custom-questions">Custom Questions</Link>
+        <Link to="/app/rewards">Rewards</Link>
         <Link to="/app/settings/general">Settings</Link>
+        <Link to="/app/billing">Billing</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>

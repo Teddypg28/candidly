@@ -1,4 +1,4 @@
-import { BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, Thumbnail } from "@shopify/polaris";
+import { BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, TextField, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
@@ -225,6 +225,7 @@ export default function EmailTemplate() {
         logo: settings.logo,
         companyName: settings.companyName,
         store: settings.store,
+        subject: settings.subject,
         lineItems: [],
         configuredQuestions: []
     }
@@ -340,6 +341,12 @@ export default function EmailTemplate() {
                                     fileUploadBtn  
                                 }
                                 </DropZone>
+                                <TextField 
+                                label="Email Subject" 
+                                value={settings.subject}
+                                onChange={(val) => {setSettings(prevSettings => {return {...prevSettings, subject: val}})}}
+                                autoComplete="off"
+                                />
                                 <BlockStack gap='100'>
                                     <Label id="colorPicker">Banner Background Color</Label>
                                     <HexColorPicker
@@ -352,33 +359,6 @@ export default function EmailTemplate() {
                                     onChange={(color) => { setSettings(prevSettings => {return {...prevSettings, bannerBgColor: color}})}} 
                                     />
                                 </BlockStack>
-                                {/* <ChoiceList 
-                                title='Recommended Products Display'
-                                onChange={(productDisplay) => setSettings(prevSettings => {return {...prevSettings, productDisplay}})}
-                                selected={settings.productDisplay}
-                                choices={[
-                                    {
-                                        label: 'Disable',
-                                        value: 'disabled'
-                                    },
-                                    {
-                                        label: 'Random Products',
-                                        value: 'random'
-                                    }, 
-                                    {
-                                        label: 'Select Products',
-                                        value: 'select',
-                                        renderChildren: (isSelected) => {
-                                            return isSelected && (
-                                                <InlineStack gap={'200'} blockAlign="center">
-                                                    <Button onClick={selectProducts}>{productData.length > 0 ? 'Change Products' : 'Select Products'}</Button> 
-                                                    <Text as="p" fontWeight="bold">{productData.length}/3 Products</Text>
-                                                </InlineStack>
-                                            )
-                                        },
-                                    }
-                                ]}
-                                /> */}
                             </BlockStack>
                         </Card>
                     </Layout.Section>
@@ -412,39 +392,6 @@ export default function EmailTemplate() {
                                         </div>
                                     </div>
                                     <div dangerouslySetInnerHTML={{__html: generateEmailBody(emailBody, emailData)}}></div>
-                                    {/* {
-                                        settings.productDisplay[0] !== 'disabled' && 
-                                        <>
-                                            <hr className={styles.separator} />
-                                            <h2 style={{fontWeight: 'bold', fontSize: '18px'}}>Top Picks for You</h2>
-                                            {settings.productDisplay[0] === 'random' ?
-                                            <Banner tone="info">
-                                                3 random products will be displayed here
-                                            </Banner>
-                                            :
-                                            <InlineStack gap={'600'}>
-                                                {
-                                                productData.length > 0 ? productData.map((product, index) => {
-                                                    return (
-                                                        <div key={index} style={{width: '100px'}}>
-                                                            <div className={styles.productImageContainer}>
-                                                                {product.image ? <img style={{objectFit: 'cover'}} height={'100%'} width={'100%'} src={product.image} /> : <ImageIcon height={'100%'} width={'100%'} />}
-                                                            </div>
-                                                            <p style={{fontSize: '10px', textAlign: 'center'}}>{product.title}</p>
-                                                            <button onClick={() => window.open(`https://${settings.store}/products/${product.handle}`)} className={styles.shopNowBtn}>Shop Now</button>
-                                                        </div>
-                                                    )
-                                                })
-                                                :
-                                                    <BlockStack>
-                                                        <div id="productSelection">Select which products to display</div>
-                                                        {productSelectionError && <InlineError fieldID="productSelection" message="Please select at least 1 product" />}
-                                                    </BlockStack>
-                                                }
-                                            </InlineStack>
-                                            }
-                                        </>
-                                    } */}
                                 </BlockStack>
                             </BlockStack>
                         </Card>

@@ -32,7 +32,7 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     productIds: [],
     companyName: undefined,
     initialEmailBody: (
-        `Hey {{first_name}},
+        `Hey {{firstName}},
     
         We hope you’re absolutely loving your {{productName}}!
         
@@ -48,6 +48,8 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     ),
     followUpEmailBody: (
         `
+            Hey {{firstName}},
+            
             We hope you’re doing well! We wanted to follow up on our previous email about your experience with the: {{productName}}. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
 
             {{stars}}
@@ -56,7 +58,8 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
 
             - {{companyName}}
         `
-    )
+    ),
+    subject: "Tell Us How You Feel"
 }
 
 export const initialImportCsvFileState: ImportCsvFileState = {
@@ -234,6 +237,7 @@ export interface ReviewRequestEmailData {
     authToken?: string | null
     reviewRequestId?: string
     store: string
+    subject: string
     bannerBgColor: string
     logo: {
         name: string
@@ -264,6 +268,7 @@ export interface ReviewRequestEmailSettings {
     companyName?: string
     initialEmailBody: string
     followUpEmailBody: string
+    subject: string
 }
 
 export interface ReviewRequestEmailProductData {
