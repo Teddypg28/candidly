@@ -7,6 +7,7 @@
 {% assign shop_name = shop.myshopify_domain %}
 
 {{ 'createReviewStars.js' | asset_url | script_tag }}
+{{ 'renderQuestions.js' | asset_url | script_tag }}
 {{ 'reviewFormFunctions.js' | asset_url | script_tag }}
 {{ 'reviewWidgetFunctions.js' | asset_url | script_tag }}
 {{ 'paginatorFunctions.js' | asset_url | script_tag }}
@@ -42,7 +43,8 @@ const reviewSettings = {
     backgroundColor: '#f6f6f6',
     customQuestions:[]
 }
-let reviews = []
+let showing = "reviews"
+let questionsWithAnswers = []
 let reviewData = {}
 const avgRating = parseFloat('{{avg_rating}}')
 const reviewProductId = '{{product.id}}'
@@ -60,6 +62,15 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
             return a.radioAnswerChoices.length - b.radioAnswerChoices.length
         })
     }
+})
+.then(() => {
+    fetch(`https://${window.Shopify.shop}/apps/api/q&a/${reviewProductId}`)
+        .then(data => data.json())
+        .then(result => {
+            if (!result.error) {
+                questionsWithAnswers = result.questions
+            }
+        })
 })
 .then(() => {
     // fetch the settings connected to the store
@@ -88,11 +99,12 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
         .then(() => {
 
             renderReviews()
+            renderQuestions()
             if (reviewData.reviews.length > 0) {
                 createReviewStars(reviewData, reviewSettings, avgRating)
                 document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
                 document.querySelector('.noReviewsText').classList.add('hidden')
-            }   
+            }
 
             // change reviews section background color
             const divs = Array.from(document.querySelectorAll('div'))

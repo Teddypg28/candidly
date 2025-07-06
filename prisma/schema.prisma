@@ -14,12 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model OnboardingDismissalState {
-  id          String  @id @default(uuid())
-  store       String
-  isDismissed Boolean @default(false)
-}
-
 model AppSettings {
   id                  String   @id @default(uuid())
   store               String
@@ -47,6 +41,29 @@ model CurrentOrdersStatus {
   id      String  @id @default(uuid())
   store   String
   handled Boolean @default(false)
+}
+
+model CustomerQuestion {
+  id        String                   @id @default(uuid())
+  createdAt DateTime
+  productId String
+  title     String
+  store     String
+  answer    CustomerQuestionAnswer[]
+}
+
+model CustomerQuestionAnswer {
+  id         String           @id @default(uuid())
+  body       String
+  store      String
+  questionId String
+  question   CustomerQuestion @relation(fields: [questionId], references: [id])
+}
+
+model OnboardingDismissalState {
+  id          String  @id @default(uuid())
+  store       String
+  isDismissed Boolean @default(false)
 }
 
 model ProductReview {

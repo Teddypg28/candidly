@@ -275,6 +275,23 @@
     margin: 0px;
 }
 
+.reviewsQuestionsContainer {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.reviewsQuestionsContainer > div {
+    cursor: pointer;
+}
+
+.reviewsQuestionsContainerSeparator {
+    height: 0.3px;
+    width: 100vw;
+    background-color: lightgray;
+    margin: 20px 0px;
+}
+
 .reviewWidgetHeader {
     width: 55vw;
     margin: auto;

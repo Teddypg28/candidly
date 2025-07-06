@@ -178,6 +178,7 @@ const generateCustomQuestionAnswerMarkup = (review) => {
 
 // renders the reviews for a given page
 const setCurrentPage = (currentPage, currentSortBy) => {
+
     const numOfPages = reviewData.totalPages
 
     const reviewMarkup = reviewData.reviews.map((review, index) => {
@@ -302,6 +303,11 @@ const renderReviews = () => {
                         <div id='reviewBarWrapper'></div>
                     </div>
                 </div>
+                <div class='reviewsQuestionsContainer'>
+                    <div class='showReviewsBtn'>Reviews (${reviewData.totalReviews})</div>
+                    <div class='showQuestionsBtn'>Questions (${questionsWithAnswers.length})</div>
+                </div>
+                <div class='reviewsQuestionsContainerSeparator'> </div>
                 <div class='flexContainer'>
                     <p id='reviewCount'></p>
                     <div class='sortByContainer'>
@@ -315,6 +321,7 @@ const renderReviews = () => {
                     </div>
                 </div>
                 <div id='reviews'></div>
+                <div id='questions'></div>
             </div>
         `
         const reviewFormOverlay = document.createElement('div')
@@ -654,5 +661,28 @@ const renderReviews = () => {
 
         // this function will then render the actual reviews, starting at page 1
         setCurrentPage(1, 'Newest')
+
+        document.querySelector('.showReviewsBtn').style.fontWeight = 'bold'
+        document.querySelector('.showReviewsBtn').style.borderBottom = '2px solid black'
+
+        document.querySelector('.showQuestionsBtn').addEventListener('click', () => {
+            document.querySelector('#reviews').classList.add('hidden')
+            document.querySelector('#questions').classList.remove('hidden')
+            document.querySelector('.flexContainer').classList.add('hidden')
+            document.querySelector('.showQuestionsBtn').style.fontWeight = 'bold'
+            document.querySelector('.showQuestionsBtn').style.borderBottom = '2px solid black'
+            document.querySelector('.showReviewsBtn').style.fontWeight = 'normal'
+            document.querySelector('.showReviewsBtn').style.borderBottom = 'none'
+        })
+
+        document.querySelector('.showReviewsBtn').addEventListener('click', () => {
+            document.querySelector('#reviews').classList.remove('hidden')
+            document.querySelector('#questions').classList.add('hidden')
+            document.querySelector('.flexContainer').classList.remove('hidden')
+            document.querySelector('.showQuestionsBtn').style.fontWeight = 'normal'
+            document.querySelector('.showQuestionsBtn').style.borderBottom = 'none'
+            document.querySelector('.showReviewsBtn').style.fontWeight = 'bold'
+            document.querySelector('.showReviewsBtn').style.borderBottom = '2px solid black'
+        })
 }
 
