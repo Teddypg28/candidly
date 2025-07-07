@@ -2,6 +2,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-bottom: 10px;
 }
 
 .avgCustomerRatingText, #totalCustomerReviews {
@@ -15,7 +16,6 @@
 
 .answerChoiceFlexBox {
     width: 170px;
-    display: flex;
     flex-wrap: wrap;
     align-content: center;
 }
@@ -24,17 +24,34 @@
     font-weight: bold;
 }
 
+.btnContainer {
+    display: flex;
+    gap: 10px;
+}
+
 .carouselReviewBody {
     width: 400px;
 }
 
 .closeMediaCarouselBtn {
-    cursor: pointer;
     height: 20px;
     width: 20px;
+    position: relative;
+}
+
+.closeMediaCarouselBtnContainer {
+    background-color: rgb(205, 205, 205);
+    border-radius: 5px;
+    padding: 5px;
     position: absolute;
     top: 20px;
     right: 20px;
+    cursor: pointer;
+    z-index: 100;
+}
+
+.closeMediaCarouselBtnContainer:hover {
+    background-color: rgb(61, 61, 61)
 }
 
 .customQuestionDropdown {
@@ -79,8 +96,8 @@
 
 .currentCarouselItem {
     height: 100%;
-    width: 50%;
-    object-fit: contain;
+    width: 100%;
+    object-fit: cover
 }
 
 .checkbox {
@@ -144,6 +161,11 @@
 
 .generatedStars {
     display: flex;
+    height: 100%;
+}
+
+.hoverEffect:hover {
+    background-color: rgb(237, 237, 237);
 }
 
 .heading {
@@ -165,16 +187,22 @@
 
 .innerFillContainer {
     height: 20px;
+    background-color: #ffcd1a;
 }
 
 .mediaCarouselReviewDetails {
     font-family: inherit;
     width: fit-content;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .mediaCarouselContainer {
     display: flex;
     align-items: center;
+    border-radius: 10px;
     gap: 20px;
     height: 100vh;
     width: 100vw;
@@ -190,10 +218,15 @@
     flex-direction: column;
     background-color: white;
     position: relative;
-    padding: 20px;
-    height: 90%;
-    width: 90%;
+    height: 70%;
+    width: 70%;
+    border-radius: 10px;
     margin: auto;
+    overflow: hidden;
+}
+
+.flex {
+    height: 100%;
 }
 
 .mediaCarouselCardDataContainer {
@@ -201,7 +234,8 @@
     align-items: center;
     justify-content: center; 
     gap: 20px;
-    height: 80%;
+    height: 100%;
+    width: 60%;
     margin-bottom: auto;
 }
 
@@ -262,12 +296,18 @@
     font-size: 14px;
 }
 
+.reviewDetails {
+    margin-top: 10px;
+}
+
 .reviewHeading {
     font-size: 20px;
 }
 
 .reviewerName {
     font-size: 16px;
+    margin-top: 2px;
+    color: black;
 }
 
 #reviewCount {
@@ -287,7 +327,7 @@
 
 .reviewsQuestionsContainerSeparator {
     height: 0.3px;
-    width: 100vw;
+    width: 100%;
     background-color: lightgray;
     margin: 20px 0px;
 }
@@ -317,6 +357,7 @@
 .ratingNameContainer {
     display: flex;
     align-items: center;
+    height: fit-content;
     gap: 10px;
 }
 
@@ -352,7 +393,7 @@
     justify-content: center;
     width: 100%;
     gap: 5px;
-    height: 30px
+    height: 30px;
 }
 
 .reviewBarContainersWrapper {
@@ -523,6 +564,10 @@
 .star, .numMatchingStarReviews {
     padding: 0px;
     margin: 0px;
+    width: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sortByContainer {
@@ -559,6 +604,7 @@
 }
 
 .submitReviewBtn {
+    background-color: black;
     width: 300px;
     padding: 15px 0px;
     border: none;
@@ -672,8 +718,8 @@
     width: 25px;
 }
 
-.writeReviewBtn {
-    border: 1px solid black;
+.writeReviewBtn, .askQuestionBtn {
+    border: 1px solid lightgray;
     padding: 10px 20px;
     border-radius: 15px;
     cursor: pointer;
@@ -729,6 +775,25 @@
 }
 
 @media only screen and (max-width: 480px) {
+
+    .flex {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mediaCarouselCardContainer {
+        height: 90%;
+        width: 90%;
+    }
+
+    .mediaCarouselCardDataContainer {
+        height: 60%;
+        width: 100%;
+    }
+
+    .mediaCarouselReviewDetails {
+        padding: 15px;
+    }
 
     .flexContainer {
         justify-content: space-between;

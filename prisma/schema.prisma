@@ -45,11 +45,13 @@ model CurrentOrdersStatus {
 
 model CustomerQuestion {
   id        String                   @id @default(uuid())
-  createdAt DateTime
+  createdAt DateTime                 @default(now())
   productId String
   title     String
+  firstName String
+  email     String
   store     String
-  answer    CustomerQuestionAnswer[]
+  answers   CustomerQuestionAnswer[]
 }
 
 model CustomerQuestionAnswer {

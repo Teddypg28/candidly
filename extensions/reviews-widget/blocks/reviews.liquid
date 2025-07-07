@@ -110,7 +110,7 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
             const divs = Array.from(document.querySelectorAll('div'))
             const targetDiv = divs.find(div => div.id.includes('candidly'))
             const section = targetDiv.closest('section')
-            section.style.backgroundColor = reviewSettings.backgroundColor
+            section.style.backgroundColor = reviewSettings.backgroundColor   
     })
 })})
 

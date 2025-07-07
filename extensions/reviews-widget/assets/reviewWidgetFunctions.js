@@ -10,28 +10,10 @@ const generateStars = (stars) => {
     let starMarkup = []
     const emptyStars = 5 - stars
     for (let i = 0; i<stars; i++) {
-        starMarkup.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
-                            <defs>
-                            <linearGradient id="fullStar-${i}">
-                                <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
-                                <stop offset="50%" stop-color="${reviewSettings.primaryColor}"/>
-                            </linearGradient>
-                            </defs>
-                            <path fill="url(#fullStar-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
-                            l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>`)
+        starMarkup.push(`<svg style="height: 20px; width: 20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z" fill="#ffcd1a"></path> </g></svg>`)
     }
     for (let i = 0; i<emptyStars; i++) {
-        starMarkup.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20px" height="20px" viewBox="0 0 32 32">
-                            <defs>
-                            <linearGradient id="emptyStar-${i}">
-                                <stop offset="50%" stop-color="#e8e8e8"/>
-                                <stop offset="50%" stop-color="#e8e8e8"/>
-                            </linearGradient>
-                            </defs>
-                            <path fill="url(#emptyStar-${i})" d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118
-                            l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                        </svg>`)
+        starMarkup.push(`<svg style="height: 20px; width: 20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z" fill="#e6e6e6"></path> </g></svg>`)
     }
     return starMarkup.join('')
 }
@@ -59,26 +41,32 @@ const renderMediaCarousel = (index, src) => {
         <div class="mediaCarouselContainer">
             <svg class="backwardCarouselArrow" height="40px" width="40px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 330 330" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path id="XMLID_92_" d="M111.213,165.004L250.607,25.607c5.858-5.858,5.858-15.355,0-21.213c-5.858-5.858-15.355-5.858-21.213,0.001 l-150,150.004C76.58,157.211,75,161.026,75,165.004c0,3.979,1.581,7.794,4.394,10.607l150,149.996 C232.322,328.536,236.161,330,240,330s7.678-1.464,10.607-4.394c5.858-5.858,5.858-15.355,0-21.213L111.213,165.004z"></path> </g></svg>
             <div class="mediaCarouselCardContainer">
-                <svg class="closeMediaCarouselBtn" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.7457 3.32851C20.3552 2.93798 19.722 2.93798 19.3315 3.32851L12.0371 10.6229L4.74275 3.32851C4.35223 2.93798 3.71906 2.93798 3.32854 3.32851C2.93801 3.71903 2.93801 4.3522 3.32854 4.74272L10.6229 12.0371L3.32856 19.3314C2.93803 19.722 2.93803 20.3551 3.32856 20.7457C3.71908 21.1362 4.35225 21.1362 4.74277 20.7457L12.0371 13.4513L19.3315 20.7457C19.722 21.1362 20.3552 21.1362 20.7457 20.7457C21.1362 20.3551 21.1362 19.722 20.7457 19.3315L13.4513 12.0371L20.7457 4.74272C21.1362 4.3522 21.1362 3.71903 20.7457 3.32851Z" fill="#000000"></path> </g></svg>
-                <div class="mediaCarouselCardDataContainer">
-                    ${src.includes('mp4') || src.includes('mov') ? 
-                    `<video src="${src}" class="currentCarouselItem" controls>
-                        <source src="${src}" preload="auto" />
-                    </video>
-                    ` 
-                    : 
-                    `<img draggable="false" class="currentCarouselItem" src="${src}" />`}
+                <div class="closeMediaCarouselBtnContainer">
+                    <svg class="closeMediaCarouselBtn" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M20.7457 3.32851C20.3552 2.93798 19.722 2.93798 19.3315 3.32851L12.0371 10.6229L4.74275 3.32851C4.35223 2.93798 3.71906 2.93798 3.32854 3.32851C2.93801 3.71903 2.93801 4.3522 3.32854 4.74272L10.6229 12.0371L3.32856 19.3314C2.93803 19.722 2.93803 20.3551 3.32856 20.7457C3.71908 21.1362 4.35225 21.1362 4.74277 20.7457L12.0371 13.4513L19.3315 20.7457C19.722 21.1362 20.3552 21.1362 20.7457 20.7457C21.1362 20.3551 21.1362 19.722 20.7457 19.3315L13.4513 12.0371L20.7457 4.74272C21.1362 4.3522 21.1362 3.71903 20.7457 3.32851Z" fill="white"></path> </g></svg>
+                </div>
+                <div class="flex">
+                    <div class="mediaCarouselCardDataContainer">
+                        ${src.includes('mp4') || src.includes('mov') ? 
+                        `<video src="${src}" class="currentCarouselItem" controls>
+                            <source src="${src}" preload="auto" />
+                        </video>
+                        ` 
+                        : 
+                        `<img draggable="false" class="currentCarouselItem" src="${src}" />`}
+                    </div>
                     <div class="mediaCarouselReviewDetails"> 
-                        <div class='reviewerName' style="color: ${reviewSettings.primaryColor}; margin-bottom: 5px">${reviewData.reviews[index].firstName}</div>
-                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px">
-                            <div class="generatedStars">${generateStars(reviewData.reviews[index].rating)}</div>
-                            <p style="margin: 0px; padding: 0px">${getDate(new Date(reviewData.reviews[index].date))}</p>
+                        <div class="reviewDetails">
+                        <p style="margin: 0px; padding: 0px">${getDate(new Date(reviewData.reviews[index].date))}</p>
+                            <div style="display: flex; align-items: center; gap: 15px; margin: 20px 0px">
+                                <div class="generatedStars">${generateStars(reviewData.reviews[index].rating)}</div>
+                                <div class='reviewerName'>${reviewData.reviews[index].firstName}</div>
+                            </div>
+                            <h2 class='reviewHeading' style="margin: 0; padding: 0">${reviewData.reviews[index].title}</h2>
+                            <p class='carouselReviewBody'>${reviewData.reviews[index].body}</p>
                         </div>
-                        <h2 class='reviewHeading' style="margin: 0; padding: 0">${reviewData.reviews[index].title}</h2>
-                        <p class='carouselReviewBody'>${reviewData.reviews[index].body}</p>
+                        <div class="allMediaContainer">${allImages}</div>
                     </div>
                 </div>
-                <div class="allMediaContainer">${allImages}</div>
             </div>                     
             <svg class="forwardCarouselArrow" height="40px" width="40px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 330 330" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path id="XMLID_222_" d="M250.606,154.389l-150-149.996c-5.857-5.858-15.355-5.858-21.213,0.001 c-5.857,5.858-5.857,15.355,0.001,21.213l139.393,139.39L79.393,304.394c-5.857,5.858-5.857,15.355,0.001,21.213 C82.322,328.536,86.161,330,90,330s7.678-1.464,10.607-4.394l149.999-150.004c2.814-2.813,4.394-6.628,4.394-10.606 C255,161.018,253.42,157.202,250.606,154.389z"></path> </g></svg>                          
         </div>
@@ -87,7 +75,7 @@ const renderMediaCarousel = (index, src) => {
 
     const forwardCarouselArrow = document.querySelector('.forwardCarouselArrow')
     const backwardCarouselArrow = document.querySelector('.backwardCarouselArrow')
-    const closeMediaCarouselBtn = document.querySelector('.closeMediaCarouselBtn')
+    const closeMediaCarouselBtn = document.querySelector('.closeMediaCarouselBtnContainer')
     // attach click listener to media items so that user can navigate to the respective image upon click
     document.querySelectorAll('.mediaItem').forEach(mediaItem => {
         mediaItem.addEventListener('click', () => {
@@ -138,9 +126,9 @@ const generateReviewStatsMarkup = () => {
         reviewStatsMarkup.push(
             `<div class='reviewBarContainer'>
                 <p class='star'>${i}</p>
-                <div>★</div>
+                <svg style="height: 17px; width: 17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z" fill="black"></path> </g></svg>
                 <div class='outerFillContainer'>
-                    <div class='innerFillContainer' style="width: ${fillWidth}%; background-color: ${reviewSettings.primaryColor}"> </div>
+                    <div class='innerFillContainer' style="width: ${fillWidth}%"> </div>
                 </div>
                 <p class='numMatchingStarReviews'>${numMatchingStarReviews}</p>
             </div>`
@@ -188,7 +176,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
                 <p>${getDate(new Date(review.date))}</p>
                 <div class='ratingNameContainer'>
                     <div class='generatedStars'>${generateStars(review.rating)}</div>
-                    <div class='reviewerName' style="color: ${reviewSettings.primaryColor}">${review.firstName}</div>
+                    <div class='reviewerName'>${review.firstName}</div>
                 </div>
                 <h3 class='reviewHeading'>${review.title}</h3>
                 <div class='reviewBody'>${review.body}</div>
@@ -288,7 +276,10 @@ const renderReviews = () => {
             <div class='reviewWidgetHeader'>
                 <div class='headingBtnContainer'>
                     <h1 class='heading'>Customer Reviews</h1>
-                    <div class='writeReviewBtn'>Write Review</div>
+                    <div class='btnContainer'>
+                        <div class='writeReviewBtn hoverEffect'>Write Review</div>
+                        <div class='askQuestionBtn hoverEffect'>Ask Question</div>
+                    </div>
                 </div>
                 <p class='noReviewsText'>Be the first to write a review!</p>
             </div>
@@ -321,13 +312,15 @@ const renderReviews = () => {
                     </div>
                 </div>
                 <div id='reviews'></div>
-                <div id='questions'></div>
+                <div id='questions' class='hidden'></div>
             </div>
         `
         const reviewFormOverlay = document.createElement('div')
         reviewFormOverlay.className = 'hidden reviewFormOverlay'
+        document.body.appendChild(reviewFormOverlay)
+
         const reviewFormMarkup = `
-            <form class='reviewForm' action="https://powderedslopes.myshopify.com/apps/api/review/storefront/create" method="POST">
+            <form class='reviewForm' action="https://${window.Shopify.shop}/apps/api/review/storefront/create" method="POST">
                 <div class='closeReviewFormBtn'>x</div>
                 <div class='reviewFormHeadingContainer'>
                     <h1>${reviewSettings.formHeading}</h1>
@@ -366,25 +359,24 @@ const renderReviews = () => {
                     <input type='file' id='uploadMediaBtn' class='uploadMediaBtn' accept='image/png, image/jpg, image/jpeg, video/*' multiple />
                 </div>
                 <p class='uploadError'></p>
-                <button type="submit" class='submitReviewBtn' style='background-color: ${reviewSettings.primaryColor}'>Submit Review</button>
+                <button type="submit" class='submitReviewBtn'>Submit Review</button>
             </form>
         `
-        document.body.appendChild(reviewFormOverlay)
-    
+
+        const btnsHoverEffect = document.querySelectorAll('.hoverEffect')
         const writeReviewBtn = document.querySelector('.writeReviewBtn')
-    
-        writeReviewBtn.addEventListener('mouseover', () => {
-            writeReviewBtn.style.backgroundColor = reviewSettings.primaryColor
-            writeReviewBtn.style.borderColor = reviewSettings.primaryColor
-            writeReviewBtn.style.color = 'white'
+        const askQuestionBtn = document.querySelector('.askQuestionBtn')
+
+        askQuestionBtn.addEventListener('click', () => {
+            const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
+            reviewFormOverlay.innerHTML = `
+                <div>
+                    This is a test container for the question markup
+                </div>
+            `
+            reviewFormOverlay.classList.remove('hidden')
         })
-    
-        writeReviewBtn.addEventListener('mouseleave', () => {
-            writeReviewBtn.style.backgroundColor = reviewSettings.backgroundColor
-            writeReviewBtn.style.borderColor = 'black'
-            writeReviewBtn.style.color = 'black'
-        })
-    
+
         writeReviewBtn.addEventListener('click', () => {
             const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
             reviewFormOverlay.innerHTML = reviewFormMarkup
@@ -662,6 +654,7 @@ const renderReviews = () => {
         // this function will then render the actual reviews, starting at page 1
         setCurrentPage(1, 'Newest')
 
+        // toggling between reviews and questions functionality
         document.querySelector('.showReviewsBtn').style.fontWeight = 'bold'
         document.querySelector('.showReviewsBtn').style.borderBottom = '2px solid black'
 
