@@ -29,7 +29,7 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                     {
                         title: review.title, 
                         body: review.body, 
-                        name: review.firstName, 
+                        firstName: review.firstName, 
                         rating: review.rating.toString(), 
                         media: review.media
                     })
@@ -223,7 +223,7 @@ export default function Review() {
                 <Card>
                     <BlockStack gap='200'>
                         <TextField 
-                        value={state.name} 
+                        value={state.firstName} 
                         onChange={value => setState(prevState => {return {...prevState, name: value}})}
                         placeholder="Reviewer Name" 
                         autoComplete="off" 

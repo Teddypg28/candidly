@@ -5,6 +5,75 @@
     margin-bottom: 10px;
 }
 
+.askQuestionBackBtn, .askQuestionForwardBtn {
+    position: absolute;
+    cursor: pointer;
+    bottom: 10px;
+    height: 30px;
+    width: 30px;
+}
+
+.askQuestionBackBtn {
+    left: 7px;
+}
+
+.askQuestionForwardBtn {
+    right: 7px;
+}
+
+.askQuestionForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+    height: 40vh;
+    background-color: white;
+    border-radius: 5px;
+    position: relative;
+    text-align: center;
+    padding: 20px 10px;
+    overflow: hidden;
+    transition: ease-in 1s;
+}
+
+.askQuestionForm > h1 {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.askQuestionForm > div > textarea, input {
+    border: 1px solid lightgray;
+    width: 100%;
+    padding: 5px 10px;
+    border-radius: 5px;
+    resize: none;
+}
+
+.askQuestionForm > div > textarea {
+    height: 100px;
+    resize: none;
+}
+
+.askQuestionForm > div > input {
+    height: 40px;
+}
+
+.askQuestionForm > div > textarea:focus, input:focus {
+    outline: none;
+}
+
+.askQuestionForm > button {
+    border-radius: 5px;
+    width: 50%;
+    height: 40px;
+    background-color: black;
+    color: white;
+    font-weight: bold;
+    margin-top: auto;
+    cursor: pointer;
+}
+
 .avgCustomerRatingText, #totalCustomerReviews {
     font-size: 15px;
 }
@@ -29,17 +98,22 @@
     gap: 10px;
 }
 
+.customerQuestionTitle {
+    font-size: 18px;
+    font-weight: bold;
+}
+
 .carouselReviewBody {
     width: 400px;
 }
 
-.closeMediaCarouselBtn {
+.closeModalBtn, .closeFormSvg {
     height: 20px;
     width: 20px;
     position: relative;
 }
 
-.closeMediaCarouselBtnContainer {
+.closeModalBtnContainer {
     background-color: rgb(205, 205, 205);
     border-radius: 5px;
     padding: 5px;
@@ -50,7 +124,7 @@
     z-index: 100;
 }
 
-.closeMediaCarouselBtnContainer:hover {
+.closeModalBtnContainer:hover {
     background-color: rgb(61, 61, 61)
 }
 
@@ -76,7 +150,7 @@
     gap: 10px
 }
 
-.closeReviewFormBtn {
+.closeFormBtn {
     position: absolute;
     right: 25px;
     top: 10px;
@@ -187,7 +261,18 @@
 
 .innerFillContainer {
     height: 20px;
-    background-color: #ffcd1a;
+    background-color: black;
+}
+
+.inputContainer {
+    margin: auto;
+    height: fit-content;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .mediaCarouselReviewDetails {
@@ -296,6 +381,16 @@
     font-size: 14px;
 }
 
+.questionAnswerContainer {
+    background-color: rgb(247, 247, 247);
+    width: 400px;
+    height: fit-content;
+    margin-left: 40px;
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
 .reviewDetails {
     margin-top: 10px;
 }
@@ -337,11 +432,12 @@
     margin: auto;
 }
 
-.reviewFormValidationError {
+.reviewFormValidationError, .askQuestionFormError {
     background-color: rgb(240, 220, 220);
     border-radius: 0.25rem;
     color: darkred;
     text-align: left;
+    width: 100%;
     padding: 10px 5px;
     margin: 0px;
     font-size: 14px;
@@ -414,7 +510,7 @@
     align-items: center;
     justify-content: flex-start;
     margin: 15px 0px;
-    gap: 40px;
+    gap: 25px;
 }
 
 .reviewStatsContainer {
@@ -561,6 +657,18 @@
     cursor: pointer
 }
 
+.step {
+    width: 50px;
+    height: 10px;
+    border-radius: 5px;
+}
+
+.stepsContainer {
+    display: flex;
+    margin-top: auto;
+    gap: 5px;
+}
+
 .star, .numMatchingStarReviews {
     padding: 0px;
     margin: 0px;
@@ -631,6 +739,31 @@
 .selectedOptionsContainer {
     margin: 0px;
     padding: 0px;
+}
+
+.thankYouMessageContainer {
+    position: relative;
+    width: 80vw;
+    height: 40vh;
+    padding: 0px 10px;
+    text-align: center;
+    background-color: white;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.thankYouMessageContainer > h1 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0px;
+    padding: 0px;
+}
+
+.thankYouMessageContainer > p {
+    font-size: 16px;
 }
 
 .uploadMediaText {
@@ -776,6 +909,16 @@
 
 @media only screen and (max-width: 480px) {
 
+    .askQuestionForm {
+        width: 80vw;
+        height: 40vh;
+    }
+
+    .askQuestionForm > textarea {
+        width: 90%;
+        height: 60%;
+    }
+
     .flex {
         display: flex;
         flex-direction: column;
@@ -859,6 +1002,10 @@
     .paginator {
         width: 250px;
         margin: auto;
+    }
+
+    .questionAnswerContainer {
+        width: 80vw;
     }
 }
 

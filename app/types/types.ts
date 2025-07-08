@@ -97,6 +97,14 @@ export const initialCustomQuestionTableState: CustomQuestionTableState = {
     selectedProductConfiguration: []
 }
 
+export const initialQuestionAnswerTableState: QuestionAnswerTableState = {
+    queryValue: '',
+    selectedTab: 0,
+    selectedProducts: [],
+    selectedAnswerStatus: [],
+    sortSelected: ['date desc']
+}
+
 export const initialReviewTableState: ReviewTableState = {
     queryValue: '',
     selectedTab: 0,
@@ -185,13 +193,21 @@ export interface ImportCsvFileState {
 export interface ProductReview {
     title: string
     body: string
-    name: string
+    firstName: string
     rating: string
     media: {
         name: string
         url: string
         file?: File
     }[]
+}
+
+export interface QuestionAnswerTableState {
+    queryValue: string
+    selectedTab: number 
+    sortSelected: IndexFiltersProps['sortSelected'] 
+    selectedProducts: string[]
+    selectedAnswerStatus: string[]
 }
 
 export interface RadioAnswerChoice {

@@ -9,7 +9,7 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     if (session && params.productId) {
         try {
-            const questionsWithAnswers = await db.customerQuestion.findMany({where: {store: {equals: session.shop}, productId: {equals: `gid://shopify/Product/${params.productId}`}}, include: {answers: true}, omit: {productId: true}})
+            const questionsWithAnswers = await db.customerQuestion.findMany({where: {store: {equals: session.shop}, productId: {equals: params.productId}}, include: {answer: true}, omit: {productId: true}})
             const data = {
                 questions: questionsWithAnswers
             }

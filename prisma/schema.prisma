@@ -44,21 +44,21 @@ model CurrentOrdersStatus {
 }
 
 model CustomerQuestion {
-  id        String                   @id @default(uuid())
-  createdAt DateTime                 @default(now())
+  id        String                  @id @default(uuid())
+  createdAt DateTime                @default(now())
   productId String
   title     String
   firstName String
   email     String
   store     String
-  answers   CustomerQuestionAnswer[]
+  answer    CustomerQuestionAnswer?
 }
 
 model CustomerQuestionAnswer {
   id         String           @id @default(uuid())
   body       String
   store      String
-  questionId String
+  questionId String           @unique
   question   CustomerQuestion @relation(fields: [questionId], references: [id])
 }
 
@@ -197,6 +197,16 @@ model SavedReviewsTableViews {
   selectedProducts   String[]
   selectedRatings    String[]
   selectedVisibility String[]
+}
+
+model SavedQuestionAnswerTableView {
+  id                   String   @id @default(uuid())
+  store                String
+  name                 String
+  queryValue           String
+  sortSelected         String[]
+  selectedProducts     String[]
+  selectedAnswerStatus String[]
 }
 
 model SavedCustomQuestionTableView {
