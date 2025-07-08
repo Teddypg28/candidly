@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Badge, Button, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
+import { Badge, Button, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 
 import db from '../db.server'
@@ -49,24 +49,13 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             product(id: "gid://shopify/Product/${question?.productId}") {
                 id
                 title
-                media(first: 1) {
-                edges {
-                    node {
-                    preview {
-                        image {
-                        url
-                        }
-                    }
-                    }
-                }
-                }
             }
         }`
     
         const res = await admin.graphql(productDataQuery)
         const data = await res.json()
 
-        return {...question, productName: data.data.product.title}
+        return {...question, productName: data.data.product.title || "Product Deleted"}
     }))
 
     return {questions: questionsWithProductNames, savedViews}
@@ -74,9 +63,9 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
 export default function QuestionAnswers() {
 
-    const questionsState = useLoaderData<typeof loader>()
+    const data = useLoaderData<typeof loader>()
 
-    const { questions, savedViews } = questionsState
+    const { questions, savedViews } = data
 
     const { mode, setMode } = useSetIndexFiltersMode()
 
@@ -100,6 +89,12 @@ export default function QuestionAnswers() {
                 return question.answer === null
             } else if (indexTableState.selectedAnswerStatus.includes("true")) {
                 return question.answer !== null
+            }
+            return question
+        })
+        .filter(question => {
+            if (indexTableState.selectedProducts.length > 0) {
+                return indexTableState.selectedProducts.includes(question.productName)
             }
             return question
         })
@@ -140,7 +135,30 @@ export default function QuestionAnswers() {
         )
     })
 
+    const productNames = data.questions.map(question => {
+        return question.productName
+    })
+
+    const productNameChoices = productNames.filter((productName, index) => {
+        return index === productNames.indexOf(productName)
+    }).map(productName => {
+        return {label: productName, value: productName}
+    })
+
     const filters: IndexFiltersProps['filters'] = [
+        {
+            key: 'products', 
+            label: 'Product Name', 
+            filter: ( 
+                <ChoiceList 
+                allowMultiple 
+                title='Product' 
+                titleHidden 
+                onChange={(selectedProducts) => setIndexTableState({...indexTableState, selectedProducts})} 
+                choices={productNameChoices} 
+                selected={indexTableState.selectedProducts} /> 
+            )
+        },
         {
             key: 'answerStatus', 
             label: 'Answer Status', 
@@ -227,6 +245,13 @@ export default function QuestionAnswers() {
             onRemove: () => setIndexTableState({...indexTableState, selectedAnswerStatus: []})
         })
     }
+    if (indexTableState.selectedProducts.length > 0) {
+        appliedFilters.push({
+            key: 'products',
+            label: indexTableState.selectedProducts.join(', '),
+            onRemove: () => setIndexTableState({...indexTableState, selectedProducts: []})
+        })
+    }
 
     return (
         <Page
@@ -254,13 +279,15 @@ export default function QuestionAnswers() {
                 onQueryChange={(queryValue) => setIndexTableState({...indexTableState, queryValue})}
                 queryValue={indexTableState.queryValue}
                 onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
+                onCreateNewView={createNewView}
                 primaryAction={primaryAction}
                 cancelAction={{onAction: cancelFilters}}
                 sortOptions={sortOptions}
                 sortSelected={indexTableState.sortSelected}
                 onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
-                selected={0}
+                selected={indexTableState.selectedTab}
                 tabs={tabs}
+                onSelect={changeTabs}
                 />
                 <IndexTable
                 headings={[{title: 'Date Asked'}, {title: 'Name'}, {title: 'Product'}, {title: 'Question'}, {title: 'Answer Status'}]}
@@ -272,7 +299,11 @@ export default function QuestionAnswers() {
                 </IndexTable>
             </Card>
         }
-
+         {questions.length > 0 &&
+        <PageActions 
+        secondaryActions={[{content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedQuestions}]}
+        />
+        }
         </Page>
     )
 }
