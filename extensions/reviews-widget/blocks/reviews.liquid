@@ -6,6 +6,7 @@
 {% assign rating_count = block.settings.product.metafields.reviews.rating_count.value %}
 {% assign shop_name = shop.myshopify_domain %}
 
+{{ 'activateUploadMediaContainer.js' | asset_url | script_tag }}
 {{ 'renderCustomerQuestionForm.js' | asset_url | script_tag }}
 {{ 'renderCustomQuestions.js' | asset_url | script_tag }}
 {{ 'renderReviewForm.js' | asset_url | script_tag }}
@@ -47,6 +48,9 @@ const reviewSettings = {
     backgroundColor: '#f6f6f6',
     customQuestions:[]
 }
+
+const productTitle = '{{product.title}}'
+const productImage = '{{ product.featured_image | img_url: '400x' }}'
 
 let companyName = ""
 let showing = "reviews"

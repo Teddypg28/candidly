@@ -21,7 +21,6 @@ export async function action({ request } : ActionFunctionArgs) {
         const selectedAnswerChoices = JSON.parse(data.customQuestionAnswers)
 
         // remove it from main data object, so that review can be created
-        delete data['selectedAnswerChoices']
         delete data['customQuestionAnswers']
 
         // fetch store settings to check auto publishing rules
@@ -42,7 +41,7 @@ export async function action({ request } : ActionFunctionArgs) {
         })
                 
         // upload media images
-        if (uploadedMedia.length > 0) {
+        if (uploadedMedia.length > 0 && uploadedMedia[0].hasOwnProperty("name")) {
             await uploadMedia(uploadedMedia, newReview.id)
         }
 
