@@ -164,7 +164,7 @@ export default function QuestionAnswers() {
             label: 'Answer Status', 
             filter: (
                 <ChoiceList 
-                choices={[{label: 'True', value: 'true'}, {label: 'False', value: 'false'}]}
+                choices={[{label: 'Answered', value: 'true'}, {label: 'Not Answered', value: 'false'}]}
                 selected={indexTableState.selectedAnswerStatus}
                 onChange={(selectedAnswerStatus) => setIndexTableState({...indexTableState, selectedAnswerStatus})}
                 title="Answer Status"
@@ -241,7 +241,7 @@ export default function QuestionAnswers() {
     if (indexTableState.selectedAnswerStatus.length > 0) {
         appliedFilters.push({
             key: 'answerStatus',
-            label: indexTableState.selectedAnswerStatus.join(', '),
+            label: indexTableState.selectedAnswerStatus.map(val => val === "true" ? "answered" : "not answered").join(", "),
             onRemove: () => setIndexTableState({...indexTableState, selectedAnswerStatus: []})
         })
     }

@@ -8,10 +8,15 @@ export async function loader({request, params} : LoaderFunctionArgs) {
     const { session } = await authenticate.public.appProxy(request)
 
     if (session && params.productId) {
+
+        const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+        const companyName = appSettings?.companyName
+
         try {
-            const questionsWithAnswers = await db.customerQuestion.findMany({where: {store: {equals: session.shop}, productId: {equals: params.productId}}, include: {answer: true}, omit: {productId: true}})
+            const questionsWithAnswers = await db.customerQuestion.findMany({where: {store: {equals: session.shop}, productId: {equals: params.productId}, answer: {isNot: null}}, include: {answer: true}, omit: {productId: true}})
             const data = {
-                questions: questionsWithAnswers
+                questions: questionsWithAnswers,
+                companyName
             }
             if (questionsWithAnswers) {
                 return new Response(JSON.stringify(data), {status: 200})

@@ -6,9 +6,13 @@
 {% assign rating_count = block.settings.product.metafields.reviews.rating_count.value %}
 {% assign shop_name = shop.myshopify_domain %}
 
+{{ 'renderCustomerQuestionForm.js' | asset_url | script_tag }}
+{{ 'renderCustomQuestions.js' | asset_url | script_tag }}
+{{ 'renderReviewForm.js' | asset_url | script_tag }}
 {{ 'createReviewStars.js' | asset_url | script_tag }}
-{{ 'renderQuestions.js' | asset_url | script_tag }}
+{{ 'customerQuestionFormFunctions.js' | asset_url | script_tag }}
 {{ 'reviewFormFunctions.js' | asset_url | script_tag }}
+{{ 'renderQuestions.js' | asset_url | script_tag }}
 {{ 'reviewWidgetFunctions.js' | asset_url | script_tag }}
 {{ 'paginatorFunctions.js' | asset_url | script_tag }}
 
@@ -43,6 +47,8 @@ const reviewSettings = {
     backgroundColor: '#f6f6f6',
     customQuestions:[]
 }
+
+let companyName = ""
 let showing = "reviews"
 let questionsWithAnswers = []
 let reviewData = {}
@@ -69,6 +75,7 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
         .then(result => {
             if (!result.error) {
                 questionsWithAnswers = result.questions
+                companyName = result.companyName
             }
         })
 })

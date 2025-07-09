@@ -5,7 +5,8 @@
     margin-bottom: 10px;
 }
 
-.askQuestionBackBtn, .askQuestionForwardBtn {
+.askQuestionBackBtn, .askQuestionForwardBtn, 
+.writeReviewForwardBtn, .writeReviewBackBtn {
     position: absolute;
     cursor: pointer;
     bottom: 10px;
@@ -21,7 +22,7 @@
     right: 7px;
 }
 
-.askQuestionForm {
+.askQuestionForm, .writeReviewForm {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -34,7 +35,6 @@
     text-align: center;
     padding: 20px 10px;
     overflow: hidden;
-    transition: ease-in 1s;
 }
 
 .askQuestionForm > h1 {
@@ -42,28 +42,12 @@
     font-weight: bold;
 }
 
-.askQuestionForm > div > textarea, input {
-    border: 1px solid lightgray;
-    width: 100%;
-    padding: 5px 10px;
-    border-radius: 5px;
-    resize: none;
-}
-
 .askQuestionForm > div > textarea {
     height: 100px;
     resize: none;
 }
 
-.askQuestionForm > div > input {
-    height: 40px;
-}
-
-.askQuestionForm > div > textarea:focus, input:focus {
-    outline: none;
-}
-
-.askQuestionForm > button {
+.askQuestionForm > button, .writeReviewForm > button {
     border-radius: 5px;
     width: 50%;
     height: 40px;
@@ -98,9 +82,16 @@
     gap: 10px;
 }
 
+.companyName {
+    font-style: italic;
+    font-size: 12px;
+}
+
 .customerQuestionTitle {
     font-size: 18px;
     font-weight: bold;
+    padding: 0;
+    margin-top: 5px;
 }
 
 .carouselReviewBody {
@@ -108,8 +99,8 @@
 }
 
 .closeModalBtn, .closeFormSvg {
-    height: 20px;
-    width: 20px;
+    height: 30px;
+    width: 30px;
     position: relative;
 }
 
@@ -128,6 +119,12 @@
     background-color: rgb(61, 61, 61)
 }
 
+.customQuestionRadio {
+    width: 70%;
+    margin: auto;
+    align-items: flex-start;
+}
+
 .customQuestionDropdown {
     padding: 8px 5px;
     box-sizing: border-box;
@@ -136,6 +133,8 @@
     outline: none;
     cursor: pointer;
     box-shadow: none;
+    width: 100%;
+    margin: auto;
 }
 
 .customQuestionTitle {
@@ -147,7 +146,8 @@
 .customQuestionsContainer {
     display: flex;
     flex-direction: column;
-    gap: 10px
+    gap: 20px;
+    width: 100%;
 }
 
 .closeFormBtn {
@@ -224,6 +224,24 @@
     padding: 0px;
     margin: 0px;
     font-size: 12px;
+}
+
+.formQuestionInput {
+    border: 1px solid lightgray;
+    width: 100%;
+    border-radius: 5px;
+    resize: none;
+    font-size: 14px;
+    height: 45px;
+    padding: 8px;
+}
+
+.formQuestionInput, .writeReviewForm > div > input {
+    height: 40px;
+}
+
+.formQuestionInput:focus {
+    outline: none;
 }
 
 .flexContainer {
@@ -381,6 +399,19 @@
     font-size: 14px;
 }
 
+.questionFirstName {
+    font-size: 14px;
+    font-style: italic;
+    padding: 0;
+    margin: 0;
+}
+
+.questionMarkupContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .questionAnswerContainer {
     background-color: rgb(247, 247, 247);
     width: 400px;
@@ -389,6 +420,11 @@
     margin-top: 20px;
     padding: 10px;
     border-radius: 5px;
+}
+
+.reviewFormStepTitle {
+    font-size: 30px;
+    font-weight: bold;
 }
 
 .reviewDetails {
@@ -657,7 +693,13 @@
     cursor: pointer
 }
 
-.step {
+.reviewFormStep {
+    width: 30px;
+    height: 10px;
+    border-radius: 5px;
+}
+
+.customerQuestionFormStep {
     width: 50px;
     height: 10px;
     border-radius: 5px;
@@ -851,6 +893,32 @@
     width: 25px;
 }
 
+.writeReviewForwardBtn {
+    right: 5px;
+}
+
+.writeReviewBackBtn {
+    left: 5px
+}
+
+.writeReviewForm {
+    height: 60vh;
+    width: 60vw;
+}
+
+.writeReviewForm > div > .reviewFormValidationError {
+    width: 60%;
+}
+
+.writeReviewForm > div > .formQuestionInput {
+    width: 60%;
+}
+
+.writeReviewForm > div > textarea {
+    height: 500px;
+    width: 500px;
+}
+
 .writeReviewBtn, .askQuestionBtn {
     border: 1px solid lightgray;
     padding: 10px 20px;
@@ -908,6 +976,15 @@
 }
 
 @media only screen and (max-width: 480px) {
+
+    .customQuestionRadio {
+        width: 100%
+    }
+
+    .closeModalBtn {
+        height: 20px;
+        width: 20px;
+    }
 
     .askQuestionForm {
         width: 80vw;
@@ -977,6 +1054,10 @@
         width: 90%
     };
 
+    .reviewFormStepTitle {
+        font-size: 20px;
+    }
+
     .submitReviewBtn {
         width: 100%;
     }
@@ -1007,5 +1088,19 @@
     .questionAnswerContainer {
         width: 80vw;
     }
+
+    .writeReviewForm {
+        height: 80vh;
+        width: 80vw;
+    }
+
+    .writeReviewForm > div > .reviewFormValidationError {
+        width: 100%;
+    }
+    
+    .writeReviewForm > div > .formQuestionInput {
+        width: 100%;
+    }
+    
 }
 
