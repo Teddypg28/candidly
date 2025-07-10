@@ -794,7 +794,7 @@
 
 .thankYouMessageContainer {
     position: relative;
-    width: 80vw;
+    width: 60vw;
     height: 40vh;
     padding: 0px 10px;
     text-align: center;
@@ -1096,6 +1096,10 @@
     .reviewStatsContainer {
         width: 100%;
     }
+
+   .thankYouMessageContainer {
+        width: 90vw;
+   }
 
     .paginator {
         width: 250px;

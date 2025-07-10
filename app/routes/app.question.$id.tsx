@@ -71,12 +71,13 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
         if (params.id === 'new') {
             return json({initialQuestionState, initialProductDataState: [], initialCollectionDataState: []})
         } else {
-            const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: params.id}}, include: {radioAnswerChoices: true}, omit: {id: true}})
+            const result = await db.reviewFormQuestion.findFirst({where: {id: {equals: params.id}}, include: {radioAnswerChoices: true}})
             if (result !== null) {
                 const productData = await fetchProductInfo(admin, result.productIds)
                 const collectionData = await fetchCollectionInfo(admin, result.collectionIds)
 
                 const initialQuestionState: ReviewFormQuestion = {
+                    id: result.id,
                     answerType: result.answerType,
                     productConfiguration: result.productConfiguration,
                     productIds: result.productIds,

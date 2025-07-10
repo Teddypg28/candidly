@@ -1,30 +1,30 @@
-.reviewForm input {
+.formQuestionInput {
+    border: 1px solid lightgray;
+    width: 100%;
+    border-radius: 5px;
+    resize: none;
+    font-size: 14px;
     height: 45px;
-    padding: 10px
+    padding: 8px;
 }
 
-.reviewForm input:focus, .reviewForm textarea:focus {
+.formQuestionInput:focus {
     outline: none;
 }
 
-.reviewForm input, .reviewForm textarea {
-    border: 1px solid lightgray;
-    border-radius: 5px;
-    font-size: 12px;
-    box-sizing: border-box;
+.hidden {
+    display: none;
+}
+
+.inputContainer {
+    margin: auto;
+    height: fit-content;
     width: 100%;
-}
-
-.progressBar {
-    transition: width 0.5s ease-in-out;
-}
-
-.reviewForm {
-    position: relative;
     display: flex;
+    align-items: center;
+    justify-content: center;
     flex-direction: column;
     gap: 10px;
-    background-color: white;
 }
 
 .removeUploadedMediaContainer {
@@ -39,19 +39,9 @@
     height: 100%;
 }
 
-.hidden {
-    display: none
-}
-
-.characterCountContainer {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    font-size: 11px;
-    color: white;
+.reviewFormStepTitle {
+    font-size: 30px;
     font-weight: bold;
-    padding: 2px 10px;
-    border-radius: 10px
 }
 
 .reviewFormStar {
@@ -60,127 +50,55 @@
     cursor: pointer;
 }
 
+.reviewFormStep {
+    width: 30px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: red;
+}
+
 .reviewFormStarsContainer {
     display: flex;
     width: fit-content;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-.reviewFieldWrapper > label, .reviewNameEmailContainer > label {
-    font-weight: bold;
-    font-size: 15px;
-}
-
-.reviewFieldWrapper > div > input, .reviewNameEmailContainer > input {
-    font-size: 12px;
-}
-
-.reviewFormHeadingContainer {
-    width: 80%;
     margin: auto;
-    text-align: center;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    flex-direction: column;
+    margin-top: 25px;
 }
 
-.reviewFormHeadingContainer > h1 {
-    font-weight: bold;
-    font-size: 25px;
-}
-
-.reviewFormHeadingContainer > h3 {
-    margin: 25px 0px
-}
-
-.reviewFieldWrapper {
-    display: flex;
-    flex-direction: column;
+.reviewFormValidationError {
+    background-color: rgb(240, 220, 220);
+    border-radius: 0.25rem;
+    color: darkred;
+    text-align: left;
     width: 100%;
-    gap: 3px
+    padding: 10px 5px;
+    margin: 0px;
+    font-size: 14px;
+    margin-top: 5px;
 }
 
-.reviewNameEmailWrapper {
+.stepsContainer {
     display: flex;
-    box-sizing: border-box;
-    justify-content: space-between;
-}
-
-.reviewTextArea {
-    font-family: inherit;
-    resize: none;
-    height: 100px;
-    width: 100%;
-    outline: none;
-    box-shadow: none;
-    padding: 8px;
-}
-
-.rewardTiersContainer {
-    width: 475px;
-    height: 40px;
-    border-radius: 25px;
-    overflow: hidden;
-    display: flex;
-}
-
-.rewardTierOne {
-    width: 33%;
-    height: 100%;
-    border-right-color: white;
-    border-right-width: 2px;
-    border-right-style: solid;
-}
-
-.rewardTierTwo {
-    width: 33%;
-    height: 100%;
-    border-right-color: white;
-    border-right-width: 2px;
-    border-right-style: solid;
-}
-
-.rewardTierThree {
-    width: 34%;
-    height: 100%;
-}
-
-.rewardTierOne, .rewardTierTwo, .rewardTierThree {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-}
-
-.submitReviewBtn {
-    width: 300px;
-    padding: 15px 0px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    margin: auto;
-    margin-top: 10px;
+    margin-top: auto;
+    gap: 5px;
 }
 
 .uploadMediaContainer {
     border: 2px dotted lightgray;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0px;
     border-radius: 5px;
     position: relative;
-    width: 100%;
-    box-sizing: border-box;
+    width: 400px;
+    height: 150px;
 }
 
 .uploadMediaContainer > label {
     display: flex;
-    height: 70px;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 5px
 }
 
 .uploadedMediaContainer {
@@ -227,9 +145,9 @@
     text-align: center;
 }
 
-.uploadIcon {
-    height: 25px;
-    width: 25px;
+.uploadMediaText {
+    padding: 0px;
+    margin: 0px;
 }
 
 .uploadMediaBtn {
@@ -242,53 +160,46 @@
     height: 100%;
 }
 
-.uploadIcon {
-    height: 25px;
-    width: 25px;
+.uploadError {
+    text-align: center;
+    font-size: 14px;
+    color: red;
 }
 
-@media only screen and (max-width: 2000px) {
-    .reviewForm {
-        width: 600px;
-        margin: auto;
-    }
-} 
-
-@media only screen and (max-width: 800px) {
-    .reviewForm {
-        width: 90%;
-    }
+.writeReviewForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 50vh;
+    background-color: white;
+    border-radius: 5px;
+    position: relative;
+    text-align: center;
+    padding: 20px 10px;
+    overflow: hidden
 }
 
-@media only screen and (max-width: 480px) {
-    
-    .reviewForm > .reviewFieldWrapper > input, textarea, .reviewForm > .reviewNameEmailWrapper > .reviewNameEmailContainer > input {
-        font-size: 12px;
-    }
+.inputContainer > textarea {
+    height: 200px;
+    width: 400px;
+    font-family: inherit;
+}
 
-    .reviewNameEmailWrapper {
-        flex-direction: column;
-        gap: 10px;
-    }
 
-    .reviewFormStarsContainer {
-        margin-bottom: 25px;
-    }
+.writeReviewForwardBtn, .writeReviewBackBtn {
+    position: absolute;
+    cursor: pointer;
+    bottom: 10px;
+    height: 30px;
+    width: 30px;
+}
 
-    .reviewFormHeadingContainer > h1 {
-        font-size: 25px;
-    }
+.writeReviewForwardBtn {
+    right: 5px;
+}
 
-    .reviewForm {
-        height: fit-content
-    };
-
-    .reviewNameEmailInnerContainer > input {
-        width: 100%;
-    }
-
-    .submitReviewBtn {
-        width: 100%;
-    }
-
+.writeReviewBackBtn {
+    left: 5px
 }

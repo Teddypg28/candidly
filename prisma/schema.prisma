@@ -140,13 +140,15 @@ model ReviewRequestEmailSettings {
 }
 
 model ReviewFormSettings {
-  id                  String @id @default(uuid())
-  store               String
-  heading             String
-  subheading          String
-  headlinePlaceholder String
-  reviewPlaceholder   String
-  primaryFormColor    String
+  id                     String @id @default(uuid())
+  store                  String
+  starRatingHeading      String @default("How many stars would you give it?")
+  titleHeading           String @default("Give your review a title")
+  titlePlaceholder       String @default("Sum up your review in a few words")
+  bodyHeading            String @default("What did your like or not like?")
+  bodyPlaceholder        String @default("What would you tell your friends?")
+  customQuestionsHeading String @default("We are interested to know...")
+  mediaHeading           String @default("Want to add an image or video?")
 }
 
 model ReviewRequest {

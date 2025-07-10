@@ -7,6 +7,7 @@ import db from '../db.server'
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 
+// delete packages 
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 
 import { SaveBar } from "@shopify/app-bridge-react";
@@ -45,7 +46,10 @@ export default function ReviewForm() {
 
     return (
 
-        <Page>
+        <Page
+        title="Customize Your Review Form"
+        subtitle="Edit the heading and placeholders of each question"
+        >
             <SaveBar open={isFormDirty}>
                 <button variant={'primary'} onClick={saveChanges}></button>
                 <button onClick={() => { setSettingsState(cleanState) }}></button>
@@ -56,44 +60,51 @@ export default function ReviewForm() {
                         <Card>
                             <BlockStack gap='200'>
                                 <TextField 
-                                value={settingsState.heading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, heading: value}})}
-                                label='Heading' 
+                                value={settingsState.starRatingHeading} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, starRatingHeading: value}})}
+                                label='Star Rating Heading' 
                                 autoComplete="off" />
                                 <TextField 
-                                value={settingsState.subheading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, subheading: value}})} 
-                                label='Subheading' 
+                                value={settingsState.titleHeading} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, titleHeading: value}})}
+                                label='Review Title Heading' 
                                 autoComplete="off" />
                                 <TextField 
-                                value={settingsState.headlinePlaceholder} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, headlinePlaceholder: value}})}
-                                label='Headline Placeholder' 
+                                value={settingsState.titlePlaceholder} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, titlePlaceholder: value}})}
+                                label='Review Title Placeholder' 
+                                autoComplete="off" />
+                                 <TextField 
+                                value={settingsState.bodyHeading} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, bodyHeading: value}})}
+                                label='Review Body Heading' 
+                                autoComplete="off" />
+                                 <TextField 
+                                value={settingsState.bodyPlaceholder} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, bodyPlaceholder: value}})}
+                                label='Review Body Placeholder' 
+                                autoComplete="off" />
+                                 <TextField 
+                                value={settingsState.customQuestionsHeading} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, customQuestionsHeading: value}})}
+                                label='Custom Questions Heading' 
                                 autoComplete="off" />
                                 <TextField 
-                                value={settingsState.reviewPlaceholder} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, reviewPlaceholder: value}})} 
-                                label='Review Placeholder' 
-                                autoComplete="off" />
-                                <Label id="primaryFormColor">Primary Form Color</Label>
-                                <HexColorPicker
-                                color={settingsState.primaryFormColor} 
-                                onChange={(color) => { setSettingsState(prevSettingsState => {return {...prevSettingsState, primaryFormColor: color}})}} 
-                                />
-                                <HexColorInput 
-                                color={settingsState.primaryFormColor} 
-                                onChange={(color) => { setSettingsState(prevSettingsState => {return {...prevSettingsState, primaryFormColor: color}})}}
-                                />
+                                value={settingsState.mediaHeading} 
+                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, mediaHeading: value}})}
+                                label='Review Media Heading' 
+                                autoComplete="off" />                               
                             </BlockStack>
                         </Card>
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
                         <ReviewFormPreview 
-                        heading={settingsState.heading}
-                        subheading={settingsState.subheading}
-                        headlinePlaceholder={settingsState.headlinePlaceholder}
-                        reviewPlaceholder={settingsState.reviewPlaceholder}
-                        primaryColor={settingsState.primaryFormColor}
+                        bodyHeading={settingsState.bodyHeading}
+                        bodyPlaceholder={settingsState.bodyPlaceholder}
+                        mediaHeading={settingsState.mediaHeading}
+                        starRatingHeading={settingsState.starRatingHeading}
+                        titleHeading={settingsState.titleHeading}
+                        titlePlaceholder={settingsState.titlePlaceholder}
                         />
                     </Layout.Section>
                 </Layout>

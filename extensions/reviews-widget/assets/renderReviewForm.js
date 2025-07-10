@@ -7,7 +7,11 @@ const submitReview = async () => {
             formData.append(key, userInputState[key])
         }
     }
-    formData.append("media", addedFiles)
+
+    addedFiles.forEach(file => {
+        formData.append("media", file)
+    })
+
     formData.append("productId", `gid://shopify/Product/${reviewProductId}`)
 
     const res = await fetch(`https://${window.Shopify.shop}/apps/api/review/storefront/create`, {method: 'POST', body: formData})

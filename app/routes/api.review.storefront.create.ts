@@ -11,7 +11,7 @@ export async function action({ request } : ActionFunctionArgs) {
         const formData = await request.formData()
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
-        const uploadedMedia = formData.getAll('media') as File[]
+        const uploadedMedia = formData.getAll('media') as File[] | String
         formData.delete('media')
 
         // convert form data to regular javascript object
@@ -41,8 +41,8 @@ export async function action({ request } : ActionFunctionArgs) {
         })
                 
         // upload media images
-        if (uploadedMedia.length > 0 && uploadedMedia[0].hasOwnProperty("name")) {
-            await uploadMedia(uploadedMedia, newReview.id)
+        if (uploadedMedia.length > 0 && uploadedMedia[0] !== "") {
+            await uploadMedia(uploadedMedia as File[], newReview.id)
         }
 
         // loop through ids and create answer choice snapshots and link them to review

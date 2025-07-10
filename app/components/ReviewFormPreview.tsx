@@ -1,84 +1,71 @@
 import { Card } from "@shopify/polaris"
 
 import styles from '../styles/ReviewPreview.module.css'
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 interface Props {
-    heading: string,
-    subheading: string
-    headlinePlaceholder: string
-    reviewPlaceholder: string
-    primaryColor: string
+    starRatingHeading: string;
+    titleHeading: string;
+    titlePlaceholder: string;
+    bodyHeading: string;
+    bodyPlaceholder: string;
+    mediaHeading: string;
 }
 
-const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPlaceholder, primaryColor } : Props ) => {
+const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading } : Props ) => {
 
-    const [reviewBody, setReviewBody] = useState('')
-    const [reviewHeadline, setReviewHeadline] = useState('')
+    const [currentStep, setCurrentStep] = useState<number>(1)
     const [uploadedMedia, setUploadedMedia] = useState<any>([])
 
-    const rating = useRef(5)
+    const steps = [
+        {title: starRatingHeading, markup: <div id="reviewFormStarsContainer" className={styles.reviewFormStarsContainer}></div>, key: "rating"}, 
+        {title: titleHeading, markup: <input className={styles.formQuestionInput} id='reviewHeadline' name='title' placeholder={titlePlaceholder} />, key: 'title'}, 
+        {title: bodyHeading, markup: <textarea className={styles.formQuestionInput} name='body' id='reviewTextArea' placeholder={bodyPlaceholder}></textarea>, key: 'body'},
+        {title: mediaHeading, markup: 
+        <>
+            <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
+                <label id="uploadMediaLabel" className={styles.uploadMediaLabel} htmlFor='uploadMediaBtn'>
+                    <p className={styles.uploadMediaText}>Upload Media</p>
+                    <i className="fa-solid fa-upload"></i>
+                </label>
+                <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
+                <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/png, image/jpg, image/jpeg, video/*' multiple />
+            </div>
+            <p className={styles.uploadError}></p>
+        </>, key: 'media'}, 
+        {title: 'What is Your First Name?', markup: <input name="firstName" className={styles.formQuestionInput} placeholder="Enter your first name" />, key: 'firstName'}, 
+    ]
+
+    const currentStarRating = useRef(5)
     const uploadedMediaRef = useRef<any>([])
 
     const [uploadMediaError, setUploadMediaError] = useState('')
 
-    const renderStars = (rating: number) => {
-        for (let i = 1; i<=5; i++) {
-            if (i <= rating) {
-                (document.querySelector(`#star${i}`) as HTMLElement).style.fill = primaryColor || ''
-            } else {
-                (document.querySelector(`#star${i}`) as HTMLElement).style.fill = '#e8e8e8'
-            }
-        }
-    }
+    useEffect(() => {
+        const linkTag = document.createElement('link')
+        linkTag.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        linkTag.rel = "stylesheet"
+        document.head.appendChild(linkTag)
+    }, [])
 
     useEffect(() => {
-
-        const mouseoverFunction = (e: any) => {
-            const rating = parseInt(e.currentTarget.dataset.rating)
-            renderStars(rating)
+        
+        if (uploadedMediaRef.current.length > 0) {
+            conditionallyRenderUploadMediaLabel()
         }
 
-        const mouseleaveFunction = () => {
-            renderStars(rating.current)
-        }
-
-        const clickFunction = (e: any) => {
-            rating.current = parseInt(e.currentTarget.dataset.rating)
-            renderStars(rating.current)
-        }
-
-        document.querySelectorAll('#reviewFormStar').forEach((star) => {
-            star.addEventListener('mouseover', mouseoverFunction)
-            star.addEventListener('mouseleave', mouseleaveFunction)
-            star.addEventListener('click', clickFunction)
-        })
-
-        return () => {
-            document.querySelectorAll('#reviewFormStar').forEach((star) => {
-                star.removeEventListener('mouseover', mouseoverFunction)
-                star.removeEventListener('mouseleave', mouseleaveFunction)
-                star.removeEventListener('click', clickFunction)
-            })
-        }
-
-    }, [primaryColor])
+    }, [uploadedMediaRef.current])
 
     useEffect(() => {
-        renderStars(rating.current)
-    }, [primaryColor])
+        if (steps[currentStep-1].key === "rating") {
+            renderStars(currentStarRating.current)
+        }
+        renderSteps(steps.length)
 
-    useEffect(() => {
-
-        try {
-            const fontAwesomeScriptTag = document.createElement('link')
-            fontAwesomeScriptTag.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-            fontAwesomeScriptTag.rel = "stylesheet"
-            document.head.appendChild(fontAwesomeScriptTag)
-
+        if (steps[currentStep-1].key === "media") {
             const uploadMediaBtn = document.querySelector('#uploadMediaBtn') as any
             const uploadedMediaContainer = document.querySelector('#uploadedMediaContainer') as any
-
+    
             const uploadMediaContainer = document.querySelector("#uploadMediaContainer") as any
             uploadMediaContainer.addEventListener('dragover', () => {
                 uploadMediaContainer.style.border = '2px dotted black'
@@ -88,7 +75,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                     uploadMediaContainer.style.border = '2px dotted lightgray'
                 })
             });
-
+    
             const verifyFileType = (file: any) => {
         
                 if (file.type.split('/')[0] !== 'image' && file.type.split('/')[0] !== 'video') {
@@ -102,7 +89,7 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
         
                     // Push files to saved uploaded files array and update input element file list
                     // since file list changes if user drags and drops multiple sets of files
-
+    
                     uploadedMediaRef.current = [...uploadedMediaRef.current, file]
                     setUploadedMedia(uploadedMediaRef.current)
         
@@ -162,29 +149,31 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                                 // Remove deleted file from file list
                                 
                                 const dt = new DataTransfer()
-
+    
                                 const currentFiles = Array.from(uploadMediaBtn.files)
-
+    
                                 currentFiles.forEach((file: any) => {
                                     if (file.name !== e.target.dataset.fileName) {
                                         dt.items.add(file)
                                     }
                                 })
-
+    
                                 uploadMediaBtn.files = dt.files
         
                                 // Remove deleted files from saved uploaded files array
         
                                 uploadedMediaRef.current = uploadedMediaRef.current.filter((uploadedFile: any) => uploadedFile !== file)
                                 setUploadedMedia(uploadedMediaRef.current)
-
+    
                                 imageContainer.remove()
+                                conditionallyRenderUploadMediaLabel()
         
                             }
                         })
         
                         imageContainer.appendChild(removeUploadedMediaContainer)
                         uploadedMediaContainer.appendChild(imageContainer)
+                        conditionallyRenderUploadMediaLabel()
         
                     }
                 }
@@ -195,75 +184,92 @@ const ReviewFormPreview = ( {heading, subheading, headlinePlaceholder, reviewPla
                     Array.from(uploadMediaBtn.files).forEach(verifyFileType)
                 })
             }
-            
-        } catch (error) {
-
-            console.log(error)
-            
         }
 
+    }, [currentStep])
+
+    const conditionallyRenderUploadMediaLabel = useCallback(() => {
+        if (uploadedMediaRef.current.length > 0) {
+            (document.querySelector('#uploadMediaLabel') as any).style.display = "none"
+        } else {
+            (document.querySelector('#uploadMediaLabel') as any).style.display ="flex"
+        }
+    }, [uploadedMediaRef.current])
+
+    const renderStars = useCallback((rating: number) => {
+        const htmlMarkup = []
+        for (let i = 1; i<6; i++) {
+            if (i <= rating) {
+                htmlMarkup.push(
+                    `<svg id="reviewFormStar" class=${styles.reviewFormStar} data-rating=${i} style="height: 60px; width: 60px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path id="star-${i}" d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z" fill="#ffcd1a"></path> </g></svg>`
+                )
+            } else {
+                htmlMarkup.push(
+                    `<svg id="reviewFormStar" class=${styles.reviewFormStar} data-rating=${i} style="height: 60px; width: 60px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path id="star-${i}" d="M9.15316 5.40838C10.4198 3.13613 11.0531 2 12 2C12.9469 2 13.5802 3.13612 14.8468 5.40837L15.1745 5.99623C15.5345 6.64193 15.7144 6.96479 15.9951 7.17781C16.2757 7.39083 16.6251 7.4699 17.3241 7.62805L17.9605 7.77203C20.4201 8.32856 21.65 8.60682 21.9426 9.54773C22.2352 10.4886 21.3968 11.4691 19.7199 13.4299L19.2861 13.9372C18.8096 14.4944 18.5713 14.773 18.4641 15.1177C18.357 15.4624 18.393 15.8341 18.465 16.5776L18.5306 17.2544C18.7841 19.8706 18.9109 21.1787 18.1449 21.7602C17.3788 22.3417 16.2273 21.8115 13.9243 20.7512L13.3285 20.4768C12.6741 20.1755 12.3469 20.0248 12 20.0248C11.6531 20.0248 11.3259 20.1755 10.6715 20.4768L10.0757 20.7512C7.77268 21.8115 6.62118 22.3417 5.85515 21.7602C5.08912 21.1787 5.21588 19.8706 5.4694 17.2544L5.53498 16.5776C5.60703 15.8341 5.64305 15.4624 5.53586 15.1177C5.42868 14.773 5.19043 14.4944 4.71392 13.9372L4.2801 13.4299C2.60325 11.4691 1.76482 10.4886 2.05742 9.54773C2.35002 8.60682 3.57986 8.32856 6.03954 7.77203L6.67589 7.62805C7.37485 7.4699 7.72433 7.39083 8.00494 7.17781C8.28555 6.96479 8.46553 6.64194 8.82547 5.99623L9.15316 5.40838Z" fill="#e6e6e6"></path> </g></svg>`
+                )
+            }
+        }
+    
+        const reviewFormStarsContainer = document.querySelector('#reviewFormStarsContainer') as any
+        reviewFormStarsContainer.innerHTML = htmlMarkup.join('')
+    
+        const reviewFormStars = document.querySelectorAll('#reviewFormStar') as any
+        reviewFormStars.forEach((reviewFormStar: any) => {
+            const reviewFormStarRating = reviewFormStar.dataset.rating 
+            const fillStars = (maxRating: number) => {
+                for (let i = 1; i<6; i++) {
+                    if (i<=maxRating) {
+                        (document.querySelector(`#star-${i}`) as any).style.fill = '#ffcd1a'
+                    } else {
+                        (document.querySelector(`#star-${i}`) as any).style.fill = '#e6e6e6'
+                    }
+                }
+            }
+            reviewFormStar.addEventListener('mouseover', () => fillStars(reviewFormStarRating))
+            reviewFormStar.addEventListener('mouseleave', () => fillStars(rating))
+            reviewFormStar.addEventListener('click', () => {
+                currentStarRating.current = reviewFormStar.dataset.rating
+                renderStars(reviewFormStarRating)
+                setCurrentStep(currentStep+1)
+            })
+        })
     }, [])
 
+    const nextQuestion = useCallback(() => {
+        if (currentStep !== steps.length) {
+            setCurrentStep(currentStep => {return currentStep + 1})
+        }
+    }, [currentStep])
+
+    const lastQuestion = useCallback(() => {
+        setCurrentStep(currentStep => {return currentStep - 1})
+    }, [currentStep])
+
+    // renders the steps helper at the bottom of the form
+    const renderSteps = useCallback((numSteps: number) => {
+        const markup = []
+        for (let i = 1; i<=numSteps; i++) {
+            markup.push(`<div class="${styles.reviewFormStep}" style="background-color: ${i <= currentStep ? "black": "#f6f6f6"}"></div>`)
+        }
+        const stepsContainer = document.querySelector('#stepsContainer')
+        if (stepsContainer) {
+            stepsContainer.innerHTML = markup.join("")
+        }
+    }, [currentStep])
+
   return (
-            <Card>
-                <div style={{width: 'fit-content', margin: 'auto'}}>
-                    <div className={styles.reviewForm} style={{width: '100%'}}>
-                        <div className={styles.reviewFormHeadingContainer} style={{marginBottom: 0}}>
-                            <h1 style={{margin: 0, padding: 0, fontSize: '26px'}}>{heading}</h1>
-                            <p style={{margin: 0, padding: 0, marginTop: '10px'}}>{subheading}</p>
-                        </div>
-                        <div className={styles.reviewFormStarsContainer} style={{width: 'fit-content', margin: 'auto'}}>
-                            <svg id="reviewFormStar" data-rating="1" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star1" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                            </svg>
-                            <svg id="reviewFormStar" data-rating="2" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star2" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                            </svg>
-                            <svg id="reviewFormStar" data-rating="3" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star3" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                            </svg>
-                            <svg id="reviewFormStar" data-rating="4" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star4" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                            </svg>
-                            <svg id="reviewFormStar" data-rating="5" className={styles.reviewFormStar} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <path id="star5" fill={primaryColor} d="M20.388,10.918L32,12.118l-8.735,7.749L25.914,31.4l-9.893-6.088L6.127,31.4l2.695-11.533L0,12.118l11.547-1.2L16.026,0.6L20.388,10.918z"/>
-                            </svg>
-                        </div>
-                        <div className={styles.reviewFieldWrapper}>
-                            <label> Give it a Headline * </label>
-                            <div style={{position: 'relative'}}>
-                                <input value={reviewHeadline} onChange={(e) => setReviewHeadline(e.target.value)} name='title' placeholder={headlinePlaceholder} />
-                            </div>
-                        </div>
-                        <div className={styles.reviewFieldWrapper}>
-                            <label>Review *</label>
-                            <div style={{position: 'relative'}}>
-                                <textarea value={reviewBody} onChange={(e) => setReviewBody(e.target.value)} name='body' className={styles.reviewTextArea} placeholder={reviewPlaceholder} />
-                            </div>
-                        </div>
-                        <div className={styles.reviewNameEmailWrapper} style={{gap: '10px'}}>
-                            <div className={styles.reviewNameEmailContainer}>
-                                <label>Your First Name *</label>
-                                <input placeholder="Automatically Inserted First Name" disabled type='name' name='name' />
-                            </div>
-                            <div className={styles.reviewNameEmailContainer}>
-                                <label>Your Email Address *</label>
-                                <input placeholder="Automatically Inserted Email" disabled type='email' name='email' />
-                            </div>
-                        </div>
-                        <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
-                            <label className={styles.uploadMediaLabel}>
-                                <p>Upload Media</p>
-                                <svg viewBox="0 0 1024 1024" className={styles.uploadIcon} version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M220.5 245.4c-32.8 32.8-55.1 73.2-65.2 117.3h16.5c18.8-75.3 75.1-135.9 148-160.7v-16.9c-37.1 11.6-71 32-99.3 60.3z" fill="#000000"></path><path d="M959.9 540.8c0 113.6-92.1 205.8-205.7 205.9H590.9v-44h163.3c43.2 0 83.8-16.9 114.3-47.4 30.6-30.6 47.4-71.2 47.4-114.5 0-43.2-16.8-83.9-47.4-114.4S797.2 379 754 379c-11.5 0-22.8 1.2-33.8 3.5-15 3.2-29.4 8.4-42.8 15.7-1-15.4-3.3-30.7-6.8-45.6v-0.1c-3.6-15.6-8.6-30.8-14.9-45.7-14.4-33.9-34.9-64.4-61.1-90.6-26.2-26.2-56.6-46.7-90.6-61.1-35.1-14.8-72.4-22.4-110.9-22.4s-75.8 7.5-110.9 22.4c-33.9 14.3-64.4 34.9-90.6 61.1-26.2 26.2-46.7 56.7-61.1 90.6-14.9 35.1-22.4 72.4-22.4 110.9s7.5 75.8 22.4 110.9c14.3 33.9 34.9 64.4 61.1 90.6 26.2 26.2 56.7 46.7 90.6 61.1 35.1 14.8 72.4 22.4 110.9 22.4h39.7v44h-41C210.7 746 64.1 599 64.1 417.7c0-181.7 147.3-329 329-329 154.6 0 284.3 106.6 319.5 250.3v0.1c13.4-2.7 27.2-4.2 41.4-4.2 113.7 0.1 205.9 92.2 205.9 205.9z" fill="#39393A"></path><path d="M692.9 636.1h-22.6L519.8 485.6v449.6h-16V485.8L353.4 636.1h-22.6l181-181z" fill="#000000"></path></g></svg>            
-                            </label>
-                            <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
-                            <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/*, video/*' multiple />
-                        </div>
-                        {uploadMediaError && <p style={{color: 'darkred', padding: 0, margin: 0, fontSize: '14px'}}>{uploadMediaError}</p>}
-                        <button className={styles.submitReviewBtn} style={{backgroundColor: primaryColor}}>Submit Review</button>
-                    </div>
+        <Card>
+            <div className={styles.writeReviewForm}>
+                {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
+                {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
+                <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
+                <div className={styles.inputContainer}>
+                    {steps[currentStep-1].markup}
                 </div>
-            </Card>
+                <div id="stepsContainer" className={styles.stepsContainer}>
+                </div>
+            </div>
+        </Card>
   )
 }
 

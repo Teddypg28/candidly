@@ -94,8 +94,8 @@ const activateUploadMediaContainer = () => {
         }
     }
 
-    const active = () => uploadMediaContainer.style.border = `2px dotted ${reviewSettings.primaryColor}`
-    const inactive = () => uploadMediaContainer.style.border = '2px dotted lightgray'
+    const active = () => uploadMediaContainer.style.border = `2px dotted #b0d7f4`
+    const inactive = () => uploadMediaContainer.style.border = '2px dotted lightgray';
 
     ['dragenter', 'dragover'].forEach(event => uploadMediaContainer.addEventListener(event, active));
     ['dragleave', 'drop'].forEach(event => uploadMediaContainer.addEventListener(event, inactive));
