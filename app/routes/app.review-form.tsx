@@ -1,14 +1,11 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Banner, BlockStack, Card, Label, Layout, Page, TextField } from "@shopify/polaris";
+import { BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
 
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
-
-// delete packages 
-import { HexColorPicker, HexColorInput } from 'react-colorful'
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import { defaultReviewFormSettings } from "~/types/types";
@@ -49,6 +46,7 @@ export default function ReviewForm() {
         <Page
         title="Customize Your Review Form"
         subtitle="Edit the heading and placeholders of each question"
+        backAction={{content: '', url: '/app'}}
         >
             <SaveBar open={isFormDirty}>
                 <button variant={'primary'} onClick={saveChanges}></button>
@@ -99,6 +97,7 @@ export default function ReviewForm() {
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
                         <ReviewFormPreview 
+                        customQuestionsHeading={settingsState.customQuestionsHeading}
                         bodyHeading={settingsState.bodyHeading}
                         bodyPlaceholder={settingsState.bodyPlaceholder}
                         mediaHeading={settingsState.mediaHeading}

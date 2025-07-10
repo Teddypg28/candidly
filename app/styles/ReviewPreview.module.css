@@ -1,3 +1,9 @@
+.customQuestionsDisplayMessage {
+    width: 60%;
+    font-style: italic;
+    font-size: 14px;
+}
+
 .formQuestionInput {
     border: 1px solid lightgray;
     width: 100%;
@@ -14,6 +20,12 @@
 
 .hidden {
     display: none;
+}
+
+.inputContainer > textarea {
+    height: 200px;
+    width: 400px;
+    font-family: inherit;
 }
 
 .inputContainer {
@@ -40,13 +52,13 @@
 }
 
 .reviewFormStepTitle {
-    font-size: 30px;
+    font-size: 25px;
     font-weight: bold;
 }
 
 .reviewFormStar {
-    height: 35px;
-    width: 35px;
+    height: 60px;
+    width: 60px;
     cursor: pointer;
 }
 
@@ -181,13 +193,6 @@
     overflow: hidden
 }
 
-.inputContainer > textarea {
-    height: 200px;
-    width: 400px;
-    font-family: inherit;
-}
-
-
 .writeReviewForwardBtn, .writeReviewBackBtn {
     position: absolute;
     cursor: pointer;
@@ -202,4 +207,27 @@
 
 .writeReviewBackBtn {
     left: 5px
+}
+
+@media only screen and (max-width: 480px) {
+    .customQuestionsDisplayMessage {
+        width: 100%;
+    }
+
+    .inputContainer > textarea {
+        width: 100%;
+    }
+
+    .reviewFormStepTitle {
+        font-size: 18px;
+    }
+
+    .reviewFormStar {
+        height: 50px;
+        width: 50px;
+    }    
+
+    .uploadMediaContainer {
+        width: 100%;
+    }
 }
