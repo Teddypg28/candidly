@@ -168,6 +168,7 @@ const renderReviewForm = () => {
             if (currentStep < steps.length) {
                 currentStep++
                 renderReviewStep(steps[currentStep-1])
+                console.log(userInputState["customQuestionAnswers"])
             } else {
                 const submissionSuccessful = await submitReview()
                 if (submissionSuccessful) {
@@ -183,6 +184,9 @@ const renderReviewForm = () => {
                     `
                     const closeFormBtn = document.querySelector('.closeModalBtnContainer')
                     closeFormBtn.addEventListener('click', closeReviewForm)
+                    userRating = '5'
+                    userInputState = { title: '', body: '', firstName: '', rating: userRating, customQuestionAnswers: {} }
+                    addedFiles = []
                 } else {
                     document.querySelector('.askQuestionFormError').textContent = 'There was an error submitting this review'
                 }

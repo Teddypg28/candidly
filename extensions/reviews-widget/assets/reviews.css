@@ -168,6 +168,12 @@
     padding: 5px 20px;
 }
 
+.chevronContainer {
+    position: absolute;
+    right: 2px;
+    top: 8px;
+}
+
 .currentCarouselItem {
     height: 100%;
     width: 100%;
@@ -186,7 +192,7 @@
 }
 
 .dropdownTop {
-    width: 250px;
+    width: 100%;
     height: fit-content;
     border: 1px solid lightgray;
     border-radius: 5px;
@@ -224,6 +230,10 @@
     padding: 0px;
     margin: 0px;
     font-size: 12px;
+}
+
+.flex {
+    height: 100%;
 }
 
 .formQuestionInput {
@@ -314,6 +324,7 @@
 
 .multipleChoicesContainer {
     position: relative; 
+    width: 100%;
 }
 
 .mediaCarouselCardContainer {
@@ -326,10 +337,6 @@
     border-radius: 10px;
     margin: auto;
     overflow: hidden;
-}
-
-.flex {
-    height: 100%;
 }
 
 .mediaCarouselCardDataContainer {
@@ -346,7 +353,7 @@
     height: 80px;
     width: 80px;
     border-radius: 10px;
-    object-fit: contain;
+    object-fit: cover;
     overflow: hidden
 }
 
@@ -693,12 +700,17 @@
 .reviewMediaContainer {
     display: flex;
     align-items: center;
-    gap: 15px
+    gap: 15px;
+    width: 100%;
+    overflow-x: scroll;
+    border-radius: 5px;
 }
 
 .reviewMediaItem {
-    height: 150px;
-    width: 150px;
+    height: 75px;
+    width: 75px;
+    object-fit: cover;
+    border-radius: 3px;
     cursor: pointer
 }
 
@@ -831,7 +843,7 @@
     border-radius: 5px;
     position: relative;
     width: 400px;
-    height: 150px;
+    height: fit-content;
 }
 
 .uploadMediaContainer > label {
@@ -947,10 +959,6 @@
 } 
 
 @media only screen and (max-width: 1100px) {
-    .reviewStatsWrapper {
-        flex-direction: column;
-        gap: 10px;
-    }
 
     .backwardCarouselArrow, .forwardCarouselArrow {
         display: none;
@@ -976,6 +984,11 @@
     .mediaCarouselReviewDetails {
         width: 100%;
     }
+
+    .reviewStatsWrapper {
+        flex-direction: column;
+        gap: 10px;
+    }
 } 
 
 @media only screen and (max-width: 1500px) {
@@ -990,15 +1003,6 @@
 
 @media only screen and (max-width: 480px) {
 
-    .customQuestionRadio {
-        width: 100%
-    }
-
-    .closeModalBtn {
-        height: 20px;
-        width: 20px;
-    }
-
     .askQuestionForm {
         width: 80vw;
         height: 40vh;
@@ -1009,9 +1013,36 @@
         height: 60%;
     }
 
+    .customQuestionRadio {
+        width: 100%
+    }
+
+    .customQuestionsContainer {
+        gap: 10px
+    }
+
+    .closeReviewFormBtn {
+        right: 10px;
+    }
+
+    .closeModalBtn {
+        height: 20px;
+        width: 20px;
+    }
+
+    .flexContainer {
+        justify-content: space-between;
+        gap: 0px;
+    }
+
     .flex {
         display: flex;
         flex-direction: column;
+    }
+
+    .headingBtnContainer {
+        flex-direction: column;
+        margin-bottom: 20px;
     }
 
     .mediaCarouselCardContainer {
@@ -1028,21 +1059,21 @@
         padding: 15px;
     }
 
-    .flexContainer {
-        justify-content: space-between;
-        gap: 0px;
-    }
-
-    .customQuestionsContainer {
-        gap: 10px
-    }
-
-    .closeReviewFormBtn {
-        right: 10px;
+    .outerFillContainer {
+        width: 200px;
     }
 
     .productTitleImageContainer {
         gap: 5px;
+    }
+
+    .paginator {
+        width: 250px;
+        margin: auto;
+    }
+
+    .questionAnswerContainer {
+        width: 80vw;
     }
     
     .reviewFormInput {
@@ -1075,39 +1106,26 @@
         font-size: 17px;
     }
 
-    .submitReviewBtn {
-        width: 100%;
-    }
-
     .reviewFormStar {
         height: 30px;
         width: 30px;
-    }
-
-    .headingBtnContainer {
-        flex-direction: column;
-        margin-bottom: 20px;
-    }
-
-    .outerFillContainer {
-        width: 200px;
     }
 
     .reviewStatsContainer {
         width: 100%;
     }
 
-   .thankYouMessageContainer {
-        width: 90vw;
-   }
-
-    .paginator {
-        width: 250px;
-        margin: auto;
+    .submitReviewBtn {
+        width: 100%;
     }
 
-    .questionAnswerContainer {
-        width: 80vw;
+    .thankYouMessageContainer {
+        width: 90vw;
+    }
+
+    .uploadMediaContainer {
+        width: 90%;
+        height: 200px;
     }
 
     .writeReviewForm {
@@ -1123,10 +1141,4 @@
         width: 100%;
     }
 
-    .uploadMediaContainer {
-        width: 90%;
-        height: 200px;
-    }
-
 }
-

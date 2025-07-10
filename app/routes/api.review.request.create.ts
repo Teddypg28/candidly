@@ -10,7 +10,7 @@ export async function action({ request } : ActionFunctionArgs) {
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
 
-        const { authToken, reviewRequestId, store, productId, rating, reviewScore, body, title } = data
+        const { authToken, reviewRequestId, store, productId, rating } = data
 
         const storeSessionDetails = await db.session.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
         const accessToken = storeSessionDetails?.accessToken
@@ -33,7 +33,7 @@ export async function action({ request } : ActionFunctionArgs) {
         }
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
-        const uploadedMedia = formData.getAll('media') as File[]
+        const uploadedMedia = formData.getAll('media') as File[] | String
         formData.delete('media')
 
         // remove authToken
@@ -55,18 +55,22 @@ export async function action({ request } : ActionFunctionArgs) {
         // grab all of the ids connected to the selected answer choices
         const answerChoiceIds: string[] = []
         Object.keys(selectedAnswerChoices).forEach(questionIdKey => {
-            if (typeof selectedAnswerChoices[questionIdKey] === "string") {
-                answerChoiceIds.push(selectedAnswerChoices[questionIdKey])
+            if (selectedAnswerChoices[questionIdKey].value.length === 1) {
+                answerChoiceIds.push(selectedAnswerChoices[questionIdKey].value[0])
             } else {
-                selectedAnswerChoices[questionIdKey].forEach((answerChoice: {id: string, value: string}) => {
-                    answerChoiceIds.push(answerChoice.id)
+                selectedAnswerChoices[questionIdKey].value.forEach((answerChoiceId: string) => {
+                    answerChoiceIds.push(answerChoiceId)
                 })
             }
         })
-                
+                   
         // upload media images
-        if (uploadedMedia.length > 0) {
-            await uploadMedia(uploadedMedia, newReview.id)
+        if (uploadedMedia.length > 0 && uploadedMedia[0] !== "") {
+            if (uploadedMedia.length > 5) {
+                const updatedUploadedMedia = (uploadedMedia as File[]).filter((file, index) =>  index !== uploadedMedia.length-1)
+                await uploadMedia(updatedUploadedMedia, newReview.id)
+            }
+            await uploadMedia(uploadedMedia as File[], newReview.id)
         }
 
         // loop through ids and create answer choice snapshots and link them to review

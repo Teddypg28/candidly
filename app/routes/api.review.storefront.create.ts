@@ -26,7 +26,7 @@ export async function action({ request } : ActionFunctionArgs) {
         // fetch store settings to check auto publishing rules
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session?.shop}}})
         const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
-        const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session?.shop, date: new Date(), isPublished, reviewRequestId: '12345'}})
+        const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session?.shop, date: new Date(), isPublished}})
 
         // grab all of the ids connected to the selected answer choices
         const answerChoiceIds: string[] = []
@@ -34,14 +34,18 @@ export async function action({ request } : ActionFunctionArgs) {
             if (selectedAnswerChoices[questionIdKey].value.length === 1) {
                 answerChoiceIds.push(selectedAnswerChoices[questionIdKey].value[0])
             } else {
-                selectedAnswerChoices[questionIdKey].value.forEach((answerChoice: {id: string}) => {
-                    answerChoiceIds.push(answerChoice.id)
+                selectedAnswerChoices[questionIdKey].value.forEach((answerChoiceId: string) => {
+                    answerChoiceIds.push(answerChoiceId)
                 })
             }
         })
                 
         // upload media images
         if (uploadedMedia.length > 0 && uploadedMedia[0] !== "") {
+            if (uploadedMedia.length > 5) {
+                const updatedUploadedMedia = (uploadedMedia as File[]).filter((file, index) =>  index !== uploadedMedia.length-1)
+                await uploadMedia(updatedUploadedMedia, newReview.id)
+            }
             await uploadMedia(uploadedMedia as File[], newReview.id)
         }
 

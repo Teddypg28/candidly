@@ -80,7 +80,7 @@ model ProductReview {
   media                  ProductReviewMedia[]
   date                   DateTime
   isPublished            Boolean
-  reviewRequestId        String
+  reviewRequestId        String?
   radioQuestionResponses AnswerChoiceSnapshot[]
   textQuestionResponses  TextAnswer[]
 }

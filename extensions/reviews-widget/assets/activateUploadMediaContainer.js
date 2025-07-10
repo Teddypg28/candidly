@@ -13,6 +13,9 @@ const activateUploadMediaContainer = () => {
     }
 
     const verifyFileType = (file) => {
+
+        if (addedFiles.length === 5) return
+
         if (file.type.split('/')[0] !== 'image' && file.type.split('/')[0] !== 'video') {
             return uploadError.innerText = 'Only image or video files are allowed'
         } 

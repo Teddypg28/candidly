@@ -45,6 +45,5 @@ const createReviewStars = () => {
 
     const defaultRatingWrapperElement = document.querySelector('.rating-wrapper')
     if (defaultRatingWrapperElement) defaultRatingWrapperElement.remove()
-
  }
  
