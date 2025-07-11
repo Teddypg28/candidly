@@ -31,7 +31,7 @@ export default function App() {
         <Link to="/app/email-template">Review Request Email</Link>
         <Link to="/app/custom-questions">Custom Questions</Link>
         <Link to="/app/question-answers">Q&A</Link>
-        <Link to="/app/rewards">Rewards</Link>
+        <Link to="/app/rewards">Rewards/Incentives</Link>
         <Link to="/app/settings/general">Settings</Link>
         <Link to="/app/billing">Billing</Link>
       </NavMenu>

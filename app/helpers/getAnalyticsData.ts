@@ -97,7 +97,7 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
                 {heading: 'Total Reviews', value: totalReviews.length, key: 'totalReviews'},
                 {heading: 'Average Product Rating', value: totalAvgProductRating, key: 'avgProductRating'},
                 {heading: 'Best Rated Product', value: bestProductTitleHandle.title, link: `https://admin.shopify.com/store/powderedslopes/products/${bestProductId.split('Product/')[1]}`, key: 'bestProduct'},
-                {heading: 'Worst Rated Product', value: worstProductTitleHandle?.title || '-', link: `https://admin.shopify.com/store/powderedslopes/products/${worstProductData.productId.split('Product/')[1]}`, key: 'worstProduct'},
+                {heading: 'Worst Rated Product', value: worstProductTitleHandle?.title || '-', link: worstProductId ? `https://admin.shopify.com/store/powderedslopes/products/${worstProductData.productId.split('Product/')[1]}` : undefined, key: 'worstProduct'},
                 {heading: 'Total Review Requests', value: totalReviewRequests.length, key: 'totalReviewRequests'},
                 {heading: 'Total Review Requests Sent', value: totalReviewRequestsSent, key: 'totalReviewRequestsSent'}
             ]

@@ -16,14 +16,6 @@ export const sampleReviewData = [
     ]
 ]
 
-export const defaultReviewFormSettings = {
-    heading: 'Tell Us What You Think',
-    subheading: 'Rate it out of 5 stars:',
-    headlinePlaceholder: 'Sum up your experience in a few short words',
-    reviewPlaceholder: 'What did you like or not like?',
-    primaryFormColor: '#000000'
-}
-
 export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
     store: '',
     logo: null,
@@ -59,7 +51,8 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
             - {{companyName}}
         `
     ),
-    subject: "Tell Us How You Feel"
+    initialEmailSubject: "Tell us how you feel...",
+    followUpEmailSubject: "We hope you are doing well..."
 }
 
 export const initialImportCsvFileState: ImportCsvFileState = {
@@ -284,7 +277,8 @@ export interface ReviewRequestEmailSettings {
     companyName?: string
     initialEmailBody: string
     followUpEmailBody: string
-    subject: string
+    initialEmailSubject: string
+    followUpEmailSubject: string
 }
 
 export interface ReviewRequestEmailProductData {

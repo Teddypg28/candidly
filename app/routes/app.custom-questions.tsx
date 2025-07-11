@@ -69,7 +69,6 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
             }
         }))
 
-
         return json({ questions: questionData, savedViews })
 
     } catch (error) {
@@ -138,7 +137,6 @@ const CustomQuestions = () => {
                 <IndexTable.Cell>
                     <Link url={`/app/question/${question.id}`}>{question.title}</Link>
                 </IndexTable.Cell>
-                {/* <IndexTable.Cell>{question.answerType[0] === 'text' ? 'Text Field' : 'Radio Buttons'}</IndexTable.Cell> */}
                 <IndexTable.Cell>
                     <CustomQuestionConfigurationDetails question={question} />
                 </IndexTable.Cell>

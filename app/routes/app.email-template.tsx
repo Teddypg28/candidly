@@ -131,7 +131,6 @@ export default function EmailTemplate() {
 
     const [emailBody, setEmailBody] = useState(data.settings.initialEmailBody)
     
-    // const [productSelectionError, setProductSelectionError] = useState(false)
     const [errors, setErrors] = useState<any>({})
 
     const cleanSettings = data.settings
@@ -155,7 +154,6 @@ export default function EmailTemplate() {
     const handleSave = () => { 
 
         if (Object.keys(errors).length > 0) return
-        
         const formData = new FormData()
         Object.keys(settings).forEach(key => {
             if (key === "productDisplay" || key === "productIds") {
@@ -195,37 +193,12 @@ export default function EmailTemplate() {
 
     const fileUploadBtn = !settings.logo && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
-    const selectProducts = async () => {
-        const products = await window.shopify.resourcePicker({
-            type: 'product',
-            action: 'select',
-            multiple: true
-        })
-        if (products) {
-            const productIds = products.map((product) => product.id).filter((id, index) => index <= 3-1)
-            setSettings(prevSettings => {return {...prevSettings, productIds}})
-            const productData: ReviewRequestEmailProductData[] = products
-                .map((product) => {
-                    return {
-                        title: product.title,
-                        image: product.images.length > 0 ? product.images[0].originalSrc : null,
-                        handle: product.handle
-                    }
-                })
-                .filter((product, index) => index <= 3-1)
-            setProductData(productData)
-        } else {
-            setSettings(prevSettings => {return {...prevSettings, productIds: []}})
-            setProductData([])
-        }
-    }
-
-    const emailData = {
+    const testEmailData = {
         bannerBgColor: settings.bannerBgColor,
         logo: settings.logo,
         companyName: settings.companyName,
         store: settings.store,
-        subject: settings.subject,
+        subject: settings.initialEmailSubject,
         lineItems: [],
         configuredQuestions: []
     }
@@ -233,7 +206,7 @@ export default function EmailTemplate() {
     const sendTestEmail = () => { 
         const formData = new FormData()
         formData.append('emailBody', emailBody)
-        formData.append('emailData', JSON.stringify(emailData))
+        formData.append('emailData', JSON.stringify(testEmailData))
         formData.append('store', data.settings.store)
         submit(formData, {action: '/api/reviewRequestEmail/test/send', method: 'POST', encType: 'multipart/form-data', navigate: false})
     }
@@ -342,9 +315,9 @@ export default function EmailTemplate() {
                                 }
                                 </DropZone>
                                 <TextField 
-                                label="Email Subject" 
-                                value={settings.subject}
-                                onChange={(val) => {setSettings(prevSettings => {return {...prevSettings, subject: val}})}}
+                                label={`${emailCopyVersion} Email Subject`} 
+                                value={emailCopyVersion === "Initial" ? settings.initialEmailSubject : settings.followUpEmailSubject}
+                                onChange={(val) => {setSettings(prevSettings => {return emailCopyVersion === "Initial" ? {...prevSettings, initialEmailSubject: val} : {...prevSettings, followUpEmailSubject: val}})}}
                                 autoComplete="off"
                                 />
                                 <BlockStack gap='100'>
@@ -373,8 +346,8 @@ export default function EmailTemplate() {
                                     <Pagination 
                                     hasNext={emailCopyVersion === 'Initial'} 
                                     hasPrevious={emailCopyVersion === 'Follow Up'}
-                                    onNext={() => { setEmailCopyVersion('Follow Up'); setEmailBody(data.settings.followUpEmailBody) }}
-                                    onPrevious={() => { setEmailCopyVersion('Initial'); setEmailBody(data.settings.initialEmailBody) }}
+                                    onNext={() => { setEmailCopyVersion('Follow Up'); setEmailBody(data.settings.followUpEmailBody)}}
+                                    onPrevious={() => { setEmailCopyVersion('Initial'); setEmailBody(data.settings.initialEmailBody)}}
                                     />
                                 </InlineStack>
                                 <BlockStack gap='300'>
@@ -391,7 +364,7 @@ export default function EmailTemplate() {
                                             }
                                         </div>
                                     </div>
-                                    <div dangerouslySetInnerHTML={{__html: generateEmailBody(emailBody, emailData)}}></div>
+                                    <div dangerouslySetInnerHTML={{__html: generateEmailBody(emailBody, testEmailData)}}></div>
                                 </BlockStack>
                             </BlockStack>
                         </Card>

@@ -148,11 +148,11 @@ export default function Index() {
     return (
         <Page
         title="Home Dashboard"
-        primaryAction={{content: 'Support', url: 'mailto:support@trycandidly.app?subject=Support Request', target: '_parent'}}
+        primaryAction={{content: 'Get Help', url: 'mailto:support@trycandidly.app?subject=Support Request', target: '_parent'}}
         >
             <BlockStack gap={'200'}>
-                <Banner tone="info">
-                    Need help? Send us an email at <strong>support@trycandidly.app</strong> by clicking the "Support" button
+                <Banner tone="info" title="Need help?">
+                    Send us an email at <strong>support@trycandidly.app</strong> by clicking the "Get Help" button
                 </Banner>
                 {!data.isDismissed &&
                 <>

@@ -8,7 +8,6 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 
 import { SaveBar } from "@shopify/app-bridge-react";
-import { defaultReviewFormSettings } from "~/types/types";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()
@@ -23,7 +22,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
     if (reviewFormSettings) {
         return json({settings: reviewFormSettings})
     }
-    const defaultSettings = await db.reviewFormSettings.create({data: {...defaultReviewFormSettings, store: session.shop}})
+    const defaultSettings = await db.reviewFormSettings.create({data: {store: session.shop}})
 
     return json({settings: defaultSettings})
 }
