@@ -225,7 +225,7 @@ export default function Question() {
                     <Button onClick={addAnswerChoice}>Add Choice</Button>
                     <Button disabled={state.radioAnswerChoices.length === 2} onClick={removeAnswerChoice}>Remove Choice</Button>
                     <InlineStack>
-                        <Button disabled={state.productIds.length !== 1} onClick={useProductVariantsAsChoices} variant="plain">Use product variants as choices</Button>
+                        <Button disabled={state.productConfiguration[0] === "all"} onClick={useProductVariantsAsChoices} variant="plain">Use product variants as choices</Button>
                     </InlineStack>
                 </InlineStack>
             </BlockStack>

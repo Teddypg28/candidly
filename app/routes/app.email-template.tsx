@@ -1,4 +1,4 @@
-import { BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Modal, Page, Pagination, Text, TextField, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, DropZone, Image, InlineError, InlineStack, Label, Layout, Link, Modal, Page, Pagination, Text, TextField, Thumbnail } from "@shopify/polaris";
 import { useEffect, useRef, useState } from "react";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
@@ -284,7 +284,10 @@ export default function EmailTemplate() {
                     </Text>
                 </Card>
             </Modal>
-            <BlockStack gap='200'>
+            <BlockStack gap='300'>
+                <Banner title="Want the emails to come from your own domain?">
+                    To send branded and trusted emails from your store’s domain, you need to verify the domain by adding a few DNS records found on the <Link>email settings</Link> page. Otherwise, the emails will come from our app's domain.
+                </Banner>
                 <Layout>
                     <Layout.Section variant="oneThird">
                         <Card>

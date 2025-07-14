@@ -13,11 +13,29 @@ import SettingsTabs from "~/components/SettingsTabs";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
 import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
 import GeneralSettings from "~/components/settings/GeneralSettings";
+import DomainVerificationSettings from "~/components/settings/DomainVerificationSettings";
+
+import { fetchCnames } from "~/helpers/domainVerification/fetchCnames";
+import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
     const { session, admin } = await authenticate.admin(request)
+    
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
-    if (appSettings) return {...appSettings, path: params.path}
+    if (appSettings) {
+        const cNames = await fetchCnames(appSettings.domain)
+        const verificationStatus: string = await verifyRecords(appSettings.domain)
+        if (cNames) {
+            const records = [
+                ...cNames, 
+                {Type: "MX", Name: `mail.${appSettings.domain}`, Value: "10 feedback-smtp.us-east-2.amazonses.com"}, 
+                {Type: "TXT", Name: `mail.${appSettings.domain}`, Value: `"v=spf1 include:amazonses.com ~all"`}, 
+                {Type: "TXT", Name: `_dmarc.${appSettings.domain}`, Value: `"v=DMARC1; p=none;"`}
+            ]
+            return {appSettings: {...appSettings, path: params.path}, records, verificationStatus}
+        }
+        return {appSettings: {...appSettings, path: params.path}, records: [], verificationStatus: "Pending"}
+    } 
 
     // fetch store owner email and set it as primary email
     const getEmailQuery = `
@@ -32,15 +50,13 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     const defaultSettings = {
         store: session.shop,
-        autoPublishReviews: ['false'],
-        minReviewRating: 4, 
-        firstReviewRequest: 10,
-        secondReviewRequest: 5,
         primaryEmail,
         companyName: session.shop.split('.')[0]
     }
+
     const initializedSettings = await db.appSettings.create({data: defaultSettings})
-    return {...initializedSettings, path: params.path}
+
+    return {appSettings: {...initializedSettings, path: params.path}, records: [], verificationStatus: "Pending"}
 }
 
 export async function action({ request } : ActionFunctionArgs) {
@@ -56,9 +72,9 @@ export default function Settings() {
     const location = useLocation()
     const settingsPath = location.pathname.split('/settings/')[1]
 
-    const settings = useLoaderData<typeof loader>()
+    const data = useLoaderData<typeof loader>()
 
-    const [settingsState, setSettingsState] = useState(settings)
+    const [settingsState, setSettingsState] = useState(data.appSettings)
     const [cleanState, setCleanState] = useState(settingsState)
     const errors = useRef([])
 
@@ -79,8 +95,11 @@ export default function Settings() {
         case "review-request-timing":
             SettingsComponent = <ReviewRequestTimingSettings state={settingsState} setState={setSettingsState} errors={errors} />
             break   
-        case "verification":
+        case "review-verification":
             SettingsComponent = <ReviewVerificationSettings state={settingsState} setState={setSettingsState} errors={errors} />
+            break
+        case "domain-verification":
+            SettingsComponent = <DomainVerificationSettings state={settingsState} setState={setSettingsState} records={data.records} errors={errors} verificationStatus={data.verificationStatus} />
             break
     }
 
@@ -96,7 +115,7 @@ export default function Settings() {
             <Layout>
                 <Layout.Section variant="oneThird">
                     <SettingsTabs 
-                    store={settings.store}
+                    store={data.appSettings.store}
                     path={settingsPath}
                     />
                 </Layout.Section>

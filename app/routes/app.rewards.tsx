@@ -24,9 +24,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session } = await authenticate.admin(request)
 
-    const rewards = await db.rewards.findFirst({where: {store: {equals: session.shop}}})
+    const rewards = await db.rewards.findFirst({where: {store: {equals: session.shop}}, omit: {id: true, store: true}})
     if (!rewards) {
-        return await db.rewards.create({data: {store: session.shop}})
+        return await db.rewards.create({data: {store: session.shop}, omit: {id: true, store: true}})
     }
     return rewards
 }

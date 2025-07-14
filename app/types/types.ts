@@ -127,6 +127,7 @@ export interface AppSettings {
     secondReviewRequest: number
     companyName: string
     primaryEmail: string
+    domain: string
 }
 
 export interface AnalyticsData {
@@ -322,6 +323,12 @@ interface SelectedProductData {
     title: string
 }
 
+export interface DNSRecord { 
+    Name: string;
+    Type: string;
+    Value: string;
+}
+
 export interface SettingsPageProps {
     state: AppSettings
     setState: React.Dispatch<React.SetStateAction<AppSettings>>
@@ -331,7 +338,7 @@ export interface SettingsPageProps {
 export const initialUserReviewFormInputState: UserReviewFormInputState = {
     title: '',
     body: '',
-    selectedAnswerChoices: {}
+    customQuestionAnswers: {}
 }
 
 export interface UserReviewFormInputState {
@@ -340,5 +347,5 @@ export interface UserReviewFormInputState {
     productId?: string
     title: string
     body: string
-    selectedAnswerChoices: {[key: string]: {id: string, value: string}[]}
+    customQuestionAnswers: {[key: string]: {value: [string], type: string, isRequired: [string]}}
 }

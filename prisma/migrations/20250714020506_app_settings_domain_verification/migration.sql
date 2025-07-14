@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "AppSettings" ALTER COLUMN "cnameOne" SET DEFAULT '',
+ALTER COLUMN "cnameThree" SET DEFAULT '',
+ALTER COLUMN "cnameTwo" SET DEFAULT '',
+ALTER COLUMN "domain" SET DEFAULT '';

@@ -17,12 +17,13 @@ datasource db {
 model AppSettings {
   id                  String   @id @default(uuid())
   store               String
-  autoPublishReviews  String[]
-  minReviewRating     Int
-  firstReviewRequest  Int
-  secondReviewRequest Int
+  autoPublishReviews  String[] @default(["false"])
+  minReviewRating     Int      @default(5)
+  firstReviewRequest  Int      @default(10)
+  secondReviewRequest Int      @default(5)
   primaryEmail        String
   companyName         String
+  domain              String   @default("")
 }
 
 model AnswerChoiceSnapshot {

@@ -39,9 +39,7 @@ const fetchConfiguredQuestions = async (productId: number, store: string, access
         if (question.productConfiguration[0] === 'all' || question.productConfiguration[0] === 'products' && question.productIds.includes(`gid://shopify/Product/${productId}`)
         || question.productConfiguration[0] === 'collections' && question.collectionIds.some(cId => productCollectionIds.includes(cId))
         ) return question
-        
     })
-
     return configuredQuestions
 }
 

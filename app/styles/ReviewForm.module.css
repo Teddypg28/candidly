@@ -1,5 +1,26 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.customQuestionsDisplayMessage {
+    width: 60%;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.customQuestionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.customQuestionTitle {
+    font-weight: bold;
+    margin: 0px;
+    padding: 0px;
 }
 
 .customQuestionDropdown {
@@ -10,18 +31,8 @@ body {
     outline: none;
     cursor: pointer;
     box-shadow: none;
-}
-
-.customQuestionTitle {
-    font-weight: bold;
-    margin: 0px;
-    padding: 0px;
-}
-
-.customQuestionsContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 10px
+    width: 100%;
+    margin: auto;
 }
 
 .checkbox {
@@ -35,29 +46,10 @@ body {
     justify-content: center;
 }
 
-.dropdownTop {
-    width: 100%;
-    height: fit-content;
-    border: 1px solid lightgray;
-    box-sizing: border-box;
-    border-radius: 5px;
-    display: flex;
-    font-size: 14px;
-    font-family: inherit;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px 10px;
-    cursor: pointer;
-}
-
-.dropdownItemsContainer {
-    position: relative;
-    box-sizing: border-box;
-    border: 1px solid lightgray;
-    border-radius: 5px;
-    width: 100%;
-    height: fit-content;
-    margin-top: 5px;
+.chevronContainer {
+    position: absolute;
+    right: 2px;
+    top: 8px;
 }
 
 .dropdownItem {
@@ -67,60 +59,67 @@ body {
     justify-content: space-between;
 }
 
-.dropdownItem:hover {
-    background-color: rgb(241, 241, 241);
+.dropdownTop {
+    width: 100%;
+    height: fit-content;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    display: flex;
+    font-size: 14px;
+    font-family: inherit;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
     cursor: pointer;
 }
 
-.multipleChoicesContainer {
-    position: relative; 
-    width: 60%;
-}
-
-.reviewForm input {
-    height: 45px;
-    padding: 10px
-}
-
-.reviewForm input:focus, .reviewForm textarea:focus {
-    outline: none;
-}
-
-.reviewForm input, .reviewForm textarea {
+.dropdownItemsContainer {
+    position: relative;
     border: 1px solid lightgray;
     border-radius: 5px;
-    font-size: 12px;
-    box-sizing: border-box;
     width: 100%;
+    height: fit-content;
+    margin-top: 5px;
 }
 
-.progressBar {
-    transition: width 0.5s ease-in-out;
+.formQuestionInput {
+    border: 1px solid lightgray;
+    width: 60%;
+    border-radius: 5px;
+    resize: none;
+    font-size: 14px;
+    height: 30px;
+    padding: 8px;
 }
 
-.reviewForm {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: white;
-}
-
-.reviewFormValidationError {
-    color: red;
-    text-align: left;
-    padding: 0px;
-    margin: 0px;
-    font-size: 14px
-}
-
-.selectedOptionsContainer {
-    margin: 0px;
-    padding: 0px;
+.formQuestionInput:focus {
+    outline: none;
 }
 
 .hidden {
     display: none;
+}
+
+.inputContainer > textarea {
+    height: 200px;
+    width: 400px;
+    font-family: inherit;
+}
+
+.inputContainer {
+    margin: auto;
+    height: fit-content;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.multipleChoicesContainer {
+    position: relative; 
+    width: 100%;
 }
 
 .removeUploadedMediaContainer {
@@ -135,164 +134,71 @@ body {
     height: 100%;
 }
 
-.hidden {
-    display: none
-}
-
-.characterCountContainer {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    font-size: 11px;
-    color: white;
+.reviewFormStepTitle {
+    font-size: 25px;
     font-weight: bold;
-    padding: 2px 10px;
-    border-radius: 10px
 }
 
 .reviewFormStar {
-    height: 35px;
-    width: 35px;
+    height: 60px;
+    width: 60px;
     cursor: pointer;
+}
+
+.reviewFormStep {
+    width: 30px;
+    height: 10px;
+    border-radius: 5px;
+    background-color: red;
 }
 
 .reviewFormStarsContainer {
     display: flex;
     width: fit-content;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-.reviewFieldWrapper > label, .reviewNameEmailContainer > label {
-    font-weight: bold;
-    font-size: 15px;
-}
-
-.reviewFieldWrapper > div > input, .reviewNameEmailContainer > input {
-    font-size: 12px;
-}
-
-.reviewFormHeadingContainer {
-    width: 80%;
     margin: auto;
-    text-align: center;
-    margin-top: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    flex-direction: column;
+    margin-top: 25px;
 }
 
-.reviewFormHeadingContainer > h1 {
-    font-weight: bold;
-    font-size: 25px;
-}
-
-.reviewFormHeadingContainer > h3 {
-    margin: 25px 0px
-}
-
-.reviewFieldWrapper {
-    display: flex;
-    flex-direction: column;
+.reviewFormValidationError {
+    background-color: rgb(240, 220, 220);
+    border-radius: 0.25rem;
+    color: darkred;
+    text-align: left;
     width: 100%;
-    gap: 3px
+    padding: 10px 5px;
+    margin: 0px;
+    font-size: 14px;
+    margin-top: 5px;
 }
 
-.reviewNameEmailWrapper {
+.selectedOptionsContainer {
+    margin: 0px;
+    padding: 0px;
+}
+
+.stepsContainer {
     display: flex;
-    box-sizing: border-box;
-    justify-content: space-between;
-}
-
-.reviewTextArea {
-    font-family: inherit;
-    resize: none;
-    height: 100px;
-    width: 100%;
-    outline: none;
-    box-shadow: none;
-    padding: 8px;
-}
-
-.rewardTiersContainer {
-    width: 475px;
-    height: 40px;
-    border-radius: 25px;
-    overflow: hidden;
-    display: flex;
-}
-
-.rewardTierText {
-    font-size: 13px;
-    font-weight: bold;
-}
-
-@media (max-width: 768px) {
-    .rewardTiersContainer {
-        width: 100%;
-    }
-
-    .rewardTierText {
-        font-size: 10px;
-    }
-}
-
-.rewardTierOne {
-    width: 33%;
-    height: 100%;
-    border-right-color: white;
-    border-right-width: 2px;
-    border-right-style: solid;
-}
-
-.rewardTierTwo {
-    width: 33%;
-    height: 100%;
-    border-right-color: white;
-    border-right-width: 2px;
-    border-right-style: solid;
-}
-
-.rewardTierThree {
-    width: 34%;
-    height: 100%;
-}
-
-.rewardTierOne, .rewardTierTwo, .rewardTierThree {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-}
-
-.submitReviewBtn {
-    width: 300px;
-    padding: 15px 0px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    margin: auto;
-    margin-top: 10px;
+    margin-top: auto;
+    gap: 5px;
 }
 
 .uploadMediaContainer {
     border: 2px dotted lightgray;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 0px;
     border-radius: 5px;
     position: relative;
-    width: 100%;
-    box-sizing: border-box;
+    width: 400px;
+    height: 150px;
 }
 
 .uploadMediaContainer > label {
     display: flex;
-    height: 70px;
-    width: 100%;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 5px
 }
 
 .uploadedMediaContainer {
@@ -339,9 +245,9 @@ body {
     text-align: center;
 }
 
-.uploadIcon {
-    height: 25px;
-    width: 25px;
+.uploadMediaText {
+    padding: 0px;
+    margin: 0px;
 }
 
 .uploadMediaBtn {
@@ -354,52 +260,62 @@ body {
     height: 100%;
 }
 
-.uploadIcon {
-    height: 25px;
-    width: 25px;
+.uploadError {
+    text-align: center;
+    font-size: 14px;
+    color: red;
 }
 
-@media only screen and (max-width: 2000px) {
-    .reviewForm {
-        width: 600px;
-        margin: auto;
-    }
-} 
+.writeReviewForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+    height: 50%;
+    background-color: white;
+    border-radius: 5px;
+    position: relative;
+    text-align: center;
+    padding: 20px 40px;
+    overflow: hidden;
+}
 
-@media only screen and (max-width: 800px) {
-    .reviewForm {
-        width: 90%;
-    }
+.writeReviewForwardBtn, .writeReviewBackBtn {
+    position: absolute;
+    cursor: pointer;
+    bottom: 10px;
+    height: 30px;
+    width: 30px;
+}
+
+.writeReviewForwardBtn {
+    right: 5px;
+}
+
+.writeReviewBackBtn {
+    left: 5px
 }
 
 @media only screen and (max-width: 480px) {
-    
-    .reviewForm > .reviewFieldWrapper > input, textarea, .reviewForm > .reviewNameEmailWrapper > .reviewNameEmailContainer > input {
-        font-size: 12px;
-    }
-
-    .reviewNameEmailWrapper {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .reviewFormStarsContainer {
-        margin-bottom: 25px;
-    }
-
-    .reviewFormHeadingContainer > h1 {
-        font-size: 21px;
-    }
-
-    .reviewForm {
-        height: fit-content
-    };
-
-    .reviewNameEmailInnerContainer > input {
+    .customQuestionsDisplayMessage {
         width: 100%;
     }
 
-    .submitReviewBtn {
+    .inputContainer > textarea {
+        width: 100%;
+    }
+
+    .reviewFormStepTitle {
+        font-size: 18px;
+    }
+
+    .reviewFormStar {
+        height: 50px;
+        width: 50px;
+    }    
+
+    .uploadMediaContainer {
         width: 100%;
     }
 }

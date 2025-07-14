@@ -3,7 +3,7 @@ import { Card, InlineStack, Text } from "@shopify/polaris"
 import styles from '../styles/Settings.module.css'
 import { useNavigate } from "@remix-run/react"
 
-import { ShieldCheckMarkIcon, ClockIcon, SettingsIcon } from '@shopify/polaris-icons';
+import { ShieldCheckMarkIcon, ClockIcon, SettingsIcon, EmailIcon } from '@shopify/polaris-icons';
 import { SettingsTab } from "~/types/types";
 
 export default function SettingsTabs({store, path}: SettingsTab) {
@@ -13,7 +13,8 @@ export default function SettingsTabs({store, path}: SettingsTab) {
     const settingTabs = [
         {name: 'General', path: 'general', icon: <SettingsIcon height={20} width={20} />},
         {name: 'Review Request Timing', path: 'review-request-timing', icon: <ClockIcon height={20} width={20} />},
-        {name: 'Review Verification', path: 'verification', icon: <ShieldCheckMarkIcon height={20} width={20} />}
+        {name: 'Review Verification', path: 'review-verification', icon: <ShieldCheckMarkIcon height={20} width={20} />},
+        {name: 'Domain Verification', path: 'domain-verification', icon: <EmailIcon height={20} width={20} />}
     ]
 
     return (
