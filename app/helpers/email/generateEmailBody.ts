@@ -8,16 +8,17 @@ export default function generateEmailBody(emailBody: string, data: ReviewRequest
     })
 
     let questionQueryString = ''
+
     data.configuredQuestions.forEach((productQuestionSet, productIndex) => {
         questionQueryString += `numProduct${productIndex+1}Questions=${productQuestionSet.length}`
         productQuestionSet.forEach((questionId, questionIndex) => {
-            questionQueryString += `&numProduct${productIndex+1}Questions=${productQuestionSet.length}&product${productIndex+1}Question${questionIndex+1}Id=${questionId}${questionIndex !== productQuestionSet.length - 1 || productIndex !== data.configuredQuestions.length - 1 ? '&' : ''}`
+            questionQueryString += `&product${productIndex+1}Question${questionIndex+1}Id=${questionId}${questionIndex !== productQuestionSet.length - 1 || productIndex !== data.configuredQuestions.length - 1 ? '&' : ''}`
         }) 
     })
     queryString += questionQueryString
 
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://earnings-clinics-raw-ana.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
+    const href = data.reviewRequestId ? `https://oz-dsl-tvs-sample.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,

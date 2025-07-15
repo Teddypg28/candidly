@@ -64,6 +64,7 @@ export default function DomainVerificationSettings({state, setState, records, ve
                                     <Text as="h1" variant="headingMd">
                                         Verification Status: <span style={{color: verificationStatus === "Success" ? "green" : verificationStatus === "Failed" ? "danger" : "#ad7b1c"}}>{verificationStatus}</span>
                                     </Text>
+                                    {verificationStatus === "Success" && <Text tone="success" as="p" variant="bodySm">Awesome! Your emails will now send from a branded email address: reviews@{state.domain}</Text>}
                                     {verificationStatus !== "Success" &&
                                     <Text as="p" variant="bodySm">
                                         Need help? Send us an email at support@trycandidly.app

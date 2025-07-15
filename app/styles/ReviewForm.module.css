@@ -1,5 +1,5 @@
 body {
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arial Narrow', Arial, sans-serif;
     margin: 0;
     padding: 0;
 }
@@ -19,7 +19,9 @@ body {
 
 .customQuestionTitle {
     font-weight: bold;
-    margin: 0px;
+    text-align: left;
+    width: 60%;
+    margin: auto;
     padding: 0px;
 }
 
@@ -31,7 +33,7 @@ body {
     outline: none;
     cursor: pointer;
     box-shadow: none;
-    width: 100%;
+    width: 60%;
     margin: auto;
 }
 
@@ -44,6 +46,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 .chevronContainer {
@@ -59,6 +62,11 @@ body {
     justify-content: space-between;
 }
 
+.dropdownItem:hover {
+    background-color: rgb(241, 241, 241);
+    cursor: pointer;
+}
+
 .dropdownTop {
     width: 100%;
     height: fit-content;
@@ -69,6 +77,7 @@ body {
     font-family: inherit;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box;
     padding: 5px 10px;
     cursor: pointer;
 }
@@ -85,11 +94,12 @@ body {
 .formQuestionInput {
     border: 1px solid lightgray;
     width: 60%;
+    box-sizing: border-box;
     border-radius: 5px;
     resize: none;
     font-size: 14px;
     height: 30px;
-    padding: 8px;
+    padding: 20px 10px;
 }
 
 .formQuestionInput:focus {
@@ -102,7 +112,7 @@ body {
 
 .inputContainer > textarea {
     height: 200px;
-    width: 400px;
+    width: 60%;
     font-family: inherit;
 }
 
@@ -119,7 +129,17 @@ body {
 
 .multipleChoicesContainer {
     position: relative; 
-    width: 100%;
+    width: 60%;
+    margin: auto;
+}
+
+.productDetailsContainer {
+    display: flex;
+    background-color: rgb(255, 255, 255); 
+    align-items: center;
+    justify-content: center;
+    gap: 10px; 
+    height: 20vh
 }
 
 .removeUploadedMediaContainer {
@@ -135,7 +155,7 @@ body {
 }
 
 .reviewFormStepTitle {
-    font-size: 25px;
+    font-size: 35px;
     font-weight: bold;
 }
 
@@ -162,11 +182,12 @@ body {
 .reviewFormValidationError {
     background-color: rgb(240, 220, 220);
     border-radius: 0.25rem;
+    box-sizing: border-box;
     color: darkred;
     text-align: left;
-    width: 100%;
-    padding: 10px 5px;
-    margin: 0px;
+    width: 60%;
+    padding: 8px;
+    margin: auto;
     font-size: 14px;
     margin-top: 5px;
 }
@@ -272,7 +293,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 50%;
-    height: 50%;
+    height: 70%;
     background-color: white;
     border-radius: 5px;
     position: relative;
@@ -302,14 +323,18 @@ body {
         width: 100%;
     }
 
+    .formQuestionInput {
+        width: 100%;
+    }
+
     .inputContainer > textarea {
         width: 100%;
     }
 
     .reviewFormStepTitle {
-        font-size: 18px;
+        font-size: 24px;
     }
-
+    
     .reviewFormStar {
         height: 50px;
         width: 50px;
@@ -317,5 +342,9 @@ body {
 
     .uploadMediaContainer {
         width: 100%;
+    }
+
+    .writeReviewForm {
+        width: 70%;
     }
 }

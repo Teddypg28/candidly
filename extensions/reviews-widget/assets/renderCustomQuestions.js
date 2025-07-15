@@ -6,7 +6,6 @@
         const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
         const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
         // add event listeners to single choice dropdowns
-        console.log(userInputState)
         customQuestionDropdowns.forEach(dropdown => {    
             dropdown.value = userInputState['customQuestionAnswers'][dropdown.getAttribute("data-name")].value[0]          
             dropdown.addEventListener('change', (e) => {

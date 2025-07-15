@@ -40,10 +40,9 @@ export async function action({ request } : ActionFunctionArgs) {
         delete data['authToken']
 
         // isolate customQuestionAnswers
-        const selectedAnswerChoices = JSON.parse(data.selectedAnswerChoices)
+        const selectedAnswerChoices = JSON.parse(data.customQuestionAnswers)
 
         // remove it from main data object, so that review can be created
-        delete data['selectedAnswerChoices']
         delete data['customQuestionAnswers']
         delete data['reviewScore']
 

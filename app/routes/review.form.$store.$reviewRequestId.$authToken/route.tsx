@@ -48,11 +48,16 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const questions = await Promise.all(productIds.map(async (id, index) => {
         const numConfigProductQuestions = parseInt(searchParams.get(`numProduct${index+1}Questions`) as string)
         if (numConfigProductQuestions > 0) {
-            const questionId = searchParams.get(`product${index+1}Question${index+1}Id`) as string
-            return await db.reviewFormQuestion.findFirst({where: {id: {equals: questionId}}, include: {radioAnswerChoices: true}}) || null
+            const questions = []
+            for (let i=0; i<numConfigProductQuestions; i++) {
+                const questionId = searchParams.get(`product${index+1}Question${i+1}Id`) as string
+                const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: questionId}}, include: {radioAnswerChoices: true}}) || null
+                questions.push(question)
+            }
+            return questions
         }
         return null
-    })).then(res => res.flatMap(q => q ? [q] : []))
+    })).then(res => res.flat().flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
 
@@ -85,25 +90,38 @@ export default function ReviewForm() {
         email: data.customerData.email
     })
 
-    const [uploadedMedia, setUploadedMedia] = useState<File[]>([])
-    const [uploadMediaError, setUploadMediaError] = useState('')
-    const uploadedMediaRef = useRef<any>([])
-    
-    const [errors, setErrors] = useState<{[key: string]: boolean}>({})
-
-    const currentStarRating = useRef(data.stars)
-
-    const customDropdownQuestions = useRef<any>({})
-
     const [currentStep, setCurrentStep] = useState<number>(1)
+    const [uploadedMedia, setUploadedMedia] = useState<any>([])
 
     const steps = [
         {title: data.formSettings.starRatingHeading, markup: <div id="reviewFormStarsContainer" className={styles.reviewFormStarsContainer}></div>, key: "rating"}, 
-        {title: data.formSettings.titleHeading, markup: <input id="formQuestionInput" className={styles.formQuestionInput} name='title' placeholder={data.formSettings.titlePlaceholder} />, key: 'title'}, 
-        {title: data.formSettings.bodyHeading, markup: <textarea  id='formQuestionInput' className={styles.formQuestionInput} name='body' placeholder={data.formSettings.bodyPlaceholder}></textarea>, key: 'body'},
-        {title: data.formSettings.customQuestionsHeading, markup: <div id="customQuestionsContainer" className={styles.customQuestionsContainer}></div>, key: 'customQuestions'},
-        {title: data.formSettings.mediaHeading, markup: 
-        <>
+        {
+            title: data.formSettings.titleHeading, 
+            markup: 
+                <input 
+                className={styles.formQuestionInput} 
+                value={userInputState["title"]} 
+                onChange={e => setUserInputState(prevState => {return {...prevState, title: e.target.value}})} 
+                id='reviewHeadline' 
+                name='title' 
+                placeholder={data.formSettings.titlePlaceholder} 
+                />, 
+            key: 'title'
+        }, 
+        {
+            title: data.formSettings.bodyHeading,
+            markup: 
+                <textarea 
+                className={styles.formQuestionInput} 
+                value={userInputState["body"]}
+                onChange={e => setUserInputState(prevState => {return {...prevState, body: e.target.value}})}
+                name='body' 
+                id='reviewTextArea' 
+                placeholder={data.formSettings.bodyPlaceholder}>
+                </textarea>, 
+            key: 'body'
+        },
+        {title: data.formSettings.mediaHeading, markup: <div>
             <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
                 <label id="uploadMediaLabel" className={styles.uploadMediaLabel} htmlFor='uploadMediaBtn'>
                     <p className={styles.uploadMediaText}>Upload Media</p>
@@ -112,16 +130,64 @@ export default function ReviewForm() {
                 <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
                 <input type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/png, image/jpg, image/jpeg, video/*' multiple />
             </div>
-            <p className={styles.uploadError}></p>
-        </>, key: 'media'}, 
-        {title: 'What is Your First Name?', markup: <input name="firstName" id="formQuestionInput" className={styles.formQuestionInput} placeholder="Enter your first name" />, key: 'firstName'}, 
+        </div>, key: 'media'}, 
+        {title: data.formSettings.customQuestionsHeading, markup: <div className={styles.customQuestionsContainer}> </div>, key: 'customQuestions'}
     ]
+
+    const currentStarRating = useRef(data.stars)
+    const uploadedMediaRef = useRef<any>([])
+
+    const [uploadMediaError, setUploadMediaError] = useState('')
+
+    const validateFormFields = () => {
+        (document.querySelector(`.${styles.reviewFormValidationError}`) as any).classList.add(styles.hidden)
+        if (["title", "body", "firstName"].includes(steps[currentStep-1].key)) {
+            const formInput: any = document.querySelector(`.${styles.formQuestionInput}`)
+            if (formInput.value.trim() === "") {
+                (document.querySelector(`.${styles.reviewFormValidationError}`) as any).classList.remove(styles.hidden)
+                return true
+            }
+        } else if (steps[currentStep-1].key === "customQuestions") {
+            let errors = false
+            Object.keys(userInputState["customQuestionAnswers"]).forEach((key: any) => {
+                const questionId: any = key.split('customQuestion-')[1];
+                (document.querySelector(`#customQuestion-${questionId}Error`) as any).classList.add(styles.hidden)
+                if (userInputState["customQuestionAnswers"][key].value.length === 0 && userInputState["customQuestionAnswers"][key].isRequired === "true") {
+                    console.log(userInputState);
+                    (document.querySelector(`#customQuestion-${questionId}Error`) as any).classList.remove(styles.hidden)
+                    errors = true
+                }
+            })
+            if (errors) return true;
+        }
+    }
 
     useEffect(() => {
         const linkTag = document.createElement('link')
         linkTag.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
         linkTag.rel = "stylesheet"
         document.head.appendChild(linkTag)
+
+        // Preconnect to fonts.googleapis.com
+        const preconnect1 = document.createElement('link');
+        preconnect1.rel = 'preconnect';
+        preconnect1.href = 'https://fonts.googleapis.com';
+        document.head.appendChild(preconnect1);
+
+        // Preconnect to fonts.gstatic.com with crossorigin
+        const preconnect2 = document.createElement('link');
+        preconnect2.rel = 'preconnect';
+        preconnect2.href = 'https://fonts.gstatic.com';
+        preconnect2.crossOrigin = 'anonymous';
+        document.head.appendChild(preconnect2);
+
+        // Link to Montserrat font
+        const fontLink = document.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap';
+        document.head.appendChild(fontLink);
+
+
     }, [])
 
     useEffect(() => {
@@ -131,10 +197,15 @@ export default function ReviewForm() {
     }, [uploadedMediaRef.current])
 
     useEffect(() => {
+
         renderSteps(steps.length)
 
         if (steps[currentStep-1].key === "rating") {
             renderStars(currentStarRating.current)
+        }
+
+        if (steps[currentStep-1].key === "customQuestions") {
+            renderQuestions()
         }
 
         if (steps[currentStep-1].key === "media") {
@@ -240,10 +311,6 @@ export default function ReviewForm() {
                     Array.from(uploadMediaBtn.files).forEach(verifyFileType)
                 })
             }
-        } 
-
-        if (steps[currentStep-1].key === "customQuestions") {
-            renderQuestions()
         }
 
     }, [currentStep])
@@ -255,162 +322,6 @@ export default function ReviewForm() {
             (document.querySelector('#uploadMediaLabel') as any).style.display ="flex"
         }
     }, [uploadedMediaRef.current])
-
-    const insertCustomQuestion = (question: any) => {
-        const customQuestionsContainer = document.querySelector('#customQuestionsContainer')
-    
-        let questionMarkup = `<div style="display: flex; flex-direction: column" id="customQuestion-${question.id}" class="${styles.customQuestionRadio}"></div>`   
-        if(customQuestionsContainer) {
-            customQuestionsContainer.innerHTML += questionMarkup
-            const questionMarkupContainer = document.querySelector(`#customQuestion-${question.id}`)
-            if (questionMarkupContainer) {
-                if (question.radioAllowMultipleAnswers[0] === 'true') {
-                    const renderChoices = () => {
-                        return question.radioAnswerChoices.map((choice: any, index: number) => {
-                            return (
-                                    `<div key=${index} class="${styles.dropdownItem}" id="dropdownQuestion${question.id}Item">
-                                        ${choice.value}
-                                        <div id="checkbox" class="${styles.checkbox}" data-name="${choice.value}" data-id="${choice.id}"> </div>
-                                    </div>`
-                            )
-                    }).join('')}
-                    questionMarkupContainer.innerHTML+= `
-                        <label for='multipleChoicesContainer-${question.id}' class=${styles.customQuestionTitle}>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
-                        <div id='multipleChoicesContainer-${question.id}' class=${styles.multipleChoicesContainer}>
-                            <div class=${styles.dropdownTop} id="dropdownTop-${question.id}">
-                                <p class="${styles.selectedOptionsContainer}" id="selectedOptionsContainer-${question.id}">Select</p>
-                                <span class="${styles.chevronContainer}" id='chevronContainer-${question.id}'> 
-                                    <svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg> 
-                                </span>
-                            </div>
-                            <div class="${styles.dropdownItemsContainer}" id="dropdownItemsContainer-${question.id}">
-                                ${renderChoices()}
-                            </div>
-                        </div>
-                        <p class="${styles.reviewFormValidationError}" id='customQuestion-${question.id}Error'>This field is required</p>`                  
-                } else {
-                    questionMarkupContainer.innerHTML+= `
-                        <label for='answerChoicesContainer-${question.id}' class="${styles.customQuestionTitle}">${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
-                        <select data-name="customQuestion-${question.id}" class="${styles.customQuestionDropdown}" id='answerChoicesContainer-${question.id}'>
-                            <option value="">Select one</option>
-                        </select>
-                        <p class="${styles.reviewFormValidationError}" id='customQuestion-${question.id}Error'>This field is required</p>
-                    `
-                    const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
-                    if (answerChoicesContainer) {
-                        question.radioAnswerChoices.forEach((choice: any) => {
-                            answerChoicesContainer.innerHTML += `<option value="${choice.id}">${choice.value}</option>`
-                        })
-                    }
-                }
-            
-                if (!userInputState["customQuestionAnswers"][`customQuestion-${question.id}`]) {
-                    userInputState['customQuestionAnswers'][`customQuestion-${question.id}`] = {value: [''], type: 'radio', isRequired: question.isRequired[0]}
-                }
-            }       
-        }
-    }
-
-    const renderQuestions = useCallback(() => {
-        if (data.questions.length > 0) {
-            data.questions.forEach((question) => {
-                insertCustomQuestion(question)
-            })
-            const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')
-            const customQuestionMultipleChoices = document.querySelectorAll('.multipleChoicesContainer')
-            // add event listeners to single choice dropdowns
-            customQuestionDropdowns.forEach((dropdown: any) => {    
-                dropdown.value = userInputState['customQuestionAnswers'][dropdown.getAttribute("data-name")].value[0]          
-                dropdown.addEventListener('change', (e: any) => {
-                    userInputState['customQuestionAnswers'][e.target.dataset.name] = {...userInputState['customQuestionAnswers'][e.target.dataset.name], value: [e.target.value]}
-                })
-            })
-            // add event listeners to multiple choice dropdowns
-            if (customQuestionMultipleChoices.length > 0) {
-    
-                // fill in saved selected answer choice(s)
-                const selectedOptionsContainers = document.querySelectorAll(`.selectedOptionsContainer`)
-                selectedOptionsContainers.forEach(container => {
-                    const questionId = container.id.split("selectedOptionsContainer-")[1]
-                    const checkedNames: string[] = []
-                    document.querySelectorAll(`#checkbox`).forEach((checkbox: any) => {
-                        if (userInputState['customQuestionAnswers'][ `customQuestion-${questionId}`].value.includes(checkbox.dataset.id)) {
-                            checkbox.classList.add(`checked-${questionId}`)
-                            checkbox.textContent = '•'
-                            checkedNames.push(checkbox.dataset.name)
-                        }
-                    })
-                    container.textContent = userInputState['customQuestionAnswers'][ `customQuestion-${questionId}`].value[0] === "" ? "Select" : checkedNames.join(", ")   
-                })
-    
-                customQuestionMultipleChoices.forEach(dropdown => {
-                    const questionId = dropdown.id.split('multipleChoicesContainer-')[1]
-                    const dropdownTop = document.querySelector(`#dropdownTop-${questionId}`)
-                    const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${questionId}`)
-    
-                    const chevronContainer = document.querySelector(`#chevronContainer-${questionId}`)
-                    let isDropdownOpen = false
-                    dropdownTop?.addEventListener('click', () => {
-                        isDropdownOpen = !isDropdownOpen
-                        const closeDropdown = (e: any) => {
-                            if (e.target.id.contains("checkbox") === false && e.target.classList.contains('dropdownItem') === false) {
-                                dropdownItemsContainer?.classList.add('hidden')
-                                if (chevronContainer) chevronContainer.innerHTML = '<svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>'
-                                isDropdownOpen = false
-                                document.removeEventListener('click', closeDropdown)
-                            }
-                        }
-                        const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${questionId}`)
-                        if (dropdownItemsContainer?.classList.contains('hidden')) {
-                            dropdownItemsContainer.classList.remove('hidden')
-                            if (chevronContainer) chevronContainer.innerHTML = '<svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>'                              
-                        } else {                              
-                            dropdownItemsContainer?.classList.add('hidden')
-                            if (chevronContainer) chevronContainer.innerHTML = '<svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>'
-                        }
-    
-                        if (isDropdownOpen) {
-                            setTimeout(() => document.addEventListener('click', closeDropdown), 100)
-                        }
-                    })
-                    document.querySelectorAll(`#dropdownQuestion${questionId}Item`).forEach(element => {
-                        element.addEventListener('click', (e: any) => {
-                            if (e.target.id === `dropdownQuestion${questionId}Item`) {
-                                if (e.target.children[0].classList.contains(`checked-${questionId}`)) {
-                                    e.target.children[0].textContent = ' '
-                                    e.target.children[0].classList.remove(`checked-${questionId}`)
-                                } else {
-                                    e.target.children[0].textContent = '•'
-                                    e.target.children[0].classList.add(`checked-${questionId}`)
-                                }
-                            } else {
-                                if (e.target.classList.contains(`checked-${questionId}`)) {
-                                    e.target.textContent = ' '
-                                    e.target.classList.remove(`checked-${questionId}`)
-                                } else {
-                                    e.target.textContent = '•'
-                                    e.target.classList.add(`checked-${questionId}`)
-                                }
-                            }
-                            const checkedNames: string[] = []
-                            const checkedAnswerIds: [string] = ['']
-                            document.querySelectorAll(`.checked-${questionId}`).forEach((checkedElement: any) => {
-                                checkedNames.push(checkedElement.dataset.name)
-                                checkedAnswerIds.push(checkedElement.dataset.id)
-                            })
-                            const selectedAnswers = checkedNames.join(', ')
-                            if (checkedNames.length === 0) {
-                                if (selectedOptionsContainer) selectedOptionsContainer.textContent = 'Select'                             
-                            } else {
-                                if (selectedOptionsContainer) selectedOptionsContainer.textContent = selectedAnswers
-                            }
-                            userInputState['customQuestionAnswers'][`customQuestion-${questionId}`] = {...userInputState['customQuestionAnswers'][`customQuestion-${questionId}`], value: checkedAnswerIds.length > 0 ? checkedAnswerIds : ['']}
-                        })
-                    })
-                })
-            }
-        }
-    }, [])
 
     const renderStars = useCallback((rating: number) => {
         const htmlMarkup = []
@@ -451,40 +362,48 @@ export default function ReviewForm() {
         })
     }, [])
 
-    const validateFormFields = () => {
-        if (["title", "body", "firstName"].includes(steps[currentStep-1].key)) {
-            const formInput = document.querySelector('#formQuestionInput') as any
-            const formInputValue = formInput.value as any
-            if (formInputValue.trim() === "") {
-                const reviewFormValidationError = document.querySelector('.reviewFormValidationError')
-                if (reviewFormValidationError) reviewFormValidationError.textContent = "This field is required"
-                return true
+    const submitReview = async () => {
+        const reviewFormData = new FormData()
+        Object.entries(userInputState).forEach(([key, value]) => {
+            if (key === "customQuestionAnswers") {
+                reviewFormData.append(key, JSON.stringify(value))
+            } else {
+                reviewFormData.append(key, value)
             }
-        } else if (steps[currentStep-1].key === "customQuestions") {
-            let errors = false
-            Object.keys(userInputState["customQuestionAnswers"]).forEach(key => {
-                const questionId = key.split('customQuestion-')[1]
-                document.querySelector(`#customQuestion-${questionId}Error`)?.classList.add('hidden')
-                if (userInputState["customQuestionAnswers"][key].value[0] === '' && userInputState["customQuestionAnswers"][key].isRequired[0] === "true") {
-                    document.querySelector(`#customQuestion-${questionId}Error`)?.classList.remove('hidden')
-                    errors = true
-                }
-            })
-            if (errors) return true
-        }
-    }
+        })
 
-    const nextQuestion = useCallback(() => {
-         // first, check if there are required questions unanswered
-         const errors = validateFormFields()
-         if (errors) return
+        reviewFormData.append('authToken', data.reviewData.authToken)
+        reviewFormData.append('store', data.reviewData.store)
+        reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
+        reviewFormData.append('productId', productsToReview[0].id)
+        reviewFormData.append('rating', currentStarRating.current.toString())
+
+        uploadedMedia.forEach((file: any) => reviewFormData.append("media", file))
+    
+        const res = await fetch('/api/review/request/create', {method: 'POST', body: reviewFormData})
+        if (res.status === 200) {
+            return true
+        } else {
+            return false
+        }
+    }    
+
+    const nextQuestion = useCallback(async () => {
+        const errors = validateFormFields()
+        if (errors) return
 
         if (currentStep !== steps.length) {
             setCurrentStep(currentStep => {return currentStep + 1})
+        } else {
+            const submissionSuccessful = await submitReview()
+            if (submissionSuccessful) {
+                const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
+            } 
         }
     }, [currentStep])
 
     const lastQuestion = useCallback(() => {
+        (document.querySelector(`.${styles.reviewFormValidationError}`) as any).classList.add(styles.hidden)
         setCurrentStep(currentStep => {return currentStep - 1})
     }, [currentStep])
 
@@ -500,46 +419,184 @@ export default function ReviewForm() {
         }
     }, [currentStep])
 
-    useEffect(() => {
-        // attach event listeners for toggling chevron direction + dropdown open/closed state
-        data.questions.forEach(question => {
-            const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${question.id}`) as HTMLBodyElement
-            const customQuestionDropdown = document.querySelector(`#dropdownTop-${question.id}`) as HTMLBodyElement
-            const chevronIconContainer = document.querySelector(`#chevronContainer-${question.id}`)
-
-            if (!customDropdownQuestions.current[question.id]) {
-                customQuestionDropdown?.addEventListener('click', () => {
-                    if (customQuestionDropdown.dataset.status === "closed" && chevronIconContainer) {
-                        chevronIconContainer.innerHTML = `<i class="fa-solid fa-chevron-up" style="color: black"> </i>`
-                        customQuestionDropdown.dataset.status = "open"
-                        dropdownItemsContainer.style.display = "block"
-                    } else if (customQuestionDropdown.dataset.status === "open" && chevronIconContainer) {
-                        chevronIconContainer.innerHTML = `<i class="fa-solid fa-chevron-down" style="color: black"> </i>`
-                        customQuestionDropdown.dataset.status = "closed"
-                        dropdownItemsContainer.style.display = "none"
+    const insertCustomQuestion = (question: any) => {
+        const customQuestionsContainer = document.querySelector(`.${styles.customQuestionsContainer}`)
+    
+        let questionMarkup = `<div style="display: flex; flex-direction: column" id="customQuestion-${question.id}" class="${styles.customQuestionRadio}"></div>`   
+        if(customQuestionsContainer) {
+            customQuestionsContainer.innerHTML += questionMarkup
+            const questionMarkupContainer = document.querySelector(`#customQuestion-${question.id}`)
+            if (questionMarkupContainer) {
+                if (question.radioAllowMultipleAnswers[0] === 'true') {
+                    const renderChoices = () => {
+                        return question.radioAnswerChoices.map((choice: any, index: number) => {
+                            return (
+                                `<div key=${index} class="${styles.dropdownItem}" id="dropdownQuestion${question.id}Item">
+                                    ${choice.value}
+                                    <div id="checkbox" class="${styles.checkbox}" data-name="${choice.value}" data-id="${choice.id}"> </div>
+                                </div>`
+                            )
+                    }).join('')}
+                    questionMarkupContainer.innerHTML+= `
+                        <label for='multipleChoicesContainer-${question.id}' class=${styles.customQuestionTitle}>${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
+                        <div id='multipleChoicesContainer-${question.id}' class=${styles.multipleChoicesContainer}>
+                            <div class="${styles.dropdownTop}" id="dropdownTop-${question.id}">
+                                <p class="${styles.selectedOptionsContainer}" id="selectedOptionsContainer-${question.id}">Select</p>
+                                <span class="${styles.chevronContainer}" id='chevronContainer-${question.id}'> 
+                                    <svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg> 
+                                </span>
+                            </div>
+                            <div class="${styles.dropdownItemsContainer} ${styles.hidden}" id="dropdownItemsContainer-${question.id}">
+                                ${renderChoices()}
+                            </div>
+                        </div>
+                        <p class="${styles.reviewFormValidationError} ${styles.hidden}" id='customQuestion-${question.id}Error'>This field is required</p>`                  
+                } else {
+                    questionMarkupContainer.innerHTML+= `
+                        <label for='answerChoicesContainer-${question.id}' class="${styles.customQuestionTitle}">${question.title} ${question.isRequired[0] === "true" ? '*' : ''}</label>
+                        <select data-name="customQuestion-${question.id}" class="${styles.customQuestionDropdown}" id='answerChoicesContainer-${question.id}'>
+                            <option value="">Select one</option>
+                        </select>
+                        <p class="${styles.reviewFormValidationError} ${styles.hidden}" id='customQuestion-${question.id}Error'>This field is required</p>
+                    `
+                    const answerChoicesContainer = document.getElementById(`answerChoicesContainer-${question.id}`)
+                    if (answerChoicesContainer) {
+                        question.radioAnswerChoices.forEach((choice: any) => {
+                            answerChoicesContainer.innerHTML += `<option value="${choice.id}">${choice.value}</option>`
+                        })
                     }
+                }
+            
+                if (!userInputState["customQuestionAnswers"][`customQuestion-${question.id}`]) {
+                    userInputState['customQuestionAnswers'][`customQuestion-${question.id}`] = {value: [], type: 'radio', isRequired: question.isRequired[0]}
+                }
+            }       
+        }
+    }
+
+    const renderQuestions = useCallback(() => {
+        if (data.questions.length > 0) {
+            data.questions.forEach((question) => {
+                insertCustomQuestion(question)
+            })
+            const customQuestionDropdowns = document.querySelectorAll(`.${styles.customQuestionDropdown}`)
+            const customQuestionMultipleChoices = document.querySelectorAll(`.${styles.multipleChoicesContainer}`)
+            // add event listeners to single choice dropdowns
+            customQuestionDropdowns.forEach((dropdown: any) => {    
+                dropdown.value = userInputState['customQuestionAnswers'][dropdown.getAttribute("data-name")].value[0] || ""         
+                dropdown.addEventListener('change', (e: any) => {
+                    userInputState['customQuestionAnswers'][e.target.dataset.name] = {...userInputState['customQuestionAnswers'][e.target.dataset.name], value: e.target.value === "" ? [] : [e.target.value]}
+                })
+            })
+
+            // add event listeners to multiple choice dropdowns
+            if (customQuestionMultipleChoices.length > 0) {
+
+                // fill in saved selected answer choice(s)
+                const selectedOptionsContainers = document.querySelectorAll(`.${styles.selectedOptionsContainer}`)
+                selectedOptionsContainers.forEach(container => {
+                    const questionId = container.id.split("selectedOptionsContainer-")[1]
+                    const checkedNames: string[] = []
+                    document.querySelectorAll(`#checkbox`).forEach((checkbox: any) => {
+                        if (userInputState['customQuestionAnswers'][ `customQuestion-${questionId}`].value.includes(checkbox.dataset.id)) {
+                            checkbox.classList.add(`checked-${questionId}`)
+                            checkbox.textContent = '•'
+                            checkedNames.push(checkbox.dataset.name)
+                        }
+                    })
+                    container.textContent = userInputState['customQuestionAnswers'][`customQuestion-${questionId}`].value.length === 0 ? "Select" : checkedNames.join(", ")   
                 })
     
-        }})
-
-        // reset input state whenever user navigates to a different review form
-        setUserInputState(defaultState)
-        setErrors({})
-
-    }, [productsToReview])
+                customQuestionMultipleChoices.forEach(dropdown => {
+                    const questionId = dropdown.id.split('multipleChoicesContainer-')[1]
+                    const dropdownTop = document.querySelector(`#dropdownTop-${questionId}`)
+                    const selectedOptionsContainer = document.querySelector(`#selectedOptionsContainer-${questionId}`)
     
-    return (
-        <div style={{backgroundColor: 'rgb(244, 244, 244)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                    const chevronContainer = document.querySelector(`#chevronContainer-${questionId}`)
+                    let isDropdownOpen = false
+                    dropdownTop?.addEventListener('click', () => {
+                        isDropdownOpen = !isDropdownOpen
+                        const closeDropdown = (e: any) => {
+                            if (e.target.id.includes("checkbox") === false && e.target.classList.contains(styles.dropdownItem) === false) {
+                                dropdownItemsContainer?.classList.add(styles.hidden)
+                                if (chevronContainer) chevronContainer.innerHTML = '<svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>'
+                                isDropdownOpen = false
+                                document.removeEventListener('click', closeDropdown)
+                            }
+                        }
+                        const dropdownItemsContainer = document.querySelector(`#dropdownItemsContainer-${questionId}`)
+                        if (dropdownItemsContainer?.classList.contains(styles.hidden)) {
+                            dropdownItemsContainer.classList.remove(styles.hidden)
+                            if (chevronContainer) chevronContainer.innerHTML = '<svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>'                              
+                        } else {                              
+                            dropdownItemsContainer?.classList.add(styles.hidden)
+                            if (chevronContainer) chevronContainer.innerHTML = '<svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M7 10L12 15L17 10" stroke="#000000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>'
+                        }
+    
+                        if (isDropdownOpen) {
+                            setTimeout(() => document.addEventListener('click', closeDropdown), 100)
+                        }
+                    })
+                    document.querySelectorAll(`#dropdownQuestion${questionId}Item`).forEach(element => {
+                        element.addEventListener('click', (e: any) => {
+                            if (e.target.id === `dropdownQuestion${questionId}Item`) {
+                                if (e.target.children[0].classList.contains(`checked-${questionId}`)) {
+                                    e.target.children[0].textContent = ' '
+                                    e.target.children[0].classList.remove(`checked-${questionId}`)
+                                } else {
+                                    e.target.children[0].textContent = '•'
+                                    e.target.children[0].classList.add(`checked-${questionId}`)
+                                }
+                            } else {
+                                if (e.target.classList.contains(`checked-${questionId}`)) {
+                                    e.target.textContent = ' '
+                                    e.target.classList.remove(`checked-${questionId}`)
+                                } else {
+                                    e.target.textContent = '•'
+                                    e.target.classList.add(`checked-${questionId}`)
+                                }
+                            }
+                            const checkedNames: string[] = []
+                            const checkedAnswerIds: string[] = []
+                            document.querySelectorAll(`.checked-${questionId}`).forEach((checkedElement: any) => {
+                                checkedNames.push(checkedElement.dataset.name)
+                                checkedAnswerIds.push(checkedElement.dataset.id)
+                            })
+                            const selectedAnswers = checkedNames.join(', ')
+                            if (checkedNames.length === 0) {
+                                if (selectedOptionsContainer) selectedOptionsContainer.textContent = 'Select'                             
+                            } else {
+                                if (selectedOptionsContainer) selectedOptionsContainer.textContent = selectedAnswers
+                            }
+                            userInputState['customQuestionAnswers'][`customQuestion-${questionId}`] = {...userInputState['customQuestionAnswers'][`customQuestion-${questionId}`], value: checkedAnswerIds.length > 0 ? checkedAnswerIds : []}
+                        })
+                    })
+                })
+            }
+        }
+    }, [])
+
+  return (
+    <div style={{height: '100vh', backgroundColor: 'rgb(244, 244, 244)'}}>
+        <div className={styles.productDetailsContainer}>
+            <div>
+                <h4 style={{margin: 0, padding: 0, marginBottom: 5}}>Product:</h4>
+                <p style={{marginTop: 0, padding: 0}}>{productsToReview[0].title}</p>
+            </div>
+            <img src={productsToReview[0].image || undefined} height={'70px'} width={'70px'} />
+        </div>
+        <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div className={styles.writeReviewForm}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
+                    {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}              
                 </div>
-                <div id="stepsContainer" className={styles.stepsContainer}>
-                </div>
+                <div id="stepsContainer" className={styles.stepsContainer}></div>
             </div>
         </div>
-    )
+    </div>
+  )
 }

@@ -286,7 +286,7 @@ export default function EmailTemplate() {
             </Modal>
             <BlockStack gap='300'>
                 <Banner title="Want the emails to come from your own domain?">
-                    To send branded and trusted emails from your store’s domain, you need to verify the domain by adding a few DNS records found on the <Link>email settings</Link> page. Otherwise, the emails will come from our app's domain.
+                    To send branded and trusted emails from your store’s domain, you need to verify the domain by adding a few DNS records found on the <Link url="/app/settings/domain-verification">domain verification</Link> page. Otherwise, the emails will come from our app's domain.
                 </Banner>
                 <Layout>
                     <Layout.Section variant="oneThird">

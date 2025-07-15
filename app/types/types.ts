@@ -347,5 +347,5 @@ export interface UserReviewFormInputState {
     productId?: string
     title: string
     body: string
-    customQuestionAnswers: {[key: string]: {value: [string], type: string, isRequired: [string]}}
+    customQuestionAnswers: {[key: string]: {value: string[], type: string, isRequired: string}}
 }

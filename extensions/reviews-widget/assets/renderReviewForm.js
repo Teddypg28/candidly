@@ -168,7 +168,6 @@ const renderReviewForm = () => {
             if (currentStep < steps.length) {
                 currentStep++
                 renderReviewStep(steps[currentStep-1])
-                console.log(userInputState["customQuestionAnswers"])
             } else {
                 const submissionSuccessful = await submitReview()
                 if (submissionSuccessful) {
