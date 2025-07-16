@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
-import ReviewFormPreview from "~/components/ReviewFormPreview";
+import { Badge, BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
+import ReviewForm from "~/components/ReviewForm";
 
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
@@ -18,16 +18,17 @@ export async function action({ request } : ActionFunctionArgs) {
 export async function loader({ request } : LoaderFunctionArgs) {
     const { session } = await authenticate.admin(request)
     const reviewFormSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
+    const reviewFormQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
 
     if (reviewFormSettings) {
-        return json({settings: reviewFormSettings})
+        return json({settings: reviewFormSettings, questions: reviewFormQuestions})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {store: session.shop}})
 
-    return json({settings: defaultSettings})
+    return json({settings: defaultSettings, questions: reviewFormQuestions})
 }
 
-export default function ReviewForm() {
+export default function ReviewFormTemplate() {
 
     const data = useLoaderData<typeof loader>()
 
@@ -95,7 +96,7 @@ export default function ReviewForm() {
                         </Card>
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
-                        <ReviewFormPreview 
+                        <ReviewForm 
                         customQuestionsHeading={settingsState.customQuestionsHeading}
                         bodyHeading={settingsState.bodyHeading}
                         bodyPlaceholder={settingsState.bodyPlaceholder}
@@ -103,6 +104,7 @@ export default function ReviewForm() {
                         starRatingHeading={settingsState.starRatingHeading}
                         titleHeading={settingsState.titleHeading}
                         titlePlaceholder={settingsState.titlePlaceholder}
+                        questions={data.questions}
                         />
                     </Layout.Section>
                 </Layout>
