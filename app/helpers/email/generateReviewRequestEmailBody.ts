@@ -1,6 +1,6 @@
 import { ReviewRequestEmailData } from "~/types/types";
 
-export default function generateEmailBody(emailBody: string, data: ReviewRequestEmailData) {
+export default function generateReviewRequestEmailBody(emailBody: string, data: ReviewRequestEmailData) {
 
     let queryString = ''
     data.lineItems.forEach((lineItem, index) => {
@@ -18,7 +18,7 @@ export default function generateEmailBody(emailBody: string, data: ReviewRequest
     queryString += questionQueryString
 
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://oz-dsl-tvs-sample.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
+    const href = data.reviewRequestId ? `https://hate-diff-noticed-ef.trycloudflare.com/review/form/${data.store.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,

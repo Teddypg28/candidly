@@ -19,7 +19,7 @@ import deleteLogo from "~/utils/deleteLogo";
 import uploadLogo from "~/utils/uploadLogo";
 
 import standardizeLineBreaks from "~/helpers/email/standardizeLineBreaks";
-import generateEmailBody from "~/helpers/email/generateEmailBody";
+import generateEmailBody from "~/helpers/email/generateReviewRequestEmailBody";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
@@ -198,7 +198,7 @@ export default function EmailTemplate() {
         logo: settings.logo,
         companyName: settings.companyName,
         store: settings.store,
-        subject: settings.initialEmailSubject,
+        subject: emailCopyVersion === "Initial" ? settings.initialEmailSubject : settings.followUpEmailSubject,
         lineItems: [],
         configuredQuestions: []
     }

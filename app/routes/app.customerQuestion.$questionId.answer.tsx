@@ -2,9 +2,12 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, Card, Layout, Page, TextField, Thumbnail } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
+import { fetchFromEmailAddress } from "~/helpers/email/fetchFromEmailAddress";
+import { generateCustomerQuestionAnswerEmailMarkup } from "~/helpers/email/generateCustomerQuestionAnswerEmailMarkup";
+import { sendCustomerQuestionAnswerEmail } from "~/helpers/email/sendCustomerQuestionAnswerEmail";
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     const { session } = await authenticate.admin(request)
@@ -12,9 +15,28 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
     const data = await request.json()
 
-    console.log(data)
-
     const question = await db.customerQuestion.findFirst({where: {id: {equals: questionId}}, include: {answer: true}})
+
+    if (data.send && question && question.answer) {
+        const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+
+        const toAddress = question.email
+        const fromEmailAddress = await fetchFromEmailAddress(session.shop, "questions")
+        const subject = `${question.firstName}, we have an answer for you!`
+        const markup = generateCustomerQuestionAnswerEmailMarkup(
+            {
+                title: question.title, 
+                answer: question.answer.body, 
+                customerName: question.firstName,
+                companyName: appSettings?.companyName as string,
+                replyAddress: appSettings?.primaryEmail as string
+            }
+        )
+        const emailSent = await sendCustomerQuestionAnswerEmail(subject, markup, toAddress, fromEmailAddress)
+        if (emailSent) return true
+        return false
+    }
+    
     if (question?.answer) {
        return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}}})
     } 
@@ -59,7 +81,10 @@ export default function AnswerQuestion() {
 
     const data = useLoaderData<typeof loader>()
 
+    const navigation = useNavigation();
     const submit = useSubmit()
+    
+    const isSubmitting = navigation.state === "submitting";
 
     const [questionAnswerState, setQuestionAnswerState] = useState({
         question: data.customerQuestion?.title,
@@ -74,11 +99,15 @@ export default function AnswerQuestion() {
         submit(JSON.stringify(questionAnswerState), {method: "POST", encType: "application/json"})
     }
 
+    const emailCustomerAnswer = () => {
+        submit(JSON.stringify({send: true, answer: data.customerQuestion?.answer?.body}), {encType: 'application/json', method: 'POST'})
+    }
+
     return (
         <Page 
         title="Customer Question"
         backAction={{content: 'All Questions', url: '/app/question-answers'}}
-        primaryAction={{content: 'Email Customer Answer', disabled: data.customerQuestion?.answer ? false : true}}
+        primaryAction={{content: 'Email Customer Answer', disabled: data.customerQuestion?.answer ? false : true, onAction: emailCustomerAnswer, loading: isSubmitting}}
         >
             <SaveBar open={isStateDirty}>
                 <button variant="primary" onClick={saveQuestionAnswerState}></button>

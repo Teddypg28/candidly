@@ -61,12 +61,15 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
 
+    const rewards = await db.rewards.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
+
     return {
         formSettings, 
         customerData: {firstName: reviewRequest.firstName, email: reviewRequest.email}, 
         reviewData: {reviewRequestId, authToken, store},
         productDataObjects, 
         questions, 
+        rewards,
         stars
     }
 }
@@ -74,15 +77,9 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 export default function ReviewForm() {
     
     const data = useLoaderData<typeof loader>()
-    
-    const defaultState = {
-        ...initialUserReviewFormInputState, 
-        firstName: data.customerData.firstName,
-        email: data.customerData.email
-    }
 
-    const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(false)
-    const [productsToReview, setProductsToReview] = useState(data.productDataObjects)
+    const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(true)
+    const productsToReview = useRef(data.productDataObjects)
 
     const [userInputState, setUserInputState] = useState<UserReviewFormInputState>({
         ...initialUserReviewFormInputState, 
@@ -197,6 +194,8 @@ export default function ReviewForm() {
     }, [uploadedMediaRef.current])
 
     useEffect(() => {
+
+        if (reviewSuccessfullySubmited) return 
 
         renderSteps(steps.length)
 
@@ -375,7 +374,7 @@ export default function ReviewForm() {
         reviewFormData.append('authToken', data.reviewData.authToken)
         reviewFormData.append('store', data.reviewData.store)
         reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
-        reviewFormData.append('productId', productsToReview[0].id)
+        reviewFormData.append('productId', productsToReview.current[0].id)
         reviewFormData.append('rating', currentStarRating.current.toString())
 
         uploadedMedia.forEach((file: any) => reviewFormData.append("media", file))
@@ -397,7 +396,17 @@ export default function ReviewForm() {
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
-                const reviewFormOverlay = document.querySelector('.reviewFormOverlay')
+                productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
+                setReviewSuccessfullySubmitted(true)
+                const reward = fetchReward()
+                if (reward) {
+                    // email reward to customer logic
+                }
+                if (productsToReview.current.length > 0) {
+                    setTimeout(() => {
+                        setReviewSuccessfullySubmitted(false)
+                    }, 2000);
+                }
             } 
         }
     }, [currentStep])
@@ -576,20 +585,32 @@ export default function ReviewForm() {
         }
     }, [])
 
+    const fetchReward = useCallback(() => {
+        if (!data.rewards || data.rewards.advanced === 0 && data.rewards.plain === 0) return null
+
+        if (uploadedMediaRef.current > 0) {
+            return data.rewards.advanced
+        }
+
+        return data.rewards.plain
+    }, [uploadedMediaRef])
+
   return (
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage reward={fetchReward()} /> :
     <div style={{height: '100vh', backgroundColor: 'rgb(244, 244, 244)'}}>
         <div className={styles.productDetailsContainer}>
             <div>
                 <h4 style={{margin: 0, padding: 0, marginBottom: 5}}>Product:</h4>
-                <p style={{marginTop: 0, padding: 0}}>{productsToReview[0].title}</p>
+                <p style={{marginTop: 0, padding: 0}}>{productsToReview.current[0].title}</p>
             </div>
-            <img src={productsToReview[0].image || undefined} height={'70px'} width={'70px'} />
+            <img src={productsToReview.current[0].image || undefined} height={'70px'} width={'70px'} />
         </div>
         <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div className={styles.writeReviewForm}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
+                {steps[currentStep-1].key === "media" && data.rewards && data.rewards?.advanced !== 0 && <p className={styles.mediaUploadRewardMessage}>(You will earn a <strong>{data.rewards.advanced}% off</strong> coupon)</p>}
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
                     {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}              

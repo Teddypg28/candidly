@@ -1,9 +1,9 @@
 import { ReviewRequestEmailData } from "~/types/types"
-import generateEmailBody from "./generateEmailBody"
+import generateReviewRequestEmailBody from "./generateReviewRequestEmailBody"
 
-export default function generateEmailMarkup(emailBody: string, data: ReviewRequestEmailData) {
+export default function generateReviewRequestEmailMarkup(emailBody: string, data: ReviewRequestEmailData) {
 
-    const updatedEmailBody = generateEmailBody(emailBody, data)
+    const updatedEmailBody = generateReviewRequestEmailBody(emailBody, data)
 
     const completeMarkup = 
     `<div style="background-color: rgb(248, 248, 248); padding: 10px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">

@@ -1,18 +1,13 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
+import { SendEmailCommand } from '@aws-sdk/client-ses'
 import { ReviewRequestEmailData } from '~/types/types';
-import generateEmailMarkup from './generateEmailMarkup';
 
-export default async function sendEmail(emailBody: string, emailData: ReviewRequestEmailData, toAddress: string, fromAddress: string) {
+import generateReviewRequestEmailMarkup from './generateReviewRequestEmailMarkup';
 
-    const emailMarkup = generateEmailMarkup(emailBody, emailData)
+import sesClient from '~/utils/sesClient';
 
-    const sesClient = new SESClient({
-        region: process.env.AWS_REGION as string,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-        }
-    })
+export default async function sendReviewRequestEmail(emailBody: string, emailData: ReviewRequestEmailData, toAddress: string, fromAddress: string) {
+
+    const emailMarkup = generateReviewRequestEmailMarkup(emailBody, emailData)
 
     const emailParams = {
         Destination: {

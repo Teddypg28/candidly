@@ -9,11 +9,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center
+    justify-content: center;
+    font-family: 'Montserrat', Courier, monospace;
 }
 
 .message {
     font-size: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.mediaUploadRewardMessage {
+    padding: 0;
+    margin-bottom: 30px;
 }
 
 @media (max-width: 768px) {
