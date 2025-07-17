@@ -12,7 +12,7 @@ import styles from '../styles/EmailTemplates.module.css'
 import { authenticate } from "~/shopify.server";
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
-import { CustomerQuestionEmailData, CustomerRewardEmailData, defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings, ReviewRequestEmailData } from "~/types/types";
+import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings, ReviewRequestEmailVariables } from "~/types/types";
 import { SaveBar } from "@shopify/app-bridge-react";
 
 import deleteLogo from "~/utils/deleteLogo";
@@ -21,7 +21,7 @@ import uploadLogo from "~/utils/uploadLogo";
 import standardizeLineBreaks from "~/helpers/email/standardizeLineBreaks";
 import generateReviewRequestEmailBody from "~/helpers/email/generateReviewRequestEmailBody";
 import generateCustomerQuestionEmailBody from "~/helpers/email/generateCustomerQuestionEmailBody";
-import generateCustomerRewardEmailBody from "~/helpers/email/generateCustomerRewardEmailData";
+import generateCustomerRewardEmailBody from "~/helpers/email/generateCustomerRewardEmailBody";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
@@ -239,28 +239,22 @@ export default function EmailTemplates() {
 
     const fileUploadBtn = !settings.emailDesignSettings.logo && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
-    const testReviewRequestEmailData: ReviewRequestEmailData = {
+    const testReviewRequestEmailVariables: ReviewRequestEmailVariables = {
         companyName: data.companyName,
-        subject: emailCopyVersion === "Initial" ? settings["reviewRequestEmailSettings"].initialEmailSubject : settings["reviewRequestEmailSettings"].followUpEmailSubject,
-        store: "",
         lineItems: [],
         configuredQuestions: []
     }
 
-    const testCustomerQuestionEmailData: CustomerQuestionEmailData = {
+    const testCustomerQuestionEmailVariables: CustomerQuestionEmailVariables = {
         companyName: data.companyName,
         question: "Is this a beginner-friendly snowboard?",
         answer: "It is! This is a great board to help beginners get the hang of things early!",
-        store: "",
-        subject: settings.customerQuestionEmailSettings.subject
     }
 
-    const testCustomerRewardEmailData: CustomerRewardEmailData = {
+    const testCustomerRewardEmailVariables: CustomerRewardEmailVariables = {
         companyName: data.companyName,
         reward: "20% Off",
         discountCode: "TEST-EMAIL-DISCOUNT-CODE",
-        store: "",
-        subject: settings.customerRewardEmailSettings.subject
     }
 
     const sendTestEmail = () => { 
@@ -269,14 +263,23 @@ export default function EmailTemplates() {
         formData.append('store', data.settings.emailDesignSettings.store)
 
         if (selectedTab === "reviewRequestEmailSettings") {
-            formData.append('emailData', JSON.stringify(testReviewRequestEmailData))
+
+            formData.append('emailVariables', JSON.stringify(testReviewRequestEmailVariables))
             formData.append('type', "review-request")
+            formData.append('subject', emailCopyVersion === "Initial" ? settings["reviewRequestEmailSettings"].initialEmailSubject : settings["reviewRequestEmailSettings"].followUpEmailSubject)
+        
         } else if (selectedTab === "customerQuestionEmailSettings") {
-            formData.append('emailData', JSON.stringify(testCustomerQuestionEmailData))
+
+            formData.append('emailVariables', JSON.stringify(testCustomerQuestionEmailVariables))
             formData.append('type', "customer-question")
+            formData.append('subject', settings["customerQuestionEmailSettings"].subject)
+
         } else if (selectedTab === "customerRewardEmailSettings") {
-            formData.append('emailData', JSON.stringify(testCustomerRewardEmailData))
+
+            formData.append('emailVariables', JSON.stringify(testCustomerRewardEmailVariables))
             formData.append('type', "customer-reward")
+            formData.append('subject', settings["customerRewardEmailSettings"].subject)
+
         }
         submit(formData, {action: '/api/test-email/send', method: 'POST', encType: 'multipart/form-data', navigate: false})
     }
@@ -285,13 +288,13 @@ export default function EmailTemplates() {
         let updatedEmailBody = ""
         switch (selectedTab) {
             case "reviewRequestEmailSettings":
-                updatedEmailBody = generateReviewRequestEmailBody(emailBody, testReviewRequestEmailData)
+                updatedEmailBody = generateReviewRequestEmailBody(emailBody, testReviewRequestEmailVariables)
                 break;
             case "customerQuestionEmailSettings":
-                updatedEmailBody = generateCustomerQuestionEmailBody(emailBody, testCustomerQuestionEmailData)
+                updatedEmailBody = generateCustomerQuestionEmailBody(emailBody, testCustomerQuestionEmailVariables)
                 break
             case "customerRewardEmailSettings":
-                updatedEmailBody = generateCustomerRewardEmailBody(emailBody, testCustomerRewardEmailData)
+                updatedEmailBody = generateCustomerRewardEmailBody(emailBody, testCustomerRewardEmailVariables)
                 break
         }
 

@@ -5,7 +5,7 @@ import db from '../db.server'
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
-import { CustomerQuestionEmailData } from "~/types/types";
+import { CustomerQuestionEmailVariables } from "~/types/types";
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     const { session } = await authenticate.admin(request)
@@ -74,13 +74,12 @@ export default function AnswerQuestion() {
     }
 
     const emailCustomer = () => {
-        const emailData: CustomerQuestionEmailData = {
+        const emailVariables: CustomerQuestionEmailVariables = {
             question: data.customerQuestion?.title,
             answer: data.customerQuestion?.answer?.body as string, 
             firstName: data.customerQuestion?.firstName,
-            subject: ""
         }
-        submit(JSON.stringify({emailData, store: data.customerQuestion?.store, toAddress: data.customerQuestion?.email}), {action: '/api/answer/email/send', method: 'POST', encType: 'application/json', navigate: false})
+        submit(JSON.stringify({emailVariables, store: data.customerQuestion?.store, toAddress: data.customerQuestion?.email}), {action: '/api/answer/email/send', method: 'POST', encType: 'application/json', navigate: false})
     }
 
     return (

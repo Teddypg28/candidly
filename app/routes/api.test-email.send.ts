@@ -12,10 +12,12 @@ export async function action({ request } : ActionFunctionArgs) {
 
     const emailHeaderStyles = await db.emailDesignSettings.findFirst({where: {store: {equals: store}}, include: {logo: {omit: {emailDesignSettingsId: true, id: true}}}})
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
-    const emailBody = data.get('emailBody') as string
-    const emailData = JSON.parse(data.get('emailData') as any)
 
-    if (!type || !store || !emailHeaderStyles || !appSettings || !emailBody || !emailData) return new Response(JSON.stringify({error: "missing required variables"}), {status: 401})
+    const emailBody = data.get('emailBody') as string
+    const emailSubject = data.get('emailSubject') as string
+    const emailVariables = JSON.parse(data.get('emailVariables') as any)
+
+    if (!type || !store || !emailHeaderStyles || !appSettings || !emailBody || !emailSubject || !emailVariables) return new Response(JSON.stringify({error: "missing required variables"}), {status: 401})
     
     const currentDomain = appSettings?.domain
     let fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@trycandidly.app`
@@ -24,7 +26,7 @@ export async function action({ request } : ActionFunctionArgs) {
       if (verificationStatus === "Success") fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@${currentDomain}`
     }
 
-    await sendEmail(emailBody, emailData, emailHeaderStyles, appSettings.primaryEmail, fromEmailAddress, type as "review-request" | "customer-question" | "customer-reward")
+    await sendEmail(emailSubject, emailBody, emailVariables, emailHeaderStyles, appSettings.primaryEmail, fromEmailAddress, type as "review-request" | "customer-question" | "customer-reward")
      
     return new Response(JSON.stringify({status: "test email successfully sent"}), {status: 200})
 }

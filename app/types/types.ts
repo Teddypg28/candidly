@@ -181,18 +181,14 @@ export interface CustomReviewFormAnswerOption {
     [key: string]: any
 }
 
-export interface CustomerQuestionEmailData {
-    store?: string
-    subject: string
+export interface CustomerQuestionEmailVariables {
     firstName?: string
     companyName?: string
     question?: string
     answer: string
 }
 
-export interface CustomerRewardEmailData {
-    store: string
-    subject: string
+export interface CustomerRewardEmailVariables {
     reward: string
     discountCode?: string
     firstName?: string
@@ -302,11 +298,10 @@ export interface ReviewFormQuestion {
     published: boolean
 }
 
-export interface ReviewRequestEmailData {
+export interface ReviewRequestEmailVariables {
     authToken?: string | null
-    store: string
+    store?: string
     reviewRequestId?: string
-    subject: string
     firstName?: string
     companyName?: string
     lineItems: {

@@ -3,7 +3,7 @@ import db from '../db.server'
 
 import sendEmail from "~/helpers/email/sendEmail";
 import { AppSettings, ReviewRequest, ReviewRequestEmailSettings } from "@prisma/client";
-import { ReviewRequestEmailData } from "~/types/types";
+import { ReviewRequestEmailVariables } from "~/types/types";
 import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
@@ -85,16 +85,17 @@ export async function action( { request, params } : ActionFunctionArgs) {
       return questionIds
     }))
   
-    const emailData: ReviewRequestEmailData = {
+    const emailVariables: ReviewRequestEmailVariables = {
       authToken: reviewRequest.authToken,
       reviewRequestId: reviewRequest.id,
       companyName: storeGeneralSettings.companyName,
       store: reviewRequest.store,
-      subject: reviewRequest.emailsSent === 0 ? storeEmailSettings.initialEmailSubject : storeEmailSettings.followUpEmailSubject,
       firstName,
       lineItems,
       configuredQuestions
     }
+
+    const emailSubject = reviewRequest.emailsSent === 0 ? storeEmailSettings.initialEmailSubject : storeEmailSettings.followUpEmailSubject
 
     // verify that we are able to send emails on behalf of the store's domain
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
@@ -106,7 +107,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
     }
   
     // send the email
-    await sendEmail(emailBody, emailData, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, "theopop28@gmail.com", fromEmailAddress, "review-request")
+    await sendEmail(emailSubject, emailBody, emailVariables, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, "theopop28@gmail.com", fromEmailAddress, "review-request")
       
     return new Response(JSON.stringify({message: 'Email successfully sent'}), {status: 200, headers: {'Content-Type': 'application/json'}})
 

@@ -1,11 +1,11 @@
-import { CustomerQuestionEmailData, CustomerRewardEmailData, EmailHeaderStyles, ReviewRequestEmailData } from "~/types/types"
+import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, EmailHeaderStyles, ReviewRequestEmailVariables } from "~/types/types"
 import generateReviewRequestEmailBody from "./generateReviewRequestEmailBody"
 import generateCustomerQuestionEmailBody from "./generateCustomerQuestionEmailBody";
-import generateCustomerRewardEmailBody from "./generateCustomerRewardEmailData";
+import generateCustomerRewardEmailBody from "./generateCustomerRewardEmailBody";
 
 export default function generateEmailMarkup(
     emailBody: string, 
-    emailData: ReviewRequestEmailData | CustomerQuestionEmailData | CustomerRewardEmailData, 
+    emailData: ReviewRequestEmailVariables | CustomerQuestionEmailVariables | CustomerRewardEmailVariables, 
     emailHeaderStyles: EmailHeaderStyles,
     type: "review-request" | "customer-question" | "customer-reward",
     ){
@@ -13,13 +13,13 @@ export default function generateEmailMarkup(
     let updatedEmailBody = ""
     switch (type) {
         case "review-request":
-            updatedEmailBody = generateReviewRequestEmailBody(emailBody, emailData as ReviewRequestEmailData)
+            updatedEmailBody = generateReviewRequestEmailBody(emailBody, emailData as ReviewRequestEmailVariables)
             break;
         case "customer-question":
-            updatedEmailBody = generateCustomerQuestionEmailBody(emailBody, emailData as CustomerQuestionEmailData)
+            updatedEmailBody = generateCustomerQuestionEmailBody(emailBody, emailData as CustomerQuestionEmailVariables)
             break
         case "customer-reward":
-            updatedEmailBody = generateCustomerRewardEmailBody(emailBody, emailData as CustomerRewardEmailData)
+            updatedEmailBody = generateCustomerRewardEmailBody(emailBody, emailData as CustomerRewardEmailVariables)
             break
         default:
             updatedEmailBody = ""
