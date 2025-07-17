@@ -63,6 +63,27 @@ model CustomerQuestionAnswer {
   question   CustomerQuestion @relation(fields: [questionId], references: [id])
 }
 
+model CustomerQuestionEmailSettings {
+  id      String @id @default(uuid())
+  store   String
+  subject String
+  body    String
+}
+
+model CustomerRewardEmailSettings {
+  id      String @id @default(uuid())
+  store   String
+  subject String
+  body    String
+}
+
+model EmailDesignSettings {
+  id            String                  @id @default(uuid())
+  store         String
+  bannerBgColor String                  @default("#FFFFFF")
+  logo          ReviewRequestEmailLogo?
+}
+
 model OnboardingDismissalState {
   id          String  @id @default(uuid())
   store       String
@@ -109,6 +130,7 @@ model ReviewFormQuestion {
   radioAllowMultipleAnswers String[]
   radioDisplayAnswer        String[]
   radioDisplayedAnswerLabel String
+  published                 Boolean                @default(true)
 }
 
 model RadioAnswerChoice {
@@ -128,20 +150,16 @@ model Rewards {
 }
 
 model ReviewRequestEmailLogo {
-  id                           Int                        @id @default(autoincrement())
-  url                          String
-  name                         String
-  reviewRequestEmailSettingsId String                     @unique
-  reviewRequestEmailSettings   ReviewRequestEmailSettings @relation(fields: [reviewRequestEmailSettingsId], references: [id], onDelete: Cascade)
+  id                    Int                 @id @default(autoincrement())
+  url                   String
+  name                  String
+  emailDesignSettingsId String              @unique
+  emailDesignSettings   EmailDesignSettings @relation(fields: [emailDesignSettingsId], references: [id], onDelete: Cascade)
 }
 
 model ReviewRequestEmailSettings {
-  id                   String                  @id @default(uuid())
+  id                   String @id @default(uuid())
   store                String
-  bannerBgColor        String
-  logo                 ReviewRequestEmailLogo?
-  productDisplay       String[]
-  productIds           String[]
   initialEmailBody     String
   followUpEmailBody    String
   initialEmailSubject  String

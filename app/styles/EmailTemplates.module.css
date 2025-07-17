@@ -58,6 +58,23 @@
     justify-content: center;
 }
 
+.tab:hover {
+    background-color: rgb(201, 201, 201) !important;
+    cursor: pointer;
+}
+
+.tab {
+    border-radius: 7px;
+    padding: 5px 10px;
+    display: flex;
+}
+
+.tabContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .uploadedMedia {
     position: relative;
     border-radius: 5px;

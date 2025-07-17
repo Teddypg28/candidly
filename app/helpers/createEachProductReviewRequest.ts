@@ -22,32 +22,21 @@ export const createEachProductReviewRequest = async (request: any, admin: AdminA
     const data = await res.json()
 
     const stillInOrderTitles = data.data.order.lineItems.edges.filter((edge: any) => {
-
         if (edge.node.currentQuantity > 0) {
             return edge
         }
-
     }).map((item: any) => {
-
         return item.node.product.title
-
     })
 
     const reviewRequests = stillInOrderTitles.filter((title: any, index: number) => {
-
         return stillInOrderTitles.indexOf(title) === index
-
     }).map((itemName: string) => {
-        
         return {
-
             ...request,
             orderId: parseInt(request.orderId.toString()),
             product: itemName
         }
-
     })
-
     return reviewRequests
-
 }

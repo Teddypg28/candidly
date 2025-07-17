@@ -399,7 +399,9 @@ const renderReviews = () => {
         document.getElementById('totalCustomerReviews').textContent = `${reviewData.totalReviews} customer ${reviewData.totalReviews > 1 ? 'reviews' : 'review'}`
 
         // this function will then render the actual reviews, starting at page 1
-        setCurrentPage(1, 'Newest')
+        if (reviewData.totalReviews > 0) {
+            setCurrentPage(1, 'Newest')
+        }
 
         // toggling between reviews and questions functionality
         document.querySelector('.showReviewsBtn').style.fontWeight = 'bold'

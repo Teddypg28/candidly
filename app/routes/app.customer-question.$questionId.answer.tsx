@@ -5,14 +5,13 @@ import db from '../db.server'
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
+import { CustomerQuestionEmailData } from "~/types/types";
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     const { session } = await authenticate.admin(request)
     const questionId = params.questionId as string
 
     const data = await request.json()
-
-    console.log(data)
 
     const question = await db.customerQuestion.findFirst({where: {id: {equals: questionId}}, include: {answer: true}})
     if (question?.answer) {
@@ -74,11 +73,21 @@ export default function AnswerQuestion() {
         submit(JSON.stringify(questionAnswerState), {method: "POST", encType: "application/json"})
     }
 
+    const emailCustomer = () => {
+        const emailData: CustomerQuestionEmailData = {
+            question: data.customerQuestion?.title,
+            answer: data.customerQuestion?.answer?.body as string, 
+            firstName: data.customerQuestion?.firstName,
+            subject: ""
+        }
+        submit(JSON.stringify({emailData, store: data.customerQuestion?.store, toAddress: data.customerQuestion?.email}), {action: '/api/answer/email/send', method: 'POST', encType: 'application/json', navigate: false})
+    }
+
     return (
         <Page 
         title="Customer Question"
         backAction={{content: 'All Questions', url: '/app/question-answers'}}
-        primaryAction={{content: 'Email Customer Answer', disabled: data.customerQuestion?.answer ? false : true}}
+        primaryAction={{content: 'Email Customer Answer', disabled: !data.customerQuestion?.answer, onAction: emailCustomer}}
         >
             <SaveBar open={isStateDirty}>
                 <button variant="primary" onClick={saveQuestionAnswerState}></button>

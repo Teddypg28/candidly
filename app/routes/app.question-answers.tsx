@@ -124,11 +124,11 @@ export default function QuestionAnswers() {
                 <IndexTable.Cell>{question.firstName}</IndexTable.Cell>
                 <IndexTable.Cell>{question.productName}</IndexTable.Cell>
                 <IndexTable.Cell>
-                    <Link url={`/app/customerQuestion/${question.id}/answer`}>{renderQuestion()}</Link>
+                    <Link url={`/app/customer-question/${question.id}/answer`}>{renderQuestion()}</Link>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
                      {question.answer === null ? 
-                     <Button variant="primary" url={`/app/customerQuestion/${question.id}/answer`}>Answer Question</Button> :
+                     <Button variant="primary" url={`/app/customer-question/${question.id}/answer`}>Answer Question</Button> :
                     <Badge tone="success">Answered</Badge>}
                 </IndexTable.Cell>
             </IndexTable.Row>

@@ -8,6 +8,7 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 import { initialReviewRequestTableState, ReviewRequestData, ReviewRequestTableState } from "~/types/types";
 import { createEachProductReviewRequest } from "~/helpers/createEachProductReviewRequest";
+import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 
 export async function loader({ request } : LoaderFunctionArgs) {
 
@@ -50,35 +51,39 @@ export async function loader({ request } : LoaderFunctionArgs) {
             const queryResult = await admin.graphql(query)
             const queryResultData = await queryResult.json()
 
-            queryResultData.data.orders.nodes.forEach((node: any) => {
+            await Promise.all(queryResultData.data.orders.nodes.map(async (node: any) => {
     
                 if (node.cancelledAt === null) {
 
                     const numOfDaysSince = Math.round((new Date().valueOf() - new Date(node.createdAt).valueOf()) / (1000 * 60 * 60 * 24))
-                    let requestDate
+                    let nextRequestDate
         
                     if (node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
                         if (numOfDaysSince >= appSettings.firstReviewRequest) {                            
-                            requestDate = new Date()
-                            requestDate.setDate(requestDate.getDate() + 1) 
+                            nextRequestDate = new Date()
+                            nextRequestDate.setDate(nextRequestDate.getDate() + 1) 
                         } else {
-                            requestDate = new Date(node.createdAt)
-                            requestDate.setDate(requestDate.getDate() + appSettings.firstReviewRequest)
+                            nextRequestDate = new Date(node.createdAt)
+                            nextRequestDate.setDate(nextRequestDate.getDate() + appSettings.firstReviewRequest)
                         }
-
+                        nextRequestDate = nextRequestDate.toLocaleDateString()
                     }      
 
                     reviewRequestObjects.push({
                         store: session.shop,
                         orderName: node.name,
-                        date: node.createdAt,
+                        createdAt: node.createdAt,
                         orderId: node.id.split('Order/')[1],
-                        requestDate,
+                        firstName: node.customer?.firstName || "",
+                        email: node.email,
+                        authToken: await generateReviewRequestHash(),
+                        nextRequestDate,
                         fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending'
                     })
 
                 }
-            })
+                return true
+            }))
 
             if (queryResultData.data.orders.pageInfo.hasNextPage) {
 

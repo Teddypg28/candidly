@@ -40,14 +40,7 @@ richSnippetScriptTag.textContent = `
 `
 document.querySelector('head').appendChild(richSnippetScriptTag)
 
-// initialize review settings
-const reviewSettings = {
-    formHeading: 'Tell Us What You Think',
-    formSubheading: 'Rate it out of 5 stars:',
-    primaryColor: 'black',
-    backgroundColor: '#f6f6f6',
-    customQuestions:[]
-}
+const customQuestions = []
 
 const productTitle = '{{product.title}}'
 const productImage = '{{ product.featured_image | img_url: '400x' }}'
@@ -66,9 +59,9 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
     // if there are custom questions, push them to the customQuestions key of the review settings object
     if (questions.result.length > 0) {
         questions.result.forEach(question => {
-            reviewSettings.customQuestions.push(question)
+            customQuestions.push(question)
         })
-        reviewSettings.customQuestions.sort((a, b) => {
+        customQuestions.sort((a, b) => {
             return a.radioAnswerChoices.length - b.radioAnswerChoices.length
         })
     }
@@ -84,35 +77,19 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
         })
 })
 .then(() => {
-    // fetch the settings connected to the store
-    fetch(`https://${window.Shopify.shop}/apps/api/settings`)
-        .then(data => data.json())
-        .then(result => {
-            // if there is no error, overwrite the placeholder reviewSettings object that was initialized above with the store's custom settings
-            if (!result.error) {
-                const { formHeading, formSubheading, primaryColor, backgroundColor } = result
-                reviewSettings.formHeading = formHeading
-                reviewSettings.formSubheading = formSubheading
-                reviewSettings.primaryColor = primaryColor
-                reviewSettings.backgroundColor = backgroundColor
-            }
-            // set background color of the main review container to the color in the review settings
-            document.querySelector('.mainReviewContainer').style.backgroundColor = reviewSettings.backgroundColor
+    // fetch all of the reviews connected to the product id
+    fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`)
+        .then(res => res.json())
+        .then(data => { 
+            // set the global reviewData object to the returned review data so we can access it below
+            reviewData = data 
         })
-        .then(() => {
-            // fetch all of the reviews connected to the product id
-            fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`)
-                .then(res => res.json())
-                .then(data => { 
-                    // set the global reviewData object to the returned review data so we can access it below
-                    reviewData = data 
-                })
         .then(() => {
 
             renderReviews()
             renderQuestions()
             if (reviewData.reviews.length > 0) {
-                createReviewStars(reviewData, reviewSettings, avgRating)
+                createReviewStars()
                 document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
                 document.querySelector('.noReviewsText').classList.add('hidden')
             }
@@ -121,9 +98,8 @@ fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
             const divs = Array.from(document.querySelectorAll('div'))
             const targetDiv = divs.find(div => div.id.includes('candidly'))
             const section = targetDiv.closest('section')
-            section.style.backgroundColor = reviewSettings.backgroundColor   
     })
-})})
+})
 
 </script>
 

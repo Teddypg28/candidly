@@ -28,6 +28,14 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             return redirect('/app/custom-questions')
         }
 
+        if (data.action === 'unpublish') {
+            return await db.reviewFormQuestion.update({where: {id: params.id, AND: {store: {equals: session.shop}}}, data: {published: false}})
+        }
+
+        if (data.action === 'publish') {
+            return await db.reviewFormQuestion.update({where: {id: params.id, AND: {store: {equals: session.shop}}}, data: {published: true}})
+        }
+
         if (params.id === 'new') {
             const answerChoices = [...data.radioAnswerChoices]
             delete data['radioAnswerChoices']
@@ -87,7 +95,8 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
                     radioAnswerChoices: result.radioAnswerChoices,
                     radioAllowMultipleAnswers: result.radioAllowMultipleAnswers,
                     radioDisplayAnswer: result.radioDisplayAnswer,
-                    radioDisplayedAnswerLabel: result.radioDisplayedAnswerLabel
+                    radioDisplayedAnswerLabel: result.radioDisplayedAnswerLabel,
+                    published: result.published
                 }    
 
                 return json({initialQuestionState, initialProductDataState: productData, initialCollectionDataState: collectionData})
@@ -330,6 +339,14 @@ export default function Question() {
         setIsFormDeleting(true)
     }
 
+    const unpublishQuestion = () => {
+        submit({action: 'unpublish'}, {method: 'POST', encType: 'application/json'})
+    }
+
+    const publishQuestion = () => {
+        submit({action: 'publish'}, {method: 'POST', encType: 'application/json'})
+    }
+
     const handleDisplayAnswerValueChange = (value: string[]) => {
         const updatedRadioAnswerChoices = state.radioAnswerChoices.map(answerChoice => {
             return {...answerChoice, display: value[0] === 'true' ? true : false}
@@ -532,7 +549,11 @@ export default function Question() {
                 <Layout.Section>
                     <PageActions
                     primaryAction={{content: 'Save', loading: navigation.state === 'submitting' && !isFormDeleting, disabled: !isStateDirty, onAction: saveQuestion}}
-                    secondaryActions={[{content: 'Delete', loading: isFormDeleting, disabled: !data.initialQuestionState.hasOwnProperty('id'), onAction: deleteQuestion, destructive: true}]}
+                    secondaryActions={[
+                        {content: 'Delete', loading: isFormDeleting, disabled: !data.initialQuestionState.hasOwnProperty('id'), onAction: deleteQuestion, destructive: true},
+                        {content: 'Unpublish', disabled: !data.initialQuestionState.hasOwnProperty('id') || data.initialQuestionState.published === false, onAction: unpublishQuestion},
+                        {content: 'Publish', disabled: !data.initialQuestionState.hasOwnProperty('id') || data.initialQuestionState.published === true, onAction: publishQuestion}
+                    ]}
                     />
                 </Layout.Section>
             </Layout>

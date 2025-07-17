@@ -17,12 +17,6 @@ export const sampleReviewData = [
 ]
 
 export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
-    store: '',
-    logo: null,
-    bannerBgColor: 'black',
-    productDisplay: ['disabled'],
-    productIds: [],
-    companyName: undefined,
     initialEmailBody: (
         `Hey {{firstName}},
     
@@ -33,7 +27,6 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
         It’ll only take a minute of your time—and it would mean the world to us!
 
         {{stars}}
-
         Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
         
         - {{companyName}}`
@@ -45,14 +38,51 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
             We hope you’re doing well! We wanted to follow up on our previous email about your experience with the: {{productName}}. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
 
             {{stars}}
-
             Thank you so much for your time and for being a valued part of our community.
 
             - {{companyName}}
         `
     ),
-    initialEmailSubject: "Tell us how you feel...",
-    followUpEmailSubject: "We hope you are doing well..."
+    initialEmailSubject: "{{firstName}}, tell us how you feel...",
+    followUpEmailSubject: "We hope you are doing well, {{firstName}}!"
+}
+
+export const defaultCustomerQuestionEmailSettings = {
+    subject: "{{firstName}}, we have an answer for you!",
+    body: (
+        `Hey {{firstName}},
+    
+        You recently asked us the following question: {{question}}
+
+        Here's our answer for you:
+
+        {{answer}}
+        
+        We hope this answers your question!
+
+        If you have any additional follow-up questions, please feel free to reach us at yoursupportemail@domain.com.
+
+        Enjoy the rest of your day!
+        
+        - {{companyName}}`
+    ) 
+}
+
+export const defaultCustomerRewardEmailSettings = {
+    subject: "{{firstName}}, we have a special reward for you!",
+    body: (
+        `Hey {{firstName}},
+    
+        Thank you so much for your recent review!
+
+        As a reward, use this code for {{reward}}:
+        
+        {{discountCode}}
+
+        Thank you againa and enjoy the rest of your day!
+        
+        - {{companyName}}`
+    ) 
 }
 
 export const initialImportCsvFileState: ImportCsvFileState = {
@@ -72,7 +102,8 @@ export const initialQuestionState: ReviewFormQuestion = {
     radioDisplayAnswer: ['false'],
     radioDisplayedAnswerLabel: '',
     title: '',
-    isRequired: ['false']
+    isRequired: ['false'],
+    published: true
 }
 
 export const initialCustomQuestionErrorState = {
@@ -150,11 +181,38 @@ export interface CustomReviewFormAnswerOption {
     [key: string]: any
 }
 
+export interface CustomerQuestionEmailData {
+    store?: string
+    subject: string
+    firstName?: string
+    companyName?: string
+    question?: string
+    answer: string
+}
+
+export interface CustomerRewardEmailData {
+    store: string
+    subject: string
+    reward: string
+    discountCode?: string
+    firstName?: string
+    companyName?: string
+}
+
 export interface CustomQuestionTableState {
     queryValue: string
     selectedTab: number
     sortSelected: IndexFiltersProps['sortSelected']
     selectedProductConfiguration: string[]
+}
+
+export interface EmailHeaderStyles {
+    bannerBgColor: string
+    logo: {
+        name: string
+        url: string
+        file?: File
+    } | null,
 }
 
 export interface EmailCompanyData {
@@ -241,19 +299,14 @@ export interface ReviewFormQuestion {
     radioAllowMultipleAnswers: string[]
     radioDisplayAnswer: string[]
     radioDisplayedAnswerLabel: string
+    published: boolean
 }
 
 export interface ReviewRequestEmailData {
     authToken?: string | null
-    reviewRequestId?: string
     store: string
+    reviewRequestId?: string
     subject: string
-    bannerBgColor: string
-    logo: {
-        name: string
-        url: string
-        file?: File
-    } | null,
     firstName?: string
     companyName?: string
     lineItems: {
@@ -266,16 +319,6 @@ export interface ReviewRequestEmailData {
 }
 
 export interface ReviewRequestEmailSettings {
-    store: string
-    bannerBgColor: string
-    logo: {
-        name: string,
-        url: string,
-        file?: File
-    } | null
-    productDisplay: string[]
-    productIds: string[]
-    companyName?: string
     initialEmailBody: string
     followUpEmailBody: string
     initialEmailSubject: string

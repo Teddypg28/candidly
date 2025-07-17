@@ -1,6 +1,6 @@
  const renderCustomQuestions = () => {
-     if (reviewSettings.customQuestions.length > 0) {
-        reviewSettings.customQuestions.forEach((question) => {
+     if (customQuestions.length > 0) {
+        customQuestions.forEach((question) => {
             insertCustomQuestion(question)
         })
         const customQuestionDropdowns = document.querySelectorAll('.customQuestionDropdown')

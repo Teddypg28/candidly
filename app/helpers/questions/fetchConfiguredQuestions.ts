@@ -1,4 +1,3 @@
-import { AdminApiContext } from '@shopify/shopify-app-remix/server'
 import db from '../../db.server'
 
 const fetchConfiguredQuestions = async (productId: number, store: string, accessToken: string) => {
@@ -12,8 +11,6 @@ const fetchConfiguredQuestions = async (productId: number, store: string, access
             edges {
               node {
                 id
-                title
-                handle
               }
             }
           }
@@ -33,7 +30,7 @@ const fetchConfiguredQuestions = async (productId: number, store: string, access
     const productCollectionIds = data?.data.product.collections.edges.map((edge: any) => edge.node.id)
 
     // fetch all questions connected to the store
-    const allQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: store}}, include: {radioAnswerChoices: true}})
+    const allQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: store}, AND: {published: {equals: true}}}, include: {radioAnswerChoices: true}})
     // only return questions that are configured for all products or for the given product ID
     const configuredQuestions = allQuestions.filter(question => {
         if (question.productConfiguration[0] === 'all' || question.productConfiguration[0] === 'products' && question.productIds.includes(`gid://shopify/Product/${productId}`)

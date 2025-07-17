@@ -103,7 +103,7 @@ const renderReviewForm = () => {
         {title: 'What is Your First Name?', markup: `<input name="firstName" class="formQuestionInput" placeholder="Enter your first name" />`, key: 'firstName'}, 
     ]
 
-    if (reviewSettings.customQuestions.length > 0) {
+    if (customQuestions.length > 0) {
         steps.splice(3, 0, {title: "We are interested to know...", markup: `<div class="customQuestionsContainer"></div>`, key: 'customQuestions'})
     }
 

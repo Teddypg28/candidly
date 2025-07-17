@@ -13,18 +13,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
 
     const reviewRequestId = params.reviewRequestId as number | string
   
-    if (reviewRequestId === "test") {
-        const formData = await request.formData()
-        const emailBody = formData.get('emailBody') as string
-        const emailData = JSON.parse(formData.get('emailData') as any)
-        const store = formData.get('store') as string
-        const appSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
-  
-        if (appSettings) await sendEmail(emailBody, emailData, appSettings.primaryEmail, "support@trycandidly.app")
-  
-        return true      
-    }
-  
     const data = await request.json()
     const store = data.store 
   
@@ -32,7 +20,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
     const accessToken = storeSessionDetails?.accessToken as string
   
     const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId as string}}}) as ReviewRequest
-    const storeEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: store}}, include: {logo: true}}) as ReviewRequestEmailSettings 
+    const storeEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: store}}}) as ReviewRequestEmailSettings 
     & {
         logo: {
             name: string,
@@ -41,6 +29,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
         } | null 
     }
     const storeGeneralSettings = await db.appSettings.findFirst({where: {store: {equals: store}}}) as AppSettings
+    const storeEmailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: store}}, include: {logo: {omit: {emailDesignSettingsId: true, id: true}}}})
   
     let emailBody
     if (reviewRequest.emailsSent === 0) {
@@ -99,8 +88,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
     const emailData: ReviewRequestEmailData = {
       authToken: reviewRequest.authToken,
       reviewRequestId: reviewRequest.id,
-      bannerBgColor: storeEmailSettings.bannerBgColor,
-      logo: storeEmailSettings.logo,
       companyName: storeGeneralSettings.companyName,
       store: reviewRequest.store,
       subject: reviewRequest.emailsSent === 0 ? storeEmailSettings.initialEmailSubject : storeEmailSettings.followUpEmailSubject,
@@ -119,7 +106,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
     }
   
     // send the email
-    await sendEmail(emailBody, emailData, "theopop28@gmail.com", fromEmailAddress)
+    await sendEmail(emailBody, emailData, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, "theopop28@gmail.com", fromEmailAddress, "review-request")
       
     return new Response(JSON.stringify({message: 'Email successfully sent'}), {status: 200, headers: {'Content-Type': 'application/json'}})
 

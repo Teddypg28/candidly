@@ -1,4 +1,4 @@
-import { ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
+import { Badge, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
 
 import { Card } from "@shopify/polaris"
 
@@ -32,6 +32,18 @@ export const action = async ({request} : ActionFunctionArgs) => {
     if (action === 'create') return await db.savedCustomQuestionTableView.create({data: {...state, store: session.shop}})
 
     if (action === 'delete') return await db.savedCustomQuestionTableView.deleteMany({where: {store: {equals: session.shop}, AND: {name: {equals: data.viewNameToDelete}}}})
+
+    if (action === 'publishQuestions') {
+        return await Promise.all(data.questionIdsToPublish.map(async (id: string) => {
+            return await db.reviewFormQuestion.update({where: {id, AND: {store: {equals: session.shop}}}, data: {published: true}})
+        }))
+    }
+
+    if (action === 'unpublishQuestions') {
+        return await Promise.all(data.questionIdsToUnpublish.map(async (id: string) => {
+            return await db.reviewFormQuestion.update({where: {id, AND: {store: {equals: session.shop}}}, data: {published: false}})
+        }))
+    }
 
     if (action === 'deleteQuestions') {
         return await Promise.all(data.questionIdsToDelete.map(async (id: string) => {
@@ -133,12 +145,15 @@ const CustomQuestions = () => {
     })
     .map((question, index: number) => {
         return (
-            <IndexTable.Row key={index} selected={selectedResources.includes(question.id.toString())} position={index} id={question.id.toString()}>
+            <IndexTable.Row key={index} selected={selectedResources.includes(question.id)} position={index} id={question.id.toString()}>
                 <IndexTable.Cell>
                     <Link url={`/app/question/${question.id}`}>{question.title}</Link>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
                     <CustomQuestionConfigurationDetails question={question} />
+                </IndexTable.Cell>
+                <IndexTable.Cell>
+                    <Badge tone={question.published ? "success" : "critical"}>{question.published.toString()}</Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>
                     <Link url={`/app/customer-answers/${question.answerType[0]}/${question.id}`}>{question.numAnswers} {question.numAnswers === 1 ? 'answer' : 'answers'}</Link>
@@ -196,6 +211,16 @@ const CustomQuestions = () => {
 
     const deleteSelectedQuestions = () => {
         submit(JSON.stringify({action: 'deleteQuestions', questionIdsToDelete: selectedResources}), {method: 'POST', encType: 'application/json'})
+        removeSelectedResources(selectedResources)
+    }
+
+    const publishSelectedQuestions = () => {
+        submit(JSON.stringify({action: 'publishQuestions', questionIdsToPublish: selectedResources}), {method: 'POST', encType: 'application/json'})
+        removeSelectedResources(selectedResources)
+    }
+
+    const unpublishSelectedQuestions = () => {
+        submit(JSON.stringify({action: 'unpublishQuestions', questionIdsToUnpublish: selectedResources}), {method: 'POST', encType: 'application/json'})
         removeSelectedResources(selectedResources)
     }
 
@@ -278,7 +303,7 @@ const CustomQuestions = () => {
                 />
                 <IndexTable
                 itemCount={IndexTableMarkup.length}
-                headings={[{title: 'Title'}, {title: 'Configuration'}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
+                headings={[{title: 'Title'}, {title: 'Configuration'}, {title: "Published"}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
                 selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
                 onSelectionChange={handleSelectionChange}
                 >
@@ -288,7 +313,11 @@ const CustomQuestions = () => {
             }
         {questions.length > 0 &&
         <PageActions 
-        secondaryActions={[{content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedQuestions}]}
+        secondaryActions={[
+            {content: 'Delete', destructive: true, disabled: selectedResources.length === 0, onAction: deleteSelectedQuestions},
+            {content: 'Publish', disabled: selectedResources.length === 0 || selectedResources.some(id => questionsState.questions.find(question => question.id === id)?.published === true), onAction: publishSelectedQuestions},
+            {content: 'Unpublish', disabled: selectedResources.length === 0 || selectedResources.some(id => questionsState.questions.find(question => question.id === id)?.published === false), onAction: unpublishSelectedQuestions}
+        ]}
         />
         }
         </Page>

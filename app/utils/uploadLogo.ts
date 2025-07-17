@@ -7,7 +7,7 @@ export default async function uploadLogo(newLogo: File, settingsId: string) {
         {
             name: (result.Location as string).split('.com/')[1].split('-timestamp-separator-')[1] as string, 
             url: result.Location as string,
-            reviewRequestEmailSettingsId: settingsId
+            emailDesignSettingsId: settingsId
         }
     })
 }

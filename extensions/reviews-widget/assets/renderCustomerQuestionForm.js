@@ -66,7 +66,7 @@ const renderCustomerQuestionForm = () => {
     
     // submit question to the server
     const submitQuestion = async () => {
-        const res = await fetch(`https://${window.Shopify.shop}/apps/api/customerQuestion/create`, {method: 'POST', body: JSON.stringify(askQuestionFormData)})
+        const res = await fetch(`https://${window.Shopify.shop}/apps/api/customer-question/create`, {method: 'POST', body: JSON.stringify(askQuestionFormData)})
         if (res.status === 200) {
             return true
         } else {

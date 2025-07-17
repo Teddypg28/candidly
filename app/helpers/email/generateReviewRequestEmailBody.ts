@@ -1,6 +1,6 @@
 import { ReviewRequestEmailData } from "~/types/types";
 
-export default function generateEmailBody(emailBody: string, data: ReviewRequestEmailData) {
+export default function generateReviewRequestEmailBody(emailBody: string, data: ReviewRequestEmailData) {
 
     let queryString = ''
     data.lineItems.forEach((lineItem, index) => {

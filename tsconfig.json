@@ -4,7 +4,8 @@
     "**/*.ts",
     "**/*.tsx",
     "app/routes/api.product.$id",
-    "extensions/reviews-widget/assets/createReviewStars.js"
+    "extensions/reviews-widget/assets/createReviewStars.js",
+    "app/routes/api.test-email.sendts"
   ],
   "compilerOptions": {
     "lib": [

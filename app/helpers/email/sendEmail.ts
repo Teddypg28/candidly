@@ -1,10 +1,17 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
-import { ReviewRequestEmailData } from '~/types/types';
+import { CustomerQuestionEmailData, CustomerRewardEmailData, EmailHeaderStyles, ReviewRequestEmailData } from '~/types/types';
 import generateEmailMarkup from './generateEmailMarkup';
 
-export default async function sendEmail(emailBody: string, emailData: ReviewRequestEmailData, toAddress: string, fromAddress: string) {
+export default async function sendEmail(
+  emailBody: string, 
+  emailData: ReviewRequestEmailData | CustomerQuestionEmailData | CustomerRewardEmailData, 
+  emailHeaderStyles: EmailHeaderStyles,
+  toAddress: string, 
+  fromAddress: string,
+  type: "review-request" | "customer-question" | "customer-reward"
+  ) {
 
-    const emailMarkup = generateEmailMarkup(emailBody, emailData)
+    const emailMarkup = generateEmailMarkup(emailBody, emailData, emailHeaderStyles, type)
 
     const sesClient = new SESClient({
         region: process.env.AWS_REGION as string,
@@ -28,7 +35,7 @@ export default async function sendEmail(emailBody: string, emailData: ReviewRequ
             },
           },
           Subject: {
-            Data: emailData.subject,
+            Data: emailData.subject.includes('{{firstName}}') && emailData.firstName ? emailData.subject.replace('{{firstName}}', emailData.firstName) : emailData.subject,
             Charset: 'UTF-8',
           },
         },
