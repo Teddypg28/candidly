@@ -1,6 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Badge, BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
-import ReviewForm from "~/components/ReviewForm";
+import { BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
 
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
@@ -8,6 +7,7 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 
 import { SaveBar } from "@shopify/app-bridge-react";
+import ReviewFormPreview from "~/components/ReviewFormPreview";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()
@@ -96,7 +96,7 @@ export default function ReviewFormTemplate() {
                         </Card>
                     </Layout.Section>
                     <Layout.Section variant="oneHalf">
-                        <ReviewForm 
+                        <ReviewFormPreview 
                         customQuestionsHeading={settingsState.customQuestionsHeading}
                         bodyHeading={settingsState.bodyHeading}
                         bodyPlaceholder={settingsState.bodyPlaceholder}
@@ -104,7 +104,6 @@ export default function ReviewFormTemplate() {
                         starRatingHeading={settingsState.starRatingHeading}
                         titleHeading={settingsState.titleHeading}
                         titlePlaceholder={settingsState.titlePlaceholder}
-                        questions={data.questions}
                         />
                     </Layout.Section>
                 </Layout>

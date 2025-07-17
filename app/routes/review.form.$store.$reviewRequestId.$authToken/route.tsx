@@ -78,7 +78,7 @@ export default function ReviewForm() {
     
     const data = useLoaderData<typeof loader>()
 
-    const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(true)
+    const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(false)
     const productsToReview = useRef(data.productDataObjects)
 
     const [userInputState, setUserInputState] = useState<UserReviewFormInputState>({

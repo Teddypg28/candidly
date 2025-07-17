@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://gang-glasses-writers-hub.trycloudflare.com"
+application_url = "https://lets-ae-um-respected.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://gang-glasses-writers-hub.trycloudflare.com/auth/callback",
-  "https://gang-glasses-writers-hub.trycloudflare.com/auth/shopify/callback",
-  "https://gang-glasses-writers-hub.trycloudflare.com/api/auth/callback"
+  "https://lets-ae-um-respected.trycloudflare.com/auth/callback",
+  "https://lets-ae-um-respected.trycloudflare.com/auth/shopify/callback",
+  "https://lets-ae-um-respected.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://gang-glasses-writers-hub.trycloudflare.com/api"
+url = "https://lets-ae-um-respected.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 
