@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
+import { Banner, BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
 
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
@@ -52,61 +52,66 @@ export default function ReviewFormTemplate() {
                 <button variant={'primary'} onClick={saveChanges}></button>
                 <button onClick={() => { setSettingsState(cleanState) }}></button>
             </SaveBar>
-            <BlockStack gap='200'>
-                <Layout>
-                    <Layout.Section variant="oneThird">
-                        <Card>
-                            <BlockStack gap='200'>
-                                <TextField 
-                                value={settingsState.starRatingHeading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, starRatingHeading: value}})}
-                                label='Star Rating Heading' 
-                                autoComplete="off" />
-                                <TextField 
-                                value={settingsState.titleHeading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, titleHeading: value}})}
-                                label='Review Title Heading' 
-                                autoComplete="off" />
-                                <TextField 
-                                value={settingsState.titlePlaceholder} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, titlePlaceholder: value}})}
-                                label='Review Title Placeholder' 
-                                autoComplete="off" />
-                                 <TextField 
-                                value={settingsState.bodyHeading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, bodyHeading: value}})}
-                                label='Review Body Heading' 
-                                autoComplete="off" />
-                                 <TextField 
-                                value={settingsState.bodyPlaceholder} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, bodyPlaceholder: value}})}
-                                label='Review Body Placeholder' 
-                                autoComplete="off" />
-                                 <TextField 
-                                value={settingsState.customQuestionsHeading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, customQuestionsHeading: value}})}
-                                label='Custom Questions Heading' 
-                                autoComplete="off" />
-                                <TextField 
-                                value={settingsState.mediaHeading} 
-                                onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, mediaHeading: value}})}
-                                label='Review Media Heading' 
-                                autoComplete="off" />                               
-                            </BlockStack>
-                        </Card>
-                    </Layout.Section>
-                    <Layout.Section variant="oneHalf">
-                        <ReviewFormPreview 
-                        customQuestionsHeading={settingsState.customQuestionsHeading}
-                        bodyHeading={settingsState.bodyHeading}
-                        bodyPlaceholder={settingsState.bodyPlaceholder}
-                        mediaHeading={settingsState.mediaHeading}
-                        starRatingHeading={settingsState.starRatingHeading}
-                        titleHeading={settingsState.titleHeading}
-                        titlePlaceholder={settingsState.titlePlaceholder}
-                        />
-                    </Layout.Section>
-                </Layout>
+            <BlockStack gap={'200'}>
+                <Banner title="Reward Tiers">
+                    If you do not have any rewards configured, the reward tiers will not show when the customer is filling out the form.
+                </Banner>
+                <BlockStack gap='200'>
+                    <Layout>
+                        <Layout.Section variant="oneThird">
+                            <Card>
+                                <BlockStack gap='200'>
+                                    <TextField 
+                                    value={settingsState.starRatingHeading} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, starRatingHeading: value}})}
+                                    label='Star Rating Heading' 
+                                    autoComplete="off" />
+                                    <TextField 
+                                    value={settingsState.titleHeading} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, titleHeading: value}})}
+                                    label='Review Title Heading' 
+                                    autoComplete="off" />
+                                    <TextField 
+                                    value={settingsState.titlePlaceholder} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, titlePlaceholder: value}})}
+                                    label='Review Title Placeholder' 
+                                    autoComplete="off" />
+                                    <TextField 
+                                    value={settingsState.bodyHeading} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, bodyHeading: value}})}
+                                    label='Review Body Heading' 
+                                    autoComplete="off" />
+                                    <TextField 
+                                    value={settingsState.bodyPlaceholder} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, bodyPlaceholder: value}})}
+                                    label='Review Body Placeholder' 
+                                    autoComplete="off" />
+                                    <TextField 
+                                    value={settingsState.customQuestionsHeading} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, customQuestionsHeading: value}})}
+                                    label='Custom Questions Heading' 
+                                    autoComplete="off" />
+                                    <TextField 
+                                    value={settingsState.mediaHeading} 
+                                    onChange={(value) => setSettingsState(prevSettingsState => {return {...prevSettingsState, mediaHeading: value}})}
+                                    label='Review Media Heading' 
+                                    autoComplete="off" />                               
+                                </BlockStack>
+                            </Card>
+                        </Layout.Section>
+                        <Layout.Section variant="oneHalf">
+                            <ReviewFormPreview 
+                            customQuestionsHeading={settingsState.customQuestionsHeading}
+                            bodyHeading={settingsState.bodyHeading}
+                            bodyPlaceholder={settingsState.bodyPlaceholder}
+                            mediaHeading={settingsState.mediaHeading}
+                            starRatingHeading={settingsState.starRatingHeading}
+                            titleHeading={settingsState.titleHeading}
+                            titlePlaceholder={settingsState.titlePlaceholder}
+                            />
+                        </Layout.Section>
+                    </Layout>
+                </BlockStack>
             </BlockStack>
         </Page>
 

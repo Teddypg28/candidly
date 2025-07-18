@@ -4,7 +4,6 @@ export default function generateCustomerQuestionEmailBody(emailBody: string, dat
 
     const dynamicVariableData: CustomerQuestionEmailVariables = {
         firstName: data.firstName,
-        companyName: data.companyName,
         question: data.question,
         answer: data.answer
     }

@@ -3,6 +3,22 @@ import { MutableRefObject } from "react"
 
 // variables
 
+export const initialRewardState: Reward = {
+    selectedRewardType: 'none', 
+    fixedAmount: 10, 
+    percentageAmount: 10, 
+    bogoRewardType: "free", 
+    bogoPurchaseAmount: 1, 
+    bogoReceiveAmount: 1, 
+    bogoDiscountAmount: 1, 
+    minPurchaseType: 'none', 
+    minPurchaseDollarValue: 1, 
+    minPurchaseQuantityValue: 1,
+    productCollectionConfiguration: "all",
+    eligibleProducts: [],
+    eligibleCollections: []
+}
+
 export const sampleReviewData = [
     ['title, body', 'firstName', 'email', 'rating', 'date', 'isPublished'],
     [
@@ -38,10 +54,7 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
             We hope you’re doing well! We wanted to follow up on our previous email about your experience with the: {{productName}}. Your thoughts are incredibly important to us, and we’d truly value hearing your feedback.
 
             {{stars}}
-            Thank you so much for your time and for being a valued part of our community.
-
-            - {{companyName}}
-        `
+            Thank you so much for your time and for being a valued part of our community.`
     ),
     initialEmailSubject: "{{firstName}}, tell us how you feel...",
     followUpEmailSubject: "We hope you are doing well, {{firstName}}!"
@@ -62,9 +75,7 @@ export const defaultCustomerQuestionEmailSettings = {
 
         If you have any additional follow-up questions, please feel free to reach us at yoursupportemail@domain.com.
 
-        Enjoy the rest of your day!
-        
-        - {{companyName}}`
+        Enjoy the rest of your day!`
     ) 
 }
 
@@ -79,9 +90,7 @@ export const defaultCustomerRewardEmailSettings = {
         
         {{discountCode}}
 
-        Thank you againa and enjoy the rest of your day!
-        
-        - {{companyName}}`
+        Thank you again and enjoy the rest of your day!`
     ) 
 }
 
@@ -183,7 +192,6 @@ export interface CustomReviewFormAnswerOption {
 
 export interface CustomerQuestionEmailVariables {
     firstName?: string
-    companyName?: string
     question?: string
     answer: string
 }
@@ -192,7 +200,6 @@ export interface CustomerRewardEmailVariables {
     reward: string
     discountCode?: string
     firstName?: string
-    companyName?: string
 }
 
 export interface CustomQuestionTableState {
@@ -200,6 +207,14 @@ export interface CustomQuestionTableState {
     selectedTab: number
     sortSelected: IndexFiltersProps['sortSelected']
     selectedProductConfiguration: string[]
+}
+
+export interface EligibleProduct {
+    productId: string
+}
+
+export interface EligibleCollection {
+    collectionId: string
 }
 
 export interface EmailHeaderStyles {
@@ -222,13 +237,8 @@ export interface EmailOrderData {
     productImage: string
 }
 
-export interface Import3rdPartyReviewsFormState {
-    isImporting3rdPartyReviews: boolean
-    numberOfReviews: number
-    selectedImportRatings: string[]
-    productLink: any
-    selectedProductData3rdParty?: SelectedProductData
-    importFormErrors: any
+export interface FetchedReward {
+    name: string | null
 }
 
 export interface ImportCsvFileState {
@@ -263,6 +273,28 @@ export interface RadioAnswerChoice {
     value: string;
     display: boolean;
     label?: string;
+}
+
+export interface Reward {
+    selectedRewardType: string
+    fixedAmount: number
+    percentageAmount: number
+    bogoRewardType: string
+    bogoPurchaseAmount: number
+    bogoReceiveAmount: number
+    bogoDiscountAmount: number
+    minPurchaseType: string
+    minPurchaseDollarValue: number
+    minPurchaseQuantityValue: number
+    productCollectionConfiguration: string
+    eligibleProducts: EligibleProduct[]
+    eligibleCollections: EligibleCollection[]
+}
+
+export interface RewardState {
+    'subpar': Reward
+    'good': Reward
+    'perfect': Reward
 }
 
 export interface ReviewTableState {
@@ -303,7 +335,6 @@ export interface ReviewRequestEmailVariables {
     store?: string
     reviewRequestId?: string
     firstName?: string
-    companyName?: string
     lineItems: {
         currentQuantity: number
         productId: string
@@ -358,6 +389,19 @@ export interface SelectedProduct {
 interface SelectedProductData {
     id: string 
     image: string
+    title: string
+}
+
+export interface SelectedProduct_Reward {
+    id: string
+    title: string
+    images: {
+        originalSrc: string
+    }[]
+}
+
+export interface SelectedCollection_Reward {
+    id: string
     title: string
 }
 

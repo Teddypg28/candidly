@@ -192,6 +192,43 @@ body {
     margin-top: 5px;
 }
 
+.rewardTiersContainer {
+    width: 475px;
+    height: 40px;
+    border-radius: 25px;
+    overflow: hidden;
+    display: flex;
+    margin: auto;
+}
+
+.rewardTierOne {
+    width: 33%;
+    height: 100%;
+    border-right-color: white;
+    border-right-width: 2px;
+    border-right-style: solid;
+}
+
+.rewardTierTwo {
+    width: 33%;
+    height: 100%;
+    border-right-color: white;
+    border-right-width: 2px;
+    border-right-style: solid;
+}
+
+.rewardTierThree {
+    width: 34%;
+    height: 100%;
+}
+
+.rewardTierOne, .rewardTierTwo, .rewardTierThree {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
 .selectedOptionsContainer {
     margin: 0px;
     padding: 0px;

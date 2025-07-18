@@ -22,7 +22,6 @@ export default function generateReviewRequestEmailBody(emailBody: string, data: 
     
     const dynamicVariableData: any = {
         firstName: data.firstName,
-        companyName: data.companyName,
         productName: data.lineItems.length > 0 ? data.lineItems[0].title : "",
         stars: (
             `<div style="display: flex; justify-content: center; width: fit-content; gap: 5px; margin: 0px auto; padding: 0px">

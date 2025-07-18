@@ -4,7 +4,6 @@ export default function generateCustomerRewardEmailBody(emailBody: string, data:
 
     const dynamicVariableData: CustomerRewardEmailVariables = {
         firstName: data.firstName,
-        companyName: data.companyName,
         discountCode: data.discountCode,
         reward: data.reward
     }

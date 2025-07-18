@@ -240,19 +240,16 @@ export default function EmailTemplates() {
     const fileUploadBtn = !settings.emailDesignSettings.logo && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
     const testReviewRequestEmailVariables: ReviewRequestEmailVariables = {
-        companyName: data.companyName,
         lineItems: [],
         configuredQuestions: []
     }
 
     const testCustomerQuestionEmailVariables: CustomerQuestionEmailVariables = {
-        companyName: data.companyName,
         question: "Is this a beginner-friendly snowboard?",
         answer: "It is! This is a great board to help beginners get the hang of things early!",
     }
 
     const testCustomerRewardEmailVariables: CustomerRewardEmailVariables = {
-        companyName: data.companyName,
         reward: "20% Off",
         discountCode: "TEST-EMAIL-DISCOUNT-CODE",
     }
@@ -352,9 +349,6 @@ export default function EmailTemplates() {
                 <strong>{`{{firstName}}`}</strong> – optional; replaced with the customer's first name
                 <br />
                 <br />
-                <strong>{`{{companyName}}`}</strong> – optional; replaced with your company's name, as specified in the general settings
-                <br />
-                <br />
                 <strong>{`{{productName}}`}</strong> – optional; replaced with the name of the product for which the review request is for
             </>
         ) : selectedTab === "customerQuestionEmailSettings" ?
@@ -366,9 +360,6 @@ export default function EmailTemplates() {
                 <strong>{`{{question}}`}</strong> – optional; replaced with the customer's original question
                 <br />
                 <br />
-                <strong>{`{{companyName}}`}</strong> – optional; replaced with your company's name, as specified in the general settings
-                <br />
-                <br />
                 <strong>{`{{firstName}}`}</strong> – optional; replaced with the customer's first name
             </>
         ) :
@@ -378,9 +369,6 @@ export default function EmailTemplates() {
                 <br />
                 <br />
                 <strong>{`{{firstName}}`}</strong> – optional; replaced with the customer's first name
-                <br />
-                <br />
-                <strong>{`{{companyName}}`}</strong> – optional; replaced with your company's name, as specified in the general settings
                 <br />
                 <br />
                 <strong>{`{{reward}}`}</strong> – optional; replaced with the reward that the customer earned

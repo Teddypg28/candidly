@@ -123,6 +123,8 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
         })
     }, [])
 
+    let reviewScore = 3
+
   return (
         <Card>
             <Pagination 
@@ -136,6 +138,19 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
                     <h1 className={styles.reviewFormStepTitle} style={{fontSize: '30px', lineHeight: '25px'}}>{steps[currentStep-1].title}</h1>
                     <div className={styles.inputContainer}>
                         {steps[currentStep-1].markup}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div className={styles.rewardTiersContainer}>
+                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore === 1 ? "black" : 'lightgray', filter: reviewScore === 1 ? 'none' : "blur(1px)"}}>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>20% Off</p>
+                    </div>
+                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore === 2 ? "black" : 'lightgray', filter: reviewScore === 2 ? 'none' : "blur(1px)"}}> 
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>BOGO Free</p>
+                    </div>
+                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore === 3 ? "black" : 'lightgray', filter: reviewScore === 3 ? 'none' : "blur(1px)"}}>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>50% Off</p>
                     </div>
                 </div>
             </div>
