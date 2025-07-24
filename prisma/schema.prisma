@@ -207,17 +207,27 @@ model ReviewRequest {
   authToken         String
 }
 
+model RewardSettings {
+  id    String @id @default(uuid())
+  store String
+  type  String
+}
+
 model Reward {
   id    String @id @default(uuid())
   store String
 
+  type String
+
   subparId  String @unique
   goodId    String @unique
   perfectId String @unique
+  soloId    String @unique
 
   subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id])
   good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id])
   perfect RewardSetting @relation("PerfectReward", fields: [perfectId], references: [id])
+  solo    RewardSetting @relation("SoloReward", fields: [soloId], references: [id])
 }
 
 model RewardSetting {
@@ -229,6 +239,8 @@ model RewardSetting {
   bogoPurchaseAmount             Int
   bogoReceiveAmount              Int
   bogoDiscountAmount             Int
+  bogoPurchaseProductId          String
+  bogoReceiveProductId           String
   minPurchaseType                String
   minPurchaseDollarValue         Int
   minPurchaseQuantityValue       Int
@@ -239,6 +251,7 @@ model RewardSetting {
   subparReward  Reward? @relation("SubparReward")
   goodReward    Reward? @relation("GoodReward")
   perfectReward Reward? @relation("PerfectReward")
+  soloReward    Reward? @relation("SoloReward")
 }
 
 model Subscription {

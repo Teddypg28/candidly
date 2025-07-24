@@ -54,7 +54,7 @@ export default function ReviewFormTemplate() {
             </SaveBar>
             <BlockStack gap={'200'}>
                 <Banner title="Reward Tiers">
-                    If you do not have any rewards configured, the reward tiers will not show when the customer is filling out the form.
+                    Note: if you do not have any reward tiers configured, the tiers graphic will not show at the bottom of the form.
                 </Banner>
                 <BlockStack gap='200'>
                     <Layout>

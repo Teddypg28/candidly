@@ -4,7 +4,7 @@ import { MutableRefObject } from "react"
 // variables
 
 export const initialRewardState: Reward = {
-    selectedRewardType: 'none', 
+    selectedRewardType: 'free-shipping', 
     fixedAmount: 10, 
     percentageAmount: 10, 
     bogoRewardType: "free", 
@@ -15,6 +15,8 @@ export const initialRewardState: Reward = {
     minPurchaseDollarValue: 1, 
     minPurchaseQuantityValue: 1,
     productCollectionConfiguration: "all",
+    bogoPurchaseProductId: "",
+    bogoReceiveProductId: "",
     eligibleProducts: [],
     eligibleCollections: []
 }
@@ -287,14 +289,20 @@ export interface Reward {
     minPurchaseDollarValue: number
     minPurchaseQuantityValue: number
     productCollectionConfiguration: string
+    bogoPurchaseProductId: string
+    bogoReceiveProductId: string
     eligibleProducts: EligibleProduct[]
     eligibleCollections: EligibleCollection[]
 }
 
 export interface RewardState {
-    'subpar': Reward
-    'good': Reward
-    'perfect': Reward
+    rewards: {
+        subpar: Reward
+        good: Reward
+        perfect: Reward
+        solo: Reward
+    }
+    type: string
 }
 
 export interface ReviewTableState {
@@ -390,6 +398,11 @@ interface SelectedProductData {
     id: string 
     image: string
     title: string
+}
+
+export interface SelectedProduct_Bogo {
+    title: string,
+    image: string | null
 }
 
 export interface SelectedProduct_Reward {

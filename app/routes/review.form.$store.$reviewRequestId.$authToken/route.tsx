@@ -611,10 +611,10 @@ export default function ReviewForm() {
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
-                {steps[currentStep-1].key === "media" && data.rewards && data.rewards.advanced !== 0 && <p className={styles.mediaUploadRewardMessage}>(You will earn a <strong>{data.rewards.advanced}% off</strong> coupon)</p>}
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
-                    {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}              
+                    {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}   
+                    {uploadMediaError && <p className={styles.reviewFormValidationError}>{uploadMediaError}</p>}           
                 </div>
                 <div id="stepsContainer" className={styles.stepsContainer}></div>
             </div>
