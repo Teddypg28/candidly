@@ -233,12 +233,13 @@ model Reward {
 model RewardSetting {
   id                             String               @id @default(uuid())
   selectedRewardType             String
-  fixedAmount                    Int
-  percentageAmount               Int
+  dollarAmount                   Int
+  percentageAmount               Float
   bogoRewardType                 String
   bogoPurchaseAmount             Int
   bogoReceiveAmount              Int
-  bogoDiscountAmount             Int
+  bogoPercentageAmount           Float
+  bogoDollarAmount               Int
   bogoPurchaseProductId          String
   bogoReceiveProductId           String
   minPurchaseType                String

@@ -88,7 +88,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
     const emailVariables: ReviewRequestEmailVariables = {
       authToken: reviewRequest.authToken,
       reviewRequestId: reviewRequest.id,
-      companyName: storeGeneralSettings.companyName,
       store: reviewRequest.store,
       firstName,
       lineItems,

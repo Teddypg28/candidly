@@ -238,7 +238,7 @@ export default function Reward() {
         rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bogoReceiveProductId === "")) return true
 
         if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bogo" && 
-        isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bogoDiscountAmount)) return true
+        isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bogoPercentageAmount)) return true
 
         if (isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].minPurchaseQuantityValue)) return true
 
@@ -256,7 +256,7 @@ export default function Reward() {
         const updatedProducts = rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleProducts.filter((product) => product.productId !== productId)
 
         setSelectedProductsCollections({...selectedProductsCollections, "products": {...selectedProductsCollections["products"], [currentTab as keyof typeof rewardState]: updatedSelectedProducts}})
-        setRewardState({...rewardState, [currentTab as keyof typeof rewardState.rewards]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleProducts: updatedProducts}})
+        setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab as keyof typeof rewardState.rewards]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleProducts: updatedProducts}}})
     }
 
     const removeEligibleCollection = (collectionId: string) => {
@@ -264,7 +264,7 @@ export default function Reward() {
         const updatedCollections = rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleCollections.filter((collection) => collection.collectionId !== collectionId).sort((a, b) => a.collectionId.localeCompare(b.collectionId))
 
         setSelectedProductsCollections({...selectedProductsCollections, "collections": {...selectedProductsCollections["collections"], [currentTab as keyof typeof rewardState]: updatedSelectedCollections}})
-        setRewardState({...rewardState, [currentTab as keyof typeof rewardState]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleCollections: updatedCollections}})
+        setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab as keyof typeof rewardState]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleCollections: updatedCollections}}})
     }
 
     const resetState = () => {

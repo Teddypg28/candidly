@@ -5,12 +5,13 @@ import { MutableRefObject } from "react"
 
 export const initialRewardState: Reward = {
     selectedRewardType: 'free-shipping', 
-    fixedAmount: 10, 
+    dollarAmount: 10, 
     percentageAmount: 10, 
     bogoRewardType: "free", 
     bogoPurchaseAmount: 1, 
     bogoReceiveAmount: 1, 
-    bogoDiscountAmount: 1, 
+    bogoPercentageAmount: 0.1,
+    bogoDollarAmount: 10, 
     minPurchaseType: 'none', 
     minPurchaseDollarValue: 1, 
     minPurchaseQuantityValue: 1,
@@ -279,12 +280,13 @@ export interface RadioAnswerChoice {
 
 export interface Reward {
     selectedRewardType: string
-    fixedAmount: number
+    dollarAmount: number
     percentageAmount: number
     bogoRewardType: string
     bogoPurchaseAmount: number
     bogoReceiveAmount: number
-    bogoDiscountAmount: number
+    bogoPercentageAmount: number
+    bogoDollarAmount: number
     minPurchaseType: string
     minPurchaseDollarValue: number
     minPurchaseQuantityValue: number

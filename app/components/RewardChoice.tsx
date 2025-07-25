@@ -19,22 +19,19 @@ interface Props {
 
 export default function RewardChoice({type, state, setState, bogoProductState, setBogoProductState} : Props) {
 
-    const handleDollarAmountBlur = () => {
-        if (isNaN(state.rewards[type as keyof typeof state.rewards].minPurchaseDollarValue)) {
-            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], minPurchaseDollarValue: 0}}})
-        } else {
-            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], minPurchaseDollarValue: Math.abs(parseFloat(state.rewards[type as keyof typeof state.rewards].minPurchaseDollarValue.toFixed(2)))}}})
+    const handlePercentageAmountChange = (key: string, value: string) => {
+        setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], [key]: isNaN(parseFloat(value)) || parseFloat(value) > 1 ? 0.01 : parseFloat(parseFloat(value).toFixed(2))}}})
+    }
+
+    const handlePercentageAmountBlur = (key: string) => {
+        const reward = state.rewards[type as keyof typeof state.rewards]
+        if (reward[key as keyof typeof reward] === 0) {
+            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], [key]: 0.01}}})
         }
     }
 
     const handleMinPurchaseValChange = (value: string, key: string) => {
         setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], [key]: isNaN(parseInt(value)) || parseInt(value) < 1 ? 1 : parseInt(value)}}})
-    }
-
-    const handleQuantityAmountBlur = () => {
-        if (state.rewards[type as keyof typeof state.rewards].minPurchaseQuantityValue.toString() === '0' || isNaN(state.rewards[type as keyof typeof state.rewards].minPurchaseQuantityValue)) {
-            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], minPurchaseQuantityValue: 1}}})
-        }
     }
 
     const isNumberRestricted = (value: number) => {
@@ -44,7 +41,7 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
     const errors: any = {}
     let isError = false
     Object.keys(state.rewards[type as keyof typeof state.rewards]).forEach((key) => {
-        const numberKeys = ['fixedAmount', 'percentageAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount', 'bogoDiscountAmount']
+        const numberKeys = ['fixedAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount']
         if (numberKeys.includes(key)) {
             if (isNumberRestricted(state.rewards[type as keyof typeof state.rewards][key as keyof Reward] as number)) {
                 errors[key] = true
@@ -107,10 +104,10 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                 type="number" 
                 autoComplete="off"
                 label="Amount"
-                suffix={state.rewards[type as keyof typeof state.rewards].fixedAmount === 1 ? "dollar" : "dollars"}
+                suffix={state.rewards[type as keyof typeof state.rewards].dollarAmount === 1 ? "dollar" : "dollars"}
                 disabled={isError && !errors['fixedAmount']}
                 error={errors['fixedAmount']}
-                value={state.rewards[type as keyof typeof state.rewards].fixedAmount.toString()}
+                value={state.rewards[type as keyof typeof state.rewards].dollarAmount.toString()}
                 onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], fixedAmount: parseInt(value)}}})}
                 min={1}
                 />
@@ -118,20 +115,23 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
             </>
             }
             {state.rewards[type as keyof typeof state.rewards].selectedRewardType === 'percent' && 
-            <>
                 <TextField 
                 type="number" 
                 autoComplete="off"
+                inputMode="decimal"
                 suffix="percent"
                 label="Amount"
+                helpText="Enter a decimal (ex: 0.4 for 40% off)"
                 disabled={isError && !errors['percentageAmount']}
                 error={errors['percentageAmount']}
                 value={state.rewards[type as keyof typeof state.rewards].percentageAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], percentageAmount: parseInt(value)}}})}
-                min={1}
+                onChange={(val) => handlePercentageAmountChange("percentageAmount", val)}
+                onBlur={() => handlePercentageAmountBlur("percentageAmount")}
+                min={0.01}
+                max={1}
+                step={0.01}
                 />
-                {errors['percentageAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
-            </>}
+            }
             {state.rewards[type as keyof typeof state.rewards].selectedRewardType === 'bogo' && 
             <>
                 <TextField 
@@ -194,30 +194,30 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                 selected={[state.rewards[type as keyof typeof state.rewards].bogoRewardType]}
                 onChange={(selected: string[]) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoRewardType: selected.toString()}}})}
                 />
+
                 {state.rewards[type as keyof typeof state.rewards].bogoRewardType === 'percent' ? 
                 <TextField 
                 type="number" 
+                inputMode="decimal"
                 autoComplete="off"
                 suffix={'percent off'}
                 label="Amount"
-                disabled={isError && !errors['bogoDiscountAmount']}
-                error={errors['bogoDiscountAmount']}
-                value={state.rewards[type as keyof typeof state.rewards].bogoDiscountAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoDiscountAmount: parseInt(value)}}})}
-                min={1}
+                value={state.rewards[type as keyof typeof state.rewards].bogoPercentageAmount.toString()}
+                onChange={(val) => handlePercentageAmountChange("bogoPercentageAmount", val)}
+                onBlur={() => handlePercentageAmountBlur("bogoPercentageAmount")}
+                min={0.01}
+                max={1}
+                step={0.01}
                 />
     
                 : state.rewards[type as keyof typeof state.rewards].bogoRewardType === 'dollar' &&
-    
                 <TextField 
                 type="number" 
                 autoComplete="off"
-                suffix={state.rewards[type as keyof typeof state.rewards].fixedAmount > 1 ? 'dollars off' : 'dollar off'}
+                suffix={state.rewards[type as keyof typeof state.rewards].bogoDollarAmount > 1 ? 'dollars off' : 'dollar off'}
                 label="Amount"
-                disabled={isError && !errors['bogoDiscountAmount']}
-                error={errors['bogoDiscountAmount']}
-                value={state.rewards[type as keyof typeof state.rewards].bogoDiscountAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoDiscountAmount: parseInt(value)}}})}
+                value={state.rewards[type as keyof typeof state.rewards].bogoDollarAmount.toString()}
+                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoDollarAmount: parseInt(value)}}})}
                 min={1}
                 />
                 }
@@ -238,7 +238,6 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                         <TextField 
                         type="text" 
                         placeholder="0.00"
-                        onBlur={handleDollarAmountBlur} 
                         value={state.rewards[type as keyof typeof state.rewards].minPurchaseDollarValue.toString()} 
                         onChange={(val: string) => handleMinPurchaseValChange(val, "minPurchaseDollarValue")} 
                         prefix='$' 
@@ -252,7 +251,6 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                         <InlineStack> 
                             <TextField 
                             type="number" 
-                            onBlur={handleQuantityAmountBlur}
                             value={state.rewards[type as keyof typeof state.rewards].minPurchaseQuantityValue.toString()} 
                             min={1} 
                             onChange={(val: string) => handleMinPurchaseValChange(val, "minPurchaseQuantityValue")} 

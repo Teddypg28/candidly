@@ -28,7 +28,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         await sendEmail(
             emailSettings?.subject as string,
             emailSettings?.body || defaultCustomerRewardEmailSettings.body, 
-            {...emailData, companyName: appSettings?.companyName}, 
+            {...emailData}, 
             emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
             data.toAddress, 
             fromEmailAddress,
