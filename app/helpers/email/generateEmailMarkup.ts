@@ -1,13 +1,13 @@
-import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, EmailHeaderStyles, ReviewRequestEmailVariables } from "~/types/types"
+import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, EmailHeaderStyles, ReviewNotificationVariables, ReviewRequestEmailVariables } from "~/types/types"
 import generateReviewRequestEmailBody from "./generateReviewRequestEmailBody"
 import generateCustomerQuestionEmailBody from "./generateCustomerQuestionEmailBody";
 import generateCustomerRewardEmailBody from "./generateCustomerRewardEmailBody";
 
 export default function generateEmailMarkup(
     emailBody: string, 
-    emailData: ReviewRequestEmailVariables | CustomerQuestionEmailVariables | CustomerRewardEmailVariables, 
+    emailData: ReviewRequestEmailVariables | CustomerQuestionEmailVariables | CustomerRewardEmailVariables | ReviewNotificationVariables, 
     emailHeaderStyles: EmailHeaderStyles,
-    type: "review-request" | "customer-question" | "customer-reward",
+    type: "review-request" | "customer-question" | "customer-reward"
     ){
 
     let updatedEmailBody = ""

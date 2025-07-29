@@ -2,6 +2,7 @@ import { ActionFunctionArgs, json } from "@remix-run/node"
 import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
 import { authenticate } from "~/shopify.server"
+import sendReviewSubmittedNotificationEmail from "~/helpers/email/sendReviewSubmittedNotificationEmail"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
@@ -27,6 +28,9 @@ export async function action({ request } : ActionFunctionArgs) {
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session?.shop}}})
         const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
         const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session?.shop, date: new Date(), isPublished}})
+       
+        // notify store of the new review
+        await sendReviewSubmittedNotificationEmail(newReview.id)
 
         // grab all of the ids connected to the selected answer choices
         const answerChoiceIds: string[] = []

@@ -1,6 +1,6 @@
 import { ActionFunctionArgs } from "@remix-run/node";
 import sendEmail from "~/helpers/email/sendEmail";
-import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, defaultCustomerRewardEmailSettings } from "~/types/types";
+import { CustomerRewardEmailVariables, defaultCustomerRewardEmailSettings } from "~/types/types";
 import db from '../db.server'
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 

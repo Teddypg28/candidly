@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://liver-seat-entertaining-nv.trycloudflare.com"
+application_url = "https://specials-mia-returns-skilled.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://liver-seat-entertaining-nv.trycloudflare.com/auth/callback",
-  "https://liver-seat-entertaining-nv.trycloudflare.com/auth/shopify/callback",
-  "https://liver-seat-entertaining-nv.trycloudflare.com/api/auth/callback"
+  "https://specials-mia-returns-skilled.trycloudflare.com/auth/callback",
+  "https://specials-mia-returns-skilled.trycloudflare.com/auth/shopify/callback",
+  "https://specials-mia-returns-skilled.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://liver-seat-entertaining-nv.trycloudflare.com/api"
+url = "https://specials-mia-returns-skilled.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

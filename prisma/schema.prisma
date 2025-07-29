@@ -111,7 +111,6 @@ model ProductReview {
   title                  String
   body                   String
   firstName              String
-  email                  String?
   rating                 Int
   media                  ProductReviewMedia[]
   date                   DateTime

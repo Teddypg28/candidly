@@ -3,6 +3,7 @@ import { Card, Pagination } from "@shopify/polaris"
 import styles from '../styles/ReviewForm.module.css'
 import { useCallback, useEffect, useRef, useState } from "react"
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
+import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
 
 interface Props {
     starRatingHeading: string;
@@ -12,9 +13,10 @@ interface Props {
     bodyHeading: string;
     bodyPlaceholder: string;
     mediaHeading: string;
+    rewardNames: string[]
 }
 
-const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading, customQuestionsHeading } : Props ) => {
+const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading, customQuestionsHeading, rewardNames } : Props ) => {
 
     const [currentStep, setCurrentStep] = useState<number>(1)
 
@@ -24,8 +26,16 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
         email: ""
     })
 
+    const uploadedMediaRef = useRef([])
+
+    const reviewScore = fetchRewardTiersScore(userInputState.title, userInputState.body, uploadedMediaRef)
+
     const steps = [
-        {title: starRatingHeading, markup: <div id="reviewFormStarsContainer" className={styles.reviewFormStarsContainer}></div>, key: "rating"}, 
+        {
+            title: starRatingHeading, 
+            markup: <div id="reviewFormStarsContainer" className={styles.reviewFormStarsContainer}></div>, 
+            key: "rating"
+        }, 
         {
             title: titleHeading, 
             markup: 
@@ -51,19 +61,24 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
                 name='body' 
                 id='reviewTextArea' 
                 placeholder={bodyPlaceholder}>
-                </textarea>, 
+                </textarea>,
             key: 'body'
         },
-        {title: mediaHeading, markup: <div>
-            <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
-                <label id="uploadMediaLabel" className={styles.uploadMediaLabel} htmlFor='uploadMediaBtn'>
-                    <p className={styles.uploadMediaText}>Upload Media</p>
-                    <i className="fa-solid fa-upload"></i>
-                </label>
-                <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
-                <input disabled type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/png, image/jpg, image/jpeg, video/*' multiple />
-            </div>
-        </div>, key: 'media'},
+        {
+            title: mediaHeading, 
+            markup: 
+            <div>
+                <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
+                    <label id="uploadMediaLabel" className={styles.uploadMediaLabel} htmlFor='uploadMediaBtn'>
+                        <p className={styles.uploadMediaText}>Upload Media</p>
+                        <i className="fa-solid fa-upload"></i>
+                    </label>
+                    <div id="uploadedMediaContainer" className={styles.uploadedMediaContainer}></div>
+                    <input disabled type='file' id='uploadMediaBtn' className={styles.uploadMediaBtn} accept='image/png, image/jpg, image/jpeg, video/*' multiple />
+                </div>
+                <p style={{fontStyle: 'italic'}}>media upload container disabled on preview</p>
+            </div>, 
+            key: 'uploadedMedia'},
         {title: customQuestionsHeading, markup: <div className={styles.customQuestionsContainer}>If you have custom questions configured, they will be displayed here on the real form</div>, key: 'customQuestions'}
     ]
 
@@ -77,11 +92,7 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
     }, [])
 
     useEffect(() => {
-
-        if (steps[currentStep-1].key === "rating") {
-            renderStars(currentStarRating.current)
-        }
-
+        if (steps[currentStep-1].key === "rating") renderStars(currentStarRating.current)
     }, [currentStep])
 
     const renderStars = useCallback((rating: number) => {
@@ -123,7 +134,9 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
         })
     }, [])
 
-    let reviewScore = 3
+    const progressMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `writing the perfect ${steps[currentStep-1].key}` : "uploading the perfect amount of media"
+    const perfectedMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `wrote the perfect ${steps[currentStep-1].key}!` : 'uploaded the perfect amount of media!'
+    const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
 
   return (
         <Card>
@@ -134,23 +147,33 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
             onPrevious={() => setCurrentStep(currentStep-1)}
             />
             <div style={{height: '80vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                <div className={styles.writeReviewForm} style={{width: '100%'}}>
-                    <h1 className={styles.reviewFormStepTitle} style={{fontSize: '30px', lineHeight: '25px'}}>{steps[currentStep-1].title}</h1>
+                <div id="writeReviewForm" className={styles.writeReviewForm} style={{width: '100%'}}>
+                    <div>
+                        <h1 className={styles.reviewFormStepTitle} style={{fontSize: '30px', lineHeight: '25px'}}>{steps[currentStep-1].title}</h1>
+                        {steps[currentStep-1].key === "uploadedMedia" && <p style={{marginTop: '10px'}}>(Add at least 1 to perfect your review)</p>}
+                    </div>
                     <div className={styles.inputContainer}>
                         {steps[currentStep-1].markup}
+                        {["title", "body"].includes(steps[currentStep-1].key) && 
+                        <div style={{width: "100%", textAlign: "left"}}>
+                            <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
+                                <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
+                            </div>
+                            <p style={{margin: "0px", padding: "0px", marginTop: "5px", fontSize: "14px", fontWeight: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? 'bolder' : 'normal', color: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score == 3 ? '#67af98' : 'black'}}>{progressMessage}</p>
+                        </div>}
                     </div>
                 </div>
             </div>
             <div>
                 <div className={styles.rewardTiersContainer}>
-                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore === 1 ? "black" : 'lightgray', filter: reviewScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>20% Off</p>
+                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[0]}</p>
                     </div>
-                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore === 2 ? "black" : 'lightgray', filter: reviewScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>BOGO Free</p>
+                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[1]}</p>
                     </div>
-                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore === 3 ? "black" : 'lightgray', filter: reviewScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>50% Off</p>
+                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[2]}</p>
                     </div>
                 </div>
             </div>

@@ -325,6 +325,10 @@ export interface ReviewRequestTableState {
     selectedReviewStatusFilters: string[]
 }
 
+export interface ReviewNotificationVariables {
+    reviewId: string
+}
+
 export interface ReviewFormQuestion {
     id?: string
     answerType: string[]

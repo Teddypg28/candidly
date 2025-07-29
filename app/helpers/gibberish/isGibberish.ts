@@ -9,7 +9,7 @@ export default function isGibberish(text: string) {
 
     for (let i = 0; i<text.length - 1; i++) {
         if (matrix[text[i].toLowerCase()] && matrix[text[i].toLowerCase()][text[i+1].toLowerCase()]){
-            probabilities.push(-Math.log(matrix[text[i]][text[i+1]])) 
+            probabilities.push(-Math.log(matrix[text[i].toLowerCase()][text[i+1].toLowerCase()])) 
         } else {
             probabilities.push(20)
         }

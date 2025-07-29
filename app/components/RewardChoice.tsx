@@ -95,7 +95,7 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                 {label: 'Buy X Get Y', value: 'bogo'},
                 {label: 'Free Shipping', value: 'free-shipping'},
                 {label: 'Percent Discount', value: 'percent'},
-                {label: 'Fixed Discount', value: 'dollar'},
+                {label: 'Dollar Discount', value: 'dollar'},
             ]}
             />
             {state.rewards[type as keyof typeof state.rewards].selectedRewardType === 'dollar' && 

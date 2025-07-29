@@ -1,7 +1,7 @@
 import { generateRandomDiscountCode } from "./generateRandomDiscountCode"
 import db from '../../../db.server'
 
-// generates a percent off or dollar off discount depedning on reward setting
+// generates a percent off or dollar off discount depending on reward setting
 export default async function createBasicDiscount(rewardSettingsId: string, store: string) {
 
     const reward = await db.rewardSetting.findFirst({where: {id: {equals: rewardSettingsId}}, include: {eligibleCollections: true, eligibleProducts: true}})
@@ -16,7 +16,7 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
         if (reward?.selectedRewardType === "dollar") {
             rewardTitle = `$${reward.dollarAmount} Off Coupon`
         } else if (reward?.selectedRewardType === "percent") {
-            rewardTitle = `${reward.percentageAmount}% Off Coupon`
+            rewardTitle = `${reward.percentageAmount * 100}% Off Coupon`
         }
     
         const mutation = `
@@ -41,6 +41,12 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
                         ... on DiscountPercentage {
                           percentage
                         }
+                        ... on DiscountAmount {
+                            amount {
+                              amount
+                            }
+                            appliesOnEachItem
+                        }
                       }
                     }
                   }
@@ -64,14 +70,14 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
               },
               customerGets: {
                 value: 
-                  reward?.selectedRewardType === "percent" ? { percentage: reward.percentageAmount } : {discountAmount: {amount: reward?.dollarAmount}},
+                  reward?.selectedRewardType === "percent" ? { percentage: reward.percentageAmount } : {discountAmount: {amount: reward?.dollarAmount, appliesOnEachItem: false}},
                 items: {
                   all: reward?.productCollectionConfiguration === "all",
                   products: {
-                    productsToAdd: reward?.productCollectionConfiguration === "all" ? [] : reward?.eligibleProducts.map(product => product.productId)
+                    productsToAdd: reward?.productCollectionConfiguration !== "all"  && reward.productCollectionConfiguration === "products" ? reward?.eligibleProducts.map(product => product.productId) : []
                   },
                   collections: {
-                    add: reward?.productCollectionConfiguration === "all" ? [] : reward?.eligibleCollections.map(product => product.collectionId)
+                    add: reward?.productCollectionConfiguration !== "all" && reward.productCollectionConfiguration === "collections" ? reward?.eligibleCollections.map(product => product.collectionId) : []
                   }
                 }
               },
@@ -97,6 +103,11 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
             body: JSON.stringify({query: mutation, variables})
         })
         const data = await res.json()
-        console.log(data.data.discountCodeBasicCreate.userErrors)
+        const errors = data.data.discountCodeBasicCreate.userErrors
+
+        if (errors.length > 0) return null
+        
+        const discountCode = data.data.discountCodeBasicCreate.codeDiscountNode.codeDiscount.codes.nodes[0].code
+        return discountCode
     }
 }

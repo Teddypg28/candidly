@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
 import { AnalyticsData } from "~/types/types";
 import isBlockEnabled from "~/helpers/isBlockEnabled";
-import createBasicDiscount from "~/helpers/rewards/discountCodeMutations/createBasicDiscount";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session, admin, billing } = await authenticate.admin(request)
@@ -20,8 +19,6 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     //     isTest: true,
     //     onFailure: async () => billing.request({ plan: MONTHLY_BASIC_PLAN }),
     // });
-
-    await createBasicDiscount("85c5fb78-9bb2-4e87-b3ca-b84a92736363", session.shop)
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
