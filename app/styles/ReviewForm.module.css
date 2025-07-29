@@ -216,13 +216,12 @@ body {
     border-radius: 25px;
     overflow: hidden;
     display: flex;
-    margin: auto;
+    margin: auto
 }
 
 .rewardTiersMainContainer {
     width: 475px; 
-    margin: auto; 
-    margin-top: 20px; 
+    margin: 20px auto; 
     padding: 15px;
 }
 
@@ -240,6 +239,7 @@ body {
     border-right-color: white;
     border-right-width: 2px;
     border-right-style: solid;
+    flex-wrap: wrap;
 }
 
 .rewardTierThree {
@@ -255,8 +255,11 @@ body {
 }
 
 .rewardTierName {
-    font-size: 13px;
-    font-weight: bold
+    font-size: 12px;
+    font-weight: bold;
+    padding: 0px 3px;
+    text-align: center;
+    margin: 0;
 }
 
 .selectedOptionsContainer {
@@ -360,13 +363,12 @@ body {
     align-items: center;
     justify-content: center;
     width: 50%;
-    height: 80%;
+    height: 90%;
     background-color: white;
     border-radius: 5px;
     position: relative;
     text-align: center;
-    padding: 20px 40px;
-    margin-top: 50px;
+    padding: 0px 40px;
     overflow: hidden;
 }
 
@@ -428,7 +430,6 @@ body {
 
     .rewardTierName {
         font-size: 10px;
-        font-weight: bold
     }
 
     .rewardTiersContainer {

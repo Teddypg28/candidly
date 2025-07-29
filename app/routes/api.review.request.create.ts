@@ -8,6 +8,8 @@ export async function action({ request } : ActionFunctionArgs) {
 
         const formData = await request.formData()
 
+        console.log(formData)
+
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
 

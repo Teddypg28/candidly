@@ -13,7 +13,6 @@ import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
 import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 
 import isGibberish from "~/helpers/gibberish/isGibberish";
-import wrapText from "~/helpers/wrapText";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
@@ -89,7 +88,6 @@ export default function ReviewForm() {
     const [userInputState, setUserInputState] = useState<UserReviewFormInputState>({
         ...initialUserReviewFormInputState, 
         firstName: data.customerData.firstName,
-        email: data.customerData.email
     })
 
     const [currentStep, setCurrentStep] = useState<number>(1)
@@ -138,7 +136,7 @@ export default function ReviewForm() {
         {
             title: data.formSettings.mediaHeading, 
             markup: 
-                <div>
+                <div style={{width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                     <div id="uploadMediaContainer" className={styles.uploadMediaContainer}>
                         <label id="uploadMediaLabel" className={styles.uploadMediaLabel} htmlFor='uploadMediaBtn'>
                             <p className={styles.uploadMediaText}>Upload Media</p>
@@ -168,7 +166,6 @@ export default function ReviewForm() {
                 const questionId: any = key.split('customQuestion-')[1];
                 (document.querySelector(`#customQuestion-${questionId}Error`) as any).classList.add(styles.hidden)
                 if (userInputState["customQuestionAnswers"][key].value.length === 0 && userInputState["customQuestionAnswers"][key].isRequired === "true") {
-                    console.log(userInputState);
                     (document.querySelector(`#customQuestion-${questionId}Error`) as any).classList.remove(styles.hidden)
                     errors = true
                 }
@@ -422,6 +419,11 @@ export default function ReviewForm() {
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
+                // send reward to customer
+                const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: "teddypg02@gmail.com"}
+                if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
+                await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
                 setReviewSuccessfullySubmitted(true)
                 if (productsToReview.current.length > 0) {
@@ -627,24 +629,27 @@ export default function ReviewForm() {
                 <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
                 <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
                     <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{wrapText(data.rewardTierNames[0])}</p>
+                        <p className={styles.rewardTierName}>{data.rewardTierNames[0]}</p>
                     </div>
                     <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p className={styles.rewardTierName}>{wrapText(data.rewardTierNames[1])}</p>
+                        <p className={styles.rewardTierName}>{data.rewardTierNames[1]}</p>
                     </div>
                     <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{wrapText(data.rewardTierNames[2])}</p>
+                        <p className={styles.rewardTierName}>{data.rewardTierNames[2]}</p>
                     </div>
                 </div>
             </div>}
         <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px'}}>
+            <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
-                <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
+                <div>
+                    <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
+                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px'}}>(Add at least 1 to perfect your review)</p>}
+                </div>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
-                    {["title", "body"].includes(steps[currentStep-1].key) && 
+                    {data.rewardSettings?.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
                         <div className={styles.progressBarContainer}>
                             <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
                                 <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
