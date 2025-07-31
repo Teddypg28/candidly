@@ -245,35 +245,34 @@ export default function EmailTemplates() {
     }
 
     const testCustomerQuestionEmailVariables: CustomerQuestionEmailVariables = {
-        question: "Is this a beginner-friendly snowboard?",
-        answer: "It is! This is a great board to help beginners get the hang of things early!",
+        question: "Is this a sample question used for the test email?",
+        answer: "Yep! And this is a sample answer used for the test email!",
     }
 
     const testCustomerRewardEmailVariables: CustomerRewardEmailVariables = {
-        reward: "20% Off",
         discountCode: "TEST-EMAIL-DISCOUNT-CODE",
     }
 
     const sendTestEmail = () => { 
         const formData = new FormData()
-        formData.append('emailBody', emailBody)
+        formData.append('body', emailBody)
         formData.append('store', data.settings.emailDesignSettings.store)
 
         if (selectedTab === "reviewRequestEmailSettings") {
 
-            formData.append('emailVariables', JSON.stringify(testReviewRequestEmailVariables))
+            formData.append('variables', JSON.stringify(testReviewRequestEmailVariables))
             formData.append('type', "review-request")
             formData.append('subject', emailCopyVersion === "Initial" ? settings["reviewRequestEmailSettings"].initialEmailSubject : settings["reviewRequestEmailSettings"].followUpEmailSubject)
         
         } else if (selectedTab === "customerQuestionEmailSettings") {
 
-            formData.append('emailVariables', JSON.stringify(testCustomerQuestionEmailVariables))
+            formData.append('variables', JSON.stringify(testCustomerQuestionEmailVariables))
             formData.append('type', "customer-question")
             formData.append('subject', settings["customerQuestionEmailSettings"].subject)
 
         } else if (selectedTab === "customerRewardEmailSettings") {
 
-            formData.append('emailVariables', JSON.stringify(testCustomerRewardEmailVariables))
+            formData.append('variables', JSON.stringify(testCustomerRewardEmailVariables))
             formData.append('type', "customer-reward")
             formData.append('subject', settings["customerRewardEmailSettings"].subject)
 

@@ -234,13 +234,13 @@ model RewardSetting {
   selectedRewardType             String
   dollarAmount                   Int
   percentageAmount               Float
-  bogoRewardType                 String
-  bogoPurchaseAmount             Int
-  bogoReceiveAmount              Int
-  bogoPercentageAmount           Float
-  bogoDollarAmount               Int
-  bogoPurchaseProductId          String
-  bogoReceiveProductId           String
+  bxgyRewardType                 String
+  bxgyPurchaseAmount             Int
+  bxgyReceiveAmount              Int
+  bxgyPercentageAmount           Float
+  bxgyDollarAmount               Int
+  bxgyPurchaseProductId          String
+  bxgyReceiveProductId           String
   minPurchaseType                String
   minPurchaseDollarValue         Int
   minPurchaseQuantityValue       Int

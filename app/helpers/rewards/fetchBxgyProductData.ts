@@ -1,16 +1,16 @@
 import { AdminApiContext } from "@shopify/shopify-app-remix/server";
-import { RewardState, SelectedProduct_Bogo } from "~/types/types";
+import { RewardState, SelectedProduct_Bxgy } from "~/types/types";
 
 // fetch product image and title for bogo purchase & receive products
-export default async function fetchBogoProductData(rewardSettings: RewardState, admin: AdminApiContext) {
-    const selectedProducts: {subpar: SelectedProduct_Bogo[], good: SelectedProduct_Bogo[], perfect: SelectedProduct_Bogo[], solo: SelectedProduct_Bogo[]} = {subpar: [], good: [], perfect: [], solo: []}
+export default async function fetchBxgyProductData(rewardSettings: RewardState, admin: AdminApiContext) {
+    const selectedProducts: {subpar: SelectedProduct_Bxgy[], good: SelectedProduct_Bxgy[], perfect: SelectedProduct_Bxgy[], solo: SelectedProduct_Bxgy[]} = {subpar: [], good: [], perfect: [], solo: []}
     await Promise.all(['subpar', 'good', 'perfect', 'solo'].map(async (reviewType) => {
         const productIds: string[] = []
-        if (rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bogoPurchaseProductId) {
-            productIds.push(rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bogoPurchaseProductId)
+        if (rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bxgyPurchaseProductId) {
+            productIds.push(rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bxgyPurchaseProductId)
         } 
-        if (rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bogoReceiveProductId) {
-            productIds.push(rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bogoReceiveProductId)
+        if (rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bxgyReceiveProductId) {
+            productIds.push(rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bxgyReceiveProductId)
         }
         await Promise.all(productIds.map(async (productId, index) => {
             const query = `{

@@ -27,7 +27,7 @@ export default function generateEmailMarkup(
     }
 
     const completeMarkup = 
-    `<div style="background-color: rgb(248, 248, 248); padding: 10px 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">
+    `<div style="background-color: rgb(248, 248, 248); padding: 10px 15px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">
         <div style="max-width: 600px; margin: auto; background-color: white; height: fit-content">
         <table style="background-color: ${emailHeaderStyles.bannerBgColor}; height: 70px; width: 100%">
             <tr>

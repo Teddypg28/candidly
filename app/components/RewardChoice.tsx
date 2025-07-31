@@ -1,5 +1,5 @@
 import { BlockStack, Text, Select, TextField, Banner, ChoiceList, InlineStack, Button, Thumbnail } from "@shopify/polaris"
-import { RewardState, SelectedProduct_Bogo } from "~/types/types"
+import { RewardState, SelectedProduct_Bxgy } from "~/types/types"
 import { Reward } from "~/types/types"
 
 import { ImageIcon } from "@shopify/polaris-icons";
@@ -8,16 +8,16 @@ interface Props {
     type: string,
     state: RewardState,
     setState: (state: RewardState) => void
-    bogoProductState: {
-        subpar: SelectedProduct_Bogo[];
-        good: SelectedProduct_Bogo[];
-        perfect: SelectedProduct_Bogo[];
-        solo: SelectedProduct_Bogo[]
+    bxgyProductState: {
+        subpar: SelectedProduct_Bxgy[];
+        good: SelectedProduct_Bxgy[];
+        perfect: SelectedProduct_Bxgy[];
+        solo: SelectedProduct_Bxgy[]
     }
-    setBogoProductState: (state: any) => void
+    setBxgyProductState: (state: any) => void
 }
 
-export default function RewardChoice({type, state, setState, bogoProductState, setBogoProductState} : Props) {
+export default function RewardChoice({type, state, setState, bxgyProductState, setBxgyProductState} : Props) {
 
     const handlePercentageAmountChange = (key: string, value: string) => {
         setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], [key]: isNaN(parseFloat(value)) || parseFloat(value) > 1 ? 0.01 : parseFloat(parseFloat(value).toFixed(2))}}})
@@ -41,7 +41,7 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
     const errors: any = {}
     let isError = false
     Object.keys(state.rewards[type as keyof typeof state.rewards]).forEach((key) => {
-        const numberKeys = ['fixedAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount']
+        const numberKeys = ['fixedAmount', 'bxgyPurchaseAmount', 'bxgyReceiveAmount']
         if (numberKeys.includes(key)) {
             if (isNumberRestricted(state.rewards[type as keyof typeof state.rewards][key as keyof Reward] as number)) {
                 errors[key] = true
@@ -52,27 +52,27 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
         }
     })
 
-    const selectBogoPurchaseProduct = async () => {
+    const selectBxgyPurchaseProduct = async () => {
         const product = await window.shopify.resourcePicker({
             type: 'product',
             action: 'select',
         })
         if (product) {
-            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoPurchaseProductId: product[0].id}}})
-            const updatedBogoProductState = bogoProductState[type as keyof typeof bogoProductState].filter((product, index) => index === 1)
-            setBogoProductState({...bogoProductState, [type]: [{title: product[0].title, image: product[0].images[0].originalSrc || null}, ...updatedBogoProductState]})
+            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bxgyPurchaseProductId: product[0].id}}})
+            const updatedBxgyProductState = bxgyProductState[type as keyof typeof bxgyProductState].filter((product, index) => index === 1)
+            setBxgyProductState({...bxgyProductState, [type]: [{title: product[0].title, image: product[0].images[0].originalSrc || null}, ...updatedBxgyProductState]})
         }
     }
 
-    const selectBogoReceiveProduct = async () => {
+    const selectBxgyReceiveProduct = async () => {
         const product = await window.shopify.resourcePicker({
             type: 'product',
             action: 'select',
         })
         if (product) {
-            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoReceiveProductId: product[0].id}}})
-            const updatedBogoProductState = bogoProductState[type as keyof typeof bogoProductState].filter((product, index) => index === 0)
-            setBogoProductState({...bogoProductState, [type]: [...updatedBogoProductState, {title: product[0].title, image: product[0].images[0].originalSrc || null}]})
+            setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bxgyReceiveProductId: product[0].id}}})
+            const updatedBxgyProductState = bxgyProductState[type as keyof typeof bxgyProductState].filter((product, index) => index === 0)
+            setBxgyProductState({...bxgyProductState, [type]: [...updatedBxgyProductState, {title: product[0].title, image: product[0].images[0].originalSrc || null}]})
         }
     }
 
@@ -92,7 +92,7 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
             value={state.rewards[type as keyof typeof state.rewards].selectedRewardType}
             onChange={(selected: string) => setState({...state, rewards: {...state.rewards, [type as keyof typeof state.rewards]: {...state.rewards[type as keyof typeof state.rewards], selectedRewardType: selected}}})}
             options={[
-                {label: 'Buy X Get Y', value: 'bogo'},
+                {label: 'Buy X Get Y', value: 'bxgy'},
                 {label: 'Free Shipping', value: 'free-shipping'},
                 {label: 'Percent Discount', value: 'percent'},
                 {label: 'Dollar Discount', value: 'dollar'},
@@ -132,29 +132,29 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                 step={0.01}
                 />
             }
-            {state.rewards[type as keyof typeof state.rewards].selectedRewardType === 'bogo' && 
+            {state.rewards[type as keyof typeof state.rewards].selectedRewardType === 'bxgy' && 
             <>
                 <TextField 
                 type="number" 
                 autoComplete="off"
                 label="Customer Buys"
-                error={errors['bogoPurchaseAmount']}
-                disabled={isError && !errors['bogoPurchaseAmount']}
-                value={state.rewards[type as keyof typeof state.rewards].bogoPurchaseAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoPurchaseAmount: parseInt(value)}}})}
+                error={errors['bxgyPurchaseAmount']}
+                disabled={isError && !errors['bxgyPurchaseAmount']}
+                value={state.rewards[type as keyof typeof state.rewards].bxgyPurchaseAmount.toString()}
+                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bxgyPurchaseAmount: parseInt(value)}}})}
                 min={1}
                 />
-                {errors['bogoPurchaseAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
+                {errors['bxgyPurchaseAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
                 <InlineStack>
-                    <Button onClick={selectBogoPurchaseProduct} variant="primary">
-                        {`${!state.rewards[type as keyof typeof state.rewards].bogoPurchaseProductId ? "Select" : "Change"} Product`}
+                    <Button onClick={selectBxgyPurchaseProduct} variant="primary">
+                        {`${!state.rewards[type as keyof typeof state.rewards].bxgyPurchaseProductId ? "Select" : "Change"} Product`}
                     </Button>
                 </InlineStack>
-                {state.rewards[type as keyof typeof state.rewards].bogoPurchaseProductId &&
+                {state.rewards[type as keyof typeof state.rewards].bxgyPurchaseProductId &&
                 <InlineStack>
                     <InlineStack blockAlign="center" gap={'100'}>
-                        <Thumbnail source={bogoProductState[type as keyof typeof state.rewards][0].image || ImageIcon} alt={bogoProductState[type as keyof typeof state.rewards][0].title} />
-                        <Text as="p" variant="bodyMd" fontWeight="bold">{bogoProductState[type as keyof typeof state.rewards][0].title}</Text>
+                        <Thumbnail source={bxgyProductState[type as keyof typeof state.rewards][0].image || ImageIcon} alt={bxgyProductState[type as keyof typeof state.rewards][0].title} />
+                        <Text as="p" variant="bodyMd" fontWeight="bold">{bxgyProductState[type as keyof typeof state.rewards][0].title}</Text>
                     </InlineStack>
                 </InlineStack>
                 }
@@ -162,66 +162,66 @@ export default function RewardChoice({type, state, setState, bogoProductState, s
                 type="number" 
                 autoComplete="off"
                 label="Customer Gets"
-                disabled={isError && !errors['bogoReceiveAmount']}
-                error={errors['bogoReceiveAmount']}
-                value={state.rewards[type as keyof typeof state.rewards].bogoReceiveAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoReceiveAmount: parseInt(value)}}})}
+                disabled={isError && !errors['bxgyReceiveAmount']}
+                error={errors['bxgyReceiveAmount']}
+                value={state.rewards[type as keyof typeof state.rewards].bxgyReceiveAmount.toString()}
+                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bxgyReceiveAmount: parseInt(value)}}})}
                 min={1}
                 />
-                {errors['bogoReceiveAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
+                {errors['bxgyReceiveAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
                 <InlineStack>
-                    <Button onClick={selectBogoReceiveProduct} variant="primary">
-                        {`${!state.rewards[type as keyof typeof state.rewards].bogoReceiveProductId ? "Select" : "Change"} Product`}
+                    <Button onClick={selectBxgyReceiveProduct} variant="primary">
+                        {`${!state.rewards[type as keyof typeof state.rewards].bxgyReceiveProductId ? "Select" : "Change"} Product`}
                     </Button>
                 </InlineStack>
                 {
-                state.rewards[type as keyof typeof state.rewards].bogoReceiveProductId &&
+                state.rewards[type as keyof typeof state.rewards].bxgyReceiveProductId &&
                 <InlineStack>
                     <InlineStack blockAlign="center" gap={'100'}>
-                        <Thumbnail source={bogoProductState[type as keyof typeof state.rewards][1].image || ImageIcon} alt={bogoProductState[type as keyof typeof state.rewards][1].title} />
-                        <Text as="p" variant="bodyMd" fontWeight="bold">{bogoProductState[type as keyof typeof state.rewards][1].title}</Text>
+                        <Thumbnail source={bxgyProductState[type as keyof typeof state.rewards][1].image || ImageIcon} alt={bxgyProductState[type as keyof typeof state.rewards][1].title} />
+                        <Text as="p" variant="bodyMd" fontWeight="bold">{bxgyProductState[type as keyof typeof state.rewards][1].title}</Text>
                     </InlineStack>
                 </InlineStack>
                 }
                 <ChoiceList 
                 title='Discount Amount'
-                disabled={errors['bogoDiscountAmount'] || isError}
+                disabled={errors['bxgyDiscountAmount'] || isError}
                 choices={[
                     {label: 'Free', value: 'free'}, 
                     {label: 'Percent Discount', value: 'percent'}, 
                     {label: 'Dollar Discount', value: 'dollar'}
                 ]}
-                selected={[state.rewards[type as keyof typeof state.rewards].bogoRewardType]}
-                onChange={(selected: string[]) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoRewardType: selected.toString()}}})}
+                selected={[state.rewards[type as keyof typeof state.rewards].bxgyRewardType]}
+                onChange={(selected: string[]) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bxgyRewardType: selected.toString()}}})}
                 />
 
-                {state.rewards[type as keyof typeof state.rewards].bogoRewardType === 'percent' ? 
+                {state.rewards[type as keyof typeof state.rewards].bxgyRewardType === 'percent' ? 
                 <TextField 
                 type="number" 
                 inputMode="decimal"
                 autoComplete="off"
                 suffix={'percent off'}
                 label="Amount"
-                value={state.rewards[type as keyof typeof state.rewards].bogoPercentageAmount.toString()}
-                onChange={(val) => handlePercentageAmountChange("bogoPercentageAmount", val)}
-                onBlur={() => handlePercentageAmountBlur("bogoPercentageAmount")}
+                value={state.rewards[type as keyof typeof state.rewards].bxgyPercentageAmount.toString()}
+                onChange={(val) => handlePercentageAmountChange("bxgyPercentageAmount", val)}
+                onBlur={() => handlePercentageAmountBlur("bxgyPercentageAmount")}
                 min={0.01}
                 max={1}
                 step={0.01}
                 />
     
-                : state.rewards[type as keyof typeof state.rewards].bogoRewardType === 'dollar' &&
+                : state.rewards[type as keyof typeof state.rewards].bxgyRewardType === 'dollar' &&
                 <TextField 
                 type="number" 
                 autoComplete="off"
-                suffix={state.rewards[type as keyof typeof state.rewards].bogoDollarAmount > 1 ? 'dollars off' : 'dollar off'}
+                suffix={state.rewards[type as keyof typeof state.rewards].bxgyDollarAmount > 1 ? 'dollars off' : 'dollar off'}
                 label="Amount"
-                value={state.rewards[type as keyof typeof state.rewards].bogoDollarAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bogoDollarAmount: parseInt(value)}}})}
+                value={state.rewards[type as keyof typeof state.rewards].bxgyDollarAmount.toString()}
+                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], bxgyDollarAmount: parseInt(value)}}})}
                 min={1}
                 />
                 }
-                {errors['bogoDiscountAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
+                {errors['bxgyDiscountAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
             </> }
         </BlockStack>
         {state.rewards[type as keyof typeof state.rewards].selectedRewardType !== 'none' &&

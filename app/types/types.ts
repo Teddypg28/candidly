@@ -7,17 +7,17 @@ export const initialRewardState: Reward = {
     selectedRewardType: 'free-shipping', 
     dollarAmount: 10, 
     percentageAmount: 10, 
-    bogoRewardType: "free", 
-    bogoPurchaseAmount: 1, 
-    bogoReceiveAmount: 1, 
-    bogoPercentageAmount: 0.1,
-    bogoDollarAmount: 10, 
+    bxgyRewardType: "free", 
+    bxgyPurchaseAmount: 1, 
+    bxgyReceiveAmount: 1, 
+    bxgyPercentageAmount: 0.1,
+    bxgyDollarAmount: 10, 
     minPurchaseType: 'none', 
     minPurchaseDollarValue: 1, 
     minPurchaseQuantityValue: 1,
     productCollectionConfiguration: "all",
-    bogoPurchaseProductId: "",
-    bogoReceiveProductId: "",
+    bxgyPurchaseProductId: "",
+    bxgyReceiveProductId: "",
     eligibleProducts: [],
     eligibleCollections: []
 }
@@ -200,7 +200,7 @@ export interface CustomerQuestionEmailVariables {
 }
 
 export interface CustomerRewardEmailVariables {
-    reward: string
+    reward?: string
     discountCode?: string
     firstName?: string
 }
@@ -282,17 +282,17 @@ export interface Reward {
     selectedRewardType: string
     dollarAmount: number
     percentageAmount: number
-    bogoRewardType: string
-    bogoPurchaseAmount: number
-    bogoReceiveAmount: number
-    bogoPercentageAmount: number
-    bogoDollarAmount: number
+    bxgyRewardType: string
+    bxgyPurchaseAmount: number
+    bxgyReceiveAmount: number
+    bxgyPercentageAmount: number
+    bxgyDollarAmount: number
     minPurchaseType: string
     minPurchaseDollarValue: number
     minPurchaseQuantityValue: number
     productCollectionConfiguration: string
-    bogoPurchaseProductId: string
-    bogoReceiveProductId: string
+    bxgyPurchaseProductId: string
+    bxgyReceiveProductId: string
     eligibleProducts: EligibleProduct[]
     eligibleCollections: EligibleCollection[]
 }
@@ -406,7 +406,7 @@ interface SelectedProductData {
     title: string
 }
 
-export interface SelectedProduct_Bogo {
+export interface SelectedProduct_Bxgy {
     title: string,
     image: string | null
 }

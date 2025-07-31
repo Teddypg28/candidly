@@ -13,20 +13,20 @@ export async function action({ request } : ActionFunctionArgs) {
     const emailHeaderStyles = await db.emailDesignSettings.findFirst({where: {store: {equals: store}}, include: {logo: {omit: {emailDesignSettingsId: true, id: true}}}})
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
 
-    const emailBody = data.get('emailBody') as string
-    const emailSubject = data.get('emailSubject') as string
-    const emailVariables = JSON.parse(data.get('emailVariables') as any)
+    const emailBody = data.get('body') as string
+    const emailSubject = data.get('subject') as string
+    const variables = JSON.parse(data.get('variables') as any)
 
-    if (!type || !store || !emailHeaderStyles || !appSettings || !emailBody || !emailSubject || !emailVariables) return new Response(JSON.stringify({error: "missing required variables"}), {status: 401})
+    if (!type || !store || !emailHeaderStyles || !appSettings || !emailBody || !emailSubject || !variables) return new Response(JSON.stringify({error: "missing required variables"}), {status: 401})
     
-    const currentDomain = appSettings?.domain
     let fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@trycandidly.app`
+    const currentDomain = appSettings?.domain
     if (currentDomain) {
       const verificationStatus = await verifyRecords(currentDomain)
       if (verificationStatus === "Success") fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@${currentDomain}`
     }
 
-    await sendEmail(emailSubject, emailBody, emailVariables, emailHeaderStyles, appSettings.primaryEmail, fromEmailAddress, type as "review-request" | "customer-question" | "customer-reward")
+    await sendEmail(emailSubject, emailBody, variables, emailHeaderStyles, appSettings.primaryEmail, fromEmailAddress, type as "review-request" | "customer-question" | "customer-reward")
      
     return new Response(JSON.stringify({status: "test email successfully sent"}), {status: 200})
 }

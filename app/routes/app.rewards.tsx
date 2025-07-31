@@ -14,7 +14,7 @@ import { SaveBar } from "@shopify/app-bridge-react";
 import db from '../db.server'
 import fetchSelectedProductData from "~/helpers/rewards/fetchSelectedProductData";
 import fetchSelectedCollectionData from "~/helpers/rewards/fetchSelectedCollectionData";
-import fetchBogoProductData from "~/helpers/rewards/fetchBogoProductData";
+import fetchBxgyProductData from "~/helpers/rewards/fetchBxgyProductData";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
 
@@ -95,7 +95,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     if (rewardSettings) {
         const selectedProducts = await fetchSelectedProductData({rewards: rewardSettings, type: rewardSettings.type}, admin)
         const selectedCollections = await fetchSelectedCollectionData({rewards: rewardSettings, type: rewardSettings.type}, admin)
-        const selectedBogoProducts = await fetchBogoProductData({rewards: rewardSettings, type: rewardSettings.type}, admin)
+        const selectedBxgyProducts = await fetchBxgyProductData({rewards: rewardSettings, type: rewardSettings.type}, admin)
         return { 
             rewardSettings: {
                 good: rewardSettings.good, 
@@ -107,7 +107,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
                 products: selectedProducts, 
                 collections: selectedCollections 
             },
-            selectedBogoProducts: selectedBogoProducts,
+            selectedBxgyProducts,
             type: rewardSettings.type
         }
     }
@@ -148,7 +148,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             products: {subpar: [], good: [], perfect: [], solo: []}, 
             collections: {subpar: [], good: [], perfect: [], solo: []}
         },
-        selectedBogoProducts: {subpar: [], good: [], perfect: [], solo: []},
+        selectedBxgyProducts: {subpar: [], good: [], perfect: [], solo: []},
         type: initializedRewardSettings.type
     }
 }
@@ -167,7 +167,7 @@ export default function Reward() {
     
     const isStateDirty = JSON.stringify(rewardState) !== JSON.stringify(cleanRewardState)
     
-    const [bogoProductState, setBogoProductState] = useState(data.selectedBogoProducts)
+    const [bxgyProductState, setBxgyProductState] = useState(data.selectedBxgyProducts)
     const [selectedProductsCollections, setSelectedProductsCollections] = useState<{
         products: {
             subpar: SelectedProduct_Reward[];
@@ -184,7 +184,7 @@ export default function Reward() {
     }>(data.selectedProductsCollections)
 
     const NaNDetected = Object.keys(rewardState.rewards[currentTab as keyof typeof rewardState.rewards]).find(key => {
-        const keys = ['fixedAmount', 'percentageAmount', 'bogoPurchaseAmount', 'bogoReceiveAmount', 'bogoDiscountAmount']
+        const keys = ['fixedAmount', 'percentageAmount', 'bxgyPurchaseAmount', 'bxgyReceiveAmount', 'bxgyDiscountAmount']
         if (keys.includes(key) && isNaN(rewardState.rewards[currentTab as keyof typeof rewardState.rewards][key as keyof RewardStateReward] as number)) {
             return key
         }
@@ -233,12 +233,12 @@ export default function Reward() {
         if (rewardState.rewards[currentTab as keyof typeof rewardState.rewards].productCollectionConfiguration === "products" && 
         rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleProducts.length === 0) return true
         
-        if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bogo" && (
-        rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bogoPurchaseProductId === "" || 
-        rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bogoReceiveProductId === "")) return true
+        if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && (
+        rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bxgyPurchaseProductId === "" || 
+        rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bxgyReceiveProductId === "")) return true
 
-        if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bogo" && 
-        isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bogoPercentageAmount)) return true
+        if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && 
+        isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bxgyPercentageAmount)) return true
 
         if (isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].minPurchaseQuantityValue)) return true
 
@@ -270,7 +270,7 @@ export default function Reward() {
     const resetState = () => {
         setRewardState(cleanRewardState); 
         setSelectedProductsCollections(data.selectedProductsCollections);
-        setBogoProductState(data.selectedBogoProducts)
+        setBxgyProductState(data.selectedBxgyProducts)
         if (cleanRewardState.type === "solo") setCurrentTab("solo")
         if (cleanRewardState.type === "tiers") setCurrentTab("subpar")
     }
@@ -337,8 +337,8 @@ export default function Reward() {
                             <RewardChoice 
                             type={rewardState.type === "solo" ? "solo" : currentTab} 
                             state={rewardState} setState={setRewardState} 
-                            bogoProductState={bogoProductState} 
-                            setBogoProductState={setBogoProductState} 
+                            bxgyProductState={bxgyProductState} 
+                            setBxgyProductState={setBxgyProductState} 
                             />
                         </BlockStack>
                     </Card>}

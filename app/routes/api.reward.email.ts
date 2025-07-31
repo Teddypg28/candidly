@@ -7,6 +7,7 @@ import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 import createBxgyDiscount from "~/helpers/rewards/discountCodeMutations/createBxgyDiscount";
 import createBasicDiscount from "~/helpers/rewards/discountCodeMutations/createBasicDiscount";
 import createFreeShippingDiscount from "~/helpers/rewards/discountCodeMutations/createFreeShippingDiscount";
+import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {      
@@ -39,7 +40,10 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 rewardTitle = "Free Shipping"
                 discountCode = await createFreeShippingDiscount(rewardSetting.id, reward.store)
             } else if (rewardSetting?.selectedRewardType === "bogo") {
-                rewardTitle = `Buy ${rewardSetting.bogoPurchaseAmount} Get ${rewardSetting.bogoReceiveAmount} ${rewardSetting.bogoRewardType === "free" ? "Free" :
+                const bogoPurchaseProductTitle = await fetchProductTitle(reward.store, rewardSetting.bogoPurchaseProductId)
+                const bogoReceiveProductTitle = await fetchProductTitle(reward.store, rewardSetting.bogoReceiveProductId)
+
+                rewardTitle = `Buy ${rewardSetting.bogoPurchaseAmount} ${bogoPurchaseProductTitle} Get ${rewardSetting.bogoReceiveAmount} ${bogoReceiveProductTitle} ${rewardSetting.bogoRewardType === "free" ? "Free" :
                 rewardSetting.bogoRewardType === "dollar" ? `$${rewardSetting.bogoDollarAmount}` : `${rewardSetting.bogoPercentageAmount}%`} Off Discount`
                 discountCode = await createBxgyDiscount(rewardSetting.id, reward.store)
             } else {
@@ -62,8 +66,11 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 rewardTitle = "Free Shipping"
                 discountCode = await createFreeShippingDiscount(soloReward.id, reward.store)
             } else if (soloReward.selectedRewardType === "bogo") {
-                rewardTitle = `Buy ${soloReward.bogoPurchaseAmount} Get ${soloReward.bogoReceiveAmount} ${soloReward.bogoRewardType === "free" ? "Free" :
-                soloReward.bogoRewardType === "dollar" ? `$${soloReward.bogoDollarAmount}` : `${soloReward.bogoPercentageAmount}%`} Off Discount`
+                const bogoPurchaseProductTitle = await fetchProductTitle(reward.store, soloReward.bogoPurchaseProductId)
+                const bogoReceiveProductTitle = await fetchProductTitle(reward.store, soloReward.bogoReceiveProductId)
+
+                rewardTitle = `Buy ${soloReward.bogoPurchaseAmount}: ${bogoPurchaseProductTitle}, Get ${soloReward.bogoReceiveAmount}: ${bogoReceiveProductTitle} - ${soloReward.bogoRewardType === "free" ? "Free" :
+                soloReward.bogoRewardType === "dollar" ? `$${soloReward.bogoDollarAmount}` : `${soloReward.bogoPercentageAmount}%`} Off`
                 discountCode = await createBxgyDiscount(soloReward.id, reward.store)
             } else {
                 if (soloReward?.selectedRewardType === "dollar") {

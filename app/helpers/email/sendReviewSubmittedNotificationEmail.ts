@@ -13,7 +13,7 @@ export default async function sendReviewSubmittedNotificationEmail(reviewId: str
                 <table style="background-color: white; height: 70px; width: 100%">
                     <tr>
                     <td>
-                       <img draggable="false" style="height: 50px; display: block; margin: auto" src="https://litigation-newspapers-whenever-ate.trycloudflare.com/logo.png" alt="company-logo">
+                       <img draggable="false" style="height: 50px; display: block; margin: auto" src="https://engines-episodes-t-packets.trycloudflare.com/logo.png" alt="company-logo">
                     </td>
                     </tr>
                 </table>
@@ -29,9 +29,6 @@ export default async function sendReviewSubmittedNotificationEmail(reviewId: str
                         <br />
                         <br />
                         <strong>Body:</strong> "${review.body}"
-                        <br />
-                        <br />
-                        - Candidly Review Notifications
                     </div>
                 </div>
             </div>
