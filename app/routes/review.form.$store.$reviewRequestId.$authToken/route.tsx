@@ -419,10 +419,12 @@ export default function ReviewForm() {
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
-                // send reward to customer
-                const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: "teddypg02@gmail.com"}
-                if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
-                await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                // send reward to customer if rewards are configured
+                if (data.rewardSettings?.type !== "none") {
+                    const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: "teddypg02@gmail.com"}
+                    if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
+                    await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                }
                 // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
                 setReviewSuccessfullySubmitted(true)
