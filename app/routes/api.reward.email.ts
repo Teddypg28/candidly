@@ -67,12 +67,14 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                     const eligibleProducts = await Promise.all(rewardSetting.eligibleProducts.map(async (product) => {
                         return await fetchProductTitle(reward.store, product.productId)
                     }))
-                    rewardTitle += `(it is eligible for the following products: ${eligibleProducts.join(', ')})`
+                    const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
+                    rewardTitle += `(it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
                 } else  {
                     const eligibleCollections = await Promise.all(rewardSetting.eligibleCollections.map(async (collection) => {
                         return await fetchCollectionTitle(reward.store, collection.collectionId)
                     }))
-                    rewardTitle += `(it is eligible for the following collections: ${eligibleCollections.join(', ')})`
+                    const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
+                    rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
                 }
             }
         }
@@ -114,12 +116,14 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 const eligibleProducts = await Promise.all(soloReward.eligibleProducts.map(async (product) => {
                     return await fetchProductTitle(reward.store, product.productId)
                 }))
-                rewardTitle += `(it is eligible for the following products: ${eligibleProducts.join(', ')})`
+                const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
+                rewardTitle += `(it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
             } else  {
                 const eligibleCollections = await Promise.all(soloReward.eligibleCollections.map(async (collection) => {
                     return await fetchCollectionTitle(reward.store, collection.collectionId)
                 }))
-                rewardTitle += `(it is eligible for the following collections: ${eligibleCollections.join(', ')})`
+                const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
+                rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
             }
         }
 
@@ -149,8 +153,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             fromEmailAddress,
             "customer-reward"
         )
-
-        console.log('sent!')
 
         return new Response(JSON.stringify({status: "email successfully sent"}), {status: 200})
 

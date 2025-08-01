@@ -33,12 +33,15 @@ export default async function fetchSelectedProductData(rewardSettings: RewardSta
                 }`
             const res = await admin.graphql(query)
             const data = await res.json()
-            selectedProducts[reviewType as keyof typeof selectedProducts].push({
-                images: data.data.product.media ? [{originalSrc: data.data.product.media.edges[0].node.preview.image.url}] : [],
-                title: data.data.product.title,
-                id: product.productId
-            })
-
+            if (data.data.product) {
+                selectedProducts[reviewType as keyof typeof selectedProducts].push({
+                    images: data.data.product.media ? [{originalSrc: data.data.product.media.edges[0].node.preview.image.url}] : [],
+                    title: data.data.product.title,
+                    id: product.productId
+                })
+            } else {
+                selectedProducts[reviewType as keyof typeof selectedProducts].push({id: "", images: [], title: "Product deleted"})
+            }
         }))
     }))    
     return selectedProducts

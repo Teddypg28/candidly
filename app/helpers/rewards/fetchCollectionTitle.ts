@@ -19,8 +19,11 @@ export default async function fetchCollectionTitle(store: string, id: string) {
               }`, variables: {id}})
           })
         const collectionData = await res.json()
-        const collectionTitle = collectionData.data.collection.title
-        return collectionTitle
+        if (collectionData.data.collection) {
+          return collectionData.data.collection.title
+        } else {
+          return null
+        }
     } 
 
     return null
