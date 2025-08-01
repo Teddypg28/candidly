@@ -13,6 +13,7 @@ import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState,
 
 import styles from '../styles/ImportReviews.module.css'
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
+import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
 
@@ -52,8 +53,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             return await db.productReview.update({where: { id }, data: {isPublished: true}})
         }))
 
-        console.log(publishedReviews)
-
         return await Promise.all(publishedReviews.map(async (review) => {
             return await updateProductRatingMetafields(review.productId, review.rating, admin, session)
         }))
@@ -71,17 +70,11 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
   try {
-      const { session, admin } = await authenticate.admin(request)
+      const { session } = await authenticate.admin(request)
 
       const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, include: {media: true}})
-      const query = `query getProductTitle($id: ID!) {
-          product(id: $id) {
-            title
-        }
-      }`
       const updatedReviews = await Promise.all(reviews.map(async (review) => {
-          const result = await admin.graphql(query, {variables: {id: review.productId}})
-          const productTitle: string = await (await result.json()).data.product?.title || 'Product Deleted'
+          const productTitle: string = await fetchProductTitle(session.shop, review.productId) || 'Product Deleted'
           return {...review, productTitle}
       }))
       const savedTableViews = await db.savedReviewsTableViews.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
@@ -393,7 +386,7 @@ export default function Reviews() {
     }, [selectedResources])
 
     const exportAsCsv = () => {
-        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.email, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.id, review.media.map(mediaObj => mediaObj.url)])
+        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.id, review.media.map(mediaObj => mediaObj.url)])
         const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'store'].includes(key))
         rows.unshift(rowHeadings)
         const encodedReviewData = rows.map(row => row.join()).join('\n')
@@ -554,9 +547,9 @@ export default function Reviews() {
             {
                 reviews.length > 0 &&
                 <PageActions 
-                primaryAction={{content: 'Publish', disabled: selectedResources.length === 0, onAction: publishSelectedReviews}}
+                primaryAction={{content: 'Publish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === true), onAction: publishSelectedReviews}}
                 secondaryActions={[
-                    {content: 'Unpublish', disabled: selectedResources.length === 0, onAction: unpublishSelectedReviews}
+                    {content: 'Unpublish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === false), onAction: unpublishSelectedReviews}
                 ]}
                 />
             }

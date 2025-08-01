@@ -58,6 +58,7 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
             }
           }`
     
+        const randomDiscountCode = generateRandomDiscountCode()
         const variables = {
             freeShippingCodeDiscount: {
               startsAt: new Date(),
@@ -67,7 +68,7 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
               },
               usageLimit: 1,
               title: "Free Shipping Coupon",
-              code: generateRandomDiscountCode(),
+              code: randomDiscountCode,
               minimumRequirement: reward?.minPurchaseType === "dollars" ? {
                 subtotal: {
                   greaterThanOrEqualToSubtotal: reward.minPurchaseDollarValue
@@ -95,7 +96,8 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
 
         if (errors.length > 0) return null
         
-        const discountCode = data.data.discountCodeFreeShippingCreate.codeDiscountNode.codeDiscount.codes.nodes[0].code
-        return discountCode
+        return randomDiscountCode
     }
+
+    return null
 }

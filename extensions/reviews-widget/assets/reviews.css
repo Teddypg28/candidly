@@ -238,7 +238,7 @@
 
 .formQuestionInput {
     border: 1px solid lightgray;
-    width: 100%;
+    width: 60%;
     border-radius: 5px;
     resize: none;
     font-size: 14px;
@@ -489,7 +489,7 @@
     border-radius: 0.25rem;
     color: darkred;
     text-align: left;
-    width: 100%;
+    width: 60%;
     padding: 10px 5px;
     margin: 0px;
     font-size: 14px;
@@ -524,6 +524,11 @@
     display: flex;
     align-items: center;
     gap: 25px;
+}
+
+textarea {
+    height: 500px;
+    width: 500px;
 }
 
 @media all and (max-width: 400px) {
@@ -931,19 +936,6 @@
     width: 60vw;
 }
 
-.writeReviewForm > div > .reviewFormValidationError {
-    width: 60%;
-}
-
-.writeReviewForm > div > .formQuestionInput {
-    width: 60%;
-}
-
-.writeReviewForm > div > textarea {
-    height: 500px;
-    width: 500px;
-}
-
 .writeReviewBtn, .askQuestionBtn {
     border: 1px solid lightgray;
     padding: 10px 20px;
@@ -1005,7 +997,7 @@
 
     .askQuestionForm {
         width: 80vw;
-        height: 40vh;
+        height: 60vh;
     }
 
     .askQuestionForm > textarea {
@@ -1133,11 +1125,11 @@
         width: 80vw;
     }
 
-    .writeReviewForm > div > .reviewFormValidationError {
+    .reviewFormValidationError, .askQuestionFormError {
         width: 100%;
     }
     
-    .writeReviewForm > div > .formQuestionInput {
+    .formQuestionInput {
         width: 100%;
     }
 

@@ -9,8 +9,8 @@ export default async function createBxgyDiscount(rewardSettingsId: string, store
     if (reward && storeSession) {
         const accessToken = storeSession.accessToken
 
-        const discountTitle = `Buy ${reward.bogoPurchaseAmount} Get ${reward.bogoReceiveAmount} ${reward.bogoRewardType === "free" ? "Free" :
-        reward.bogoRewardType === "dollar" ? `$${reward.bogoDollarAmount}` : `${reward.bogoPercentageAmount}%`} Off Discount`
+        const discountTitle = `Buy ${reward.bxgyPurchaseAmount} Get ${reward.bxgyReceiveAmount} ${reward.bxgyRewardType === "free" ? "Free" :
+        reward.bxgyRewardType === "dollar" ? `$${reward.bxgyDollarAmount}` : `${reward.bxgyPercentageAmount}%`} Off Discount`
         
         const mutation = `
         mutation discountCodeBxgyCreate($bxgyCodeDiscount: DiscountCodeBxgyInput!) {
@@ -92,33 +92,34 @@ export default async function createBxgyDiscount(rewardSettingsId: string, store
             }
           }`
     
+        const randomDiscountCode = generateRandomDiscountCode()
         const variables = {
             bxgyCodeDiscount: {
-              code: generateRandomDiscountCode(),
+              code: randomDiscountCode,
               customerBuys: {
                 items: {
                   products: {
-                    productsToAdd: [reward.bogoPurchaseProductId]
+                    productsToAdd: [reward.bxgyPurchaseProductId]
                   }
                 },
                 value: {
-                  quantity: reward.bogoPurchaseAmount.toString()
+                  quantity: reward.bxgyPurchaseAmount.toString()
                 }
               },
               customerGets: {
                 items: {
                   products: {
-                    productsToAdd: [reward.bogoReceiveProductId]
+                    productsToAdd: [reward.bxgyReceiveProductId]
                   }
                 },
                 value: {
                   discountOnQuantity: {
-                        effect: reward.bogoRewardType === "dollar" ? {
-                            amount: reward.bogoDollarAmount
+                        effect: reward.bxgyRewardType === "dollar" ? {
+                            amount: reward.bxgyDollarAmount
                         } : {
-                            percentage: reward.bogoRewardType === "free" ? 100 : reward.bogoPercentageAmount
+                            percentage: reward.bxgyRewardType === "free" ? 100 : reward.bxgyPercentageAmount
                         },
-                        quantity: reward.bogoReceiveAmount.toString()
+                        quantity: reward.bxgyReceiveAmount.toString()
                     },
                 }
             },
@@ -144,7 +145,8 @@ export default async function createBxgyDiscount(rewardSettingsId: string, store
         
         if (errors.length > 0) return null
 
-        const discountCode = data.data.discountCodeBxgyCreate.codeDiscountNode.codeDiscount.codes.nodes[0].code
-        return discountCode
+        return randomDiscountCode
     }
+
+    return null
 }

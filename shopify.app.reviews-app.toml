@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://gm-cover-commonly-zoning.trycloudflare.com"
+application_url = "https://resulting-insertion-insight-beneath.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://gm-cover-commonly-zoning.trycloudflare.com/auth/callback",
-  "https://gm-cover-commonly-zoning.trycloudflare.com/auth/shopify/callback",
-  "https://gm-cover-commonly-zoning.trycloudflare.com/api/auth/callback"
+  "https://resulting-insertion-insight-beneath.trycloudflare.com/auth/callback",
+  "https://resulting-insertion-insight-beneath.trycloudflare.com/auth/shopify/callback",
+  "https://resulting-insertion-insight-beneath.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://gm-cover-commonly-zoning.trycloudflare.com/api"
+url = "https://resulting-insertion-insight-beneath.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

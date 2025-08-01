@@ -155,13 +155,6 @@ model RadioAnswerChoice {
   question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
-model Rewards {
-  id       Int    @id @default(autoincrement())
-  store    String
-  plain    Int    @default(0)
-  advanced Int    @default(0)
-}
-
 model ReviewRequestEmailLogo {
   id                    Int                 @id @default(autoincrement())
   url                   String

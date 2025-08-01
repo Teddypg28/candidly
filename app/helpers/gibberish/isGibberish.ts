@@ -20,7 +20,7 @@ export default function isGibberish(text: string) {
     const words = text.split(" ")
     const averageWordLength = words.reduce((a, b) => a + b.length, 0) / words.length
 
-    if (averageWordLength > 10 || (words.length > 5 && averageWordLength < 3)) score += 10
+    if (averageWordLength > 10 || (words.length > 5 && averageWordLength < 3) || (words.length <= 2 && averageWordLength <= 4)) score += 10
     if (words.some(word => commonReviewWords.includes(word))) score -= 20
 
     if (score > 6) {

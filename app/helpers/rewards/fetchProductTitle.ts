@@ -19,8 +19,7 @@ export default async function fetchProductTitle(store: string, id: string) {
               }`, variables: {id}})
           })
         const productData = await res.json()
-        const productTitle = productData.data.product.title
-        return productTitle
+        return productData.data.product.title || "Product Deleted"
     } 
 
     return null

@@ -616,7 +616,7 @@ export default function ReviewForm() {
     const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
 
   return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage reward={0} /> :
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings?.type !== "none"} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>

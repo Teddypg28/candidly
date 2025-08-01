@@ -13,7 +13,7 @@ export default async function sendReviewSubmittedNotificationEmail(reviewId: str
                 <table style="background-color: white; height: 70px; width: 100%">
                     <tr>
                     <td>
-                       <img draggable="false" style="height: 50px; display: block; margin: auto" src="https://engines-episodes-t-packets.trycloudflare.com/logo.png" alt="company-logo">
+                       <img draggable="false" style="height: 50px; display: block; margin: auto" src="https://resulting-insertion-insight-beneath.trycloudflare.com/logo.png" alt="company-logo">
                     </td>
                     </tr>
                 </table>

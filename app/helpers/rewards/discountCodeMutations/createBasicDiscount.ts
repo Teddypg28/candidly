@@ -59,10 +59,11 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
             }
           }`
     
+        const randomDiscountCode = generateRandomDiscountCode()
         const variables = {
             basicCodeDiscount: {
               title: rewardTitle,
-              code: generateRandomDiscountCode(),
+              code: randomDiscountCode,
               startsAt: new Date(),
               endsAt: null,
               customerSelection: {
@@ -107,7 +108,8 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
 
         if (errors.length > 0) return null
         
-        const discountCode = data.data.discountCodeBasicCreate.codeDiscountNode.codeDiscount.codes.nodes[0].code
-        return discountCode
+        return randomDiscountCode
     }
+
+    return null
 }
