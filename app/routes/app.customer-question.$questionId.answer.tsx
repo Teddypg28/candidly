@@ -2,10 +2,12 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, Card, Layout, Page, TextField, Thumbnail } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { CustomerQuestionEmailVariables } from "~/types/types";
+
+import {ImageIcon} from '@shopify/polaris-icons';
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     const { session } = await authenticate.admin(request)
@@ -50,8 +52,11 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
     const res = await admin.graphql(productDataQuery)
     const data = await res.json()
+
+    const productTitle = data.data.product ? data.data.product.title : "Product deleted"
+    const productImageUrl = data.data.product && data.data.product.media ? data.data.product.media.edges[0].node.preview.image.url : ""
     
-    return {customerQuestion, productTitle: data.data.product.title, productImageUrl: data.data.product.media.edges[0].node.preview.image.url}
+    return {customerQuestion, productTitle, productImageUrl}
 }
 
 export default function AnswerQuestion() {
@@ -59,6 +64,7 @@ export default function AnswerQuestion() {
     const data = useLoaderData<typeof loader>()
 
     const submit = useSubmit()
+    const navigation = useNavigation()
 
     const [questionAnswerState, setQuestionAnswerState] = useState({
         question: data.customerQuestion?.title,
@@ -66,7 +72,7 @@ export default function AnswerQuestion() {
     })
 
     const cleanQuestionAnswerState = {question: data.customerQuestion?.title, answer: data.customerQuestion?.answer?.body || ""}
-
+    
     const isStateDirty = JSON.stringify(questionAnswerState) !== JSON.stringify(cleanQuestionAnswerState)
 
     const saveQuestionAnswerState = () => {
@@ -86,7 +92,7 @@ export default function AnswerQuestion() {
         <Page 
         title="Customer Question"
         backAction={{content: 'All Questions', url: '/app/question-answers'}}
-        primaryAction={{content: 'Email Customer Answer', disabled: !data.customerQuestion?.answer, onAction: emailCustomer}}
+        primaryAction={{content: 'Email Customer Answer', disabled: !data.customerQuestion?.answer, onAction: emailCustomer, loading: navigation.state === "submitting"}}
         >
             <SaveBar open={isStateDirty}>
                 <button variant="primary" onClick={saveQuestionAnswerState}></button>
@@ -123,7 +129,7 @@ export default function AnswerQuestion() {
                             <BlockStack gap={'100'}>
                                 <strong>Product</strong>
                                 <div style={{backgroundColor: '#f1f1f1', padding: '10px', borderRadius: '5px'}}>{data.productTitle}</div>
-                                <Thumbnail alt="product image" source={data.productImageUrl} size="large" />
+                                <Thumbnail alt="product image" source={data.productImageUrl || ImageIcon} size="large" />
                             </BlockStack>
                         </BlockStack>
                     </Card>

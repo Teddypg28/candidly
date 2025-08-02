@@ -164,7 +164,7 @@ const generateCustomQuestionAnswerMarkup = (review) => {
 }
 
 // renders the reviews for a given page
-const setCurrentPage = (currentPage, currentSortBy) => {
+const renderCurrentPageReviews = (currentPage, currentSortBy) => {
 
     const numOfPages = reviewData.totalPages
 
@@ -241,7 +241,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
             fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=${currentPage+1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                 .then(res => res.json())
                 .then(data => reviewData = data)
-                .then(() => setCurrentPage(currentPage + 1, currentSortBy))
+                .then(() => renderCurrentPageReviews(currentPage + 1, currentSortBy))
         }
     })
 
@@ -250,7 +250,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
             fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=${currentPage-1}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                 .then(res => res.json())
                 .then(data => reviewData = data)               
-                .then(() => setCurrentPage(currentPage - 1, currentSortBy))
+                .then(() => renderCurrentPageReviews(currentPage - 1, currentSortBy))
         }
     })
 
@@ -260,7 +260,7 @@ const setCurrentPage = (currentPage, currentSortBy) => {
             fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=${parseInt(el.dataset.page)}&limit=5&sort=${currentSortBy.toLowerCase()}`)
                 .then(res => res.json())
                 .then(data => reviewData = data)               
-                .then(() => setCurrentPage(parseInt(el.dataset.page), currentSortBy))
+                .then(() => renderCurrentPageReviews(parseInt(el.dataset.page), currentSortBy))
         })
         if (el.dataset.page === currentPage.toString()) {
             return el.classList.add('selected')
@@ -269,18 +269,23 @@ const setCurrentPage = (currentPage, currentSortBy) => {
 }
 
 // renders review metadata and calls function to render the corresponding reviews - or displays "no reviews" message
-const renderReviews = () => {
+const renderWidgetSkeleton = () => {
     document.querySelector('.mainReviewContainer').innerHTML = `
-            <div class='reviewWidgetHeader'>
+            <div class='reviewsQuestionsWidgetHeader'>
                 <div class='headingBtnContainer'>
-                    <h1 class='heading'>Customer Reviews</h1>
+                    <h1 class='heading'>Customer <span class='reviewsOrQuestions'>Reviews</span></h1>
                     <div class='btnContainer'>
                         <div class='writeReviewBtn hoverEffect'>Write Review</div>
                         <div class='askQuestionBtn hoverEffect'>Ask Question</div>
                     </div>
                 </div>
-                <p class='noReviewsText'>Be the first to write a review!</p>
+                <div class='reviewsQuestionsContainer'>
+                    <div class='showReviewsBtn'>Reviews (${reviewData.totalReviews})</div>
+                    <div class='showQuestionsBtn'>Questions (${questionsWithAnswers.length})</div>
+                </div>
+                <div class='reviewsQuestionsContainerSeparator'> </div>
             </div>
+            <div class="noReviewsBlock ${reviewData.totalReviews > 0 ? "hidden" : ""}">Be the first to write a review!</div>
             <div class='hasReviewsWrapper hidden'>
                 <div class='reviewStatsWrapper'>
                     <div class='reviewStatsContainer'>
@@ -292,11 +297,6 @@ const renderReviews = () => {
                         <div id='reviewBarWrapper'></div>
                     </div>
                 </div>
-                <div class='reviewsQuestionsContainer'>
-                    <div class='showReviewsBtn'>Reviews (${reviewData.totalReviews})</div>
-                    <div class='showQuestionsBtn'>Questions (${questionsWithAnswers.length})</div>
-                </div>
-                <div class='reviewsQuestionsContainerSeparator'> </div>
                 <div class='flexContainer'>
                     <p id='reviewCount'></p>
                     <div class='sortByContainer'>
@@ -310,6 +310,8 @@ const renderReviews = () => {
                     </div>
                 </div>
                 <div id='reviews'></div>
+            </div>
+            <div>
                 <div id='questions' class='hidden'></div>
             </div>
         `
@@ -354,25 +356,25 @@ const renderReviews = () => {
                     fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=lowest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
-                        .then(() => setCurrentPage(1, currentSortBy))
+                        .then(() => renderCurrentPageReviews(1, currentSortBy))
                 } 
                 if (currentSortBy === 'Highest') {
                     fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=highest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
-                        .then(() => setCurrentPage(1, currentSortBy))
+                        .then(() => renderCurrentPageReviews(1, currentSortBy))
                 }
                 if (currentSortBy === 'Oldest') {
                     fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=oldest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
-                        .then(() => setCurrentPage(1, currentSortBy))
+                        .then(() => renderCurrentPageReviews(1, currentSortBy))
                 }
                 if (currentSortBy === 'Newest') {
                     fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5&sort=newest`)
                         .then(res => res.json())
                         .then(data => reviewData = data)
-                        .then(() => setCurrentPage(1, currentSortBy))
+                        .then(() => renderCurrentPageReviews(1, currentSortBy))
                 }
             })
         })
@@ -398,9 +400,11 @@ const renderReviews = () => {
         document.getElementById('averageCustomerReviewScore').textContent = `${avgRating.toFixed(1)} out of 5`
         document.getElementById('totalCustomerReviews').textContent = `${reviewData.totalReviews} customer ${reviewData.totalReviews > 1 ? 'reviews' : 'review'}`
 
+        renderQuestions()
+
         // this function will then render the actual reviews, starting at page 1
         if (reviewData.totalReviews > 0) {
-            setCurrentPage(1, 'Newest')
+            renderCurrentPageReviews(1, 'Newest')
         }
 
         // toggling between reviews and questions functionality
@@ -411,20 +415,29 @@ const renderReviews = () => {
             document.querySelector('#reviews').classList.add('hidden')
             document.querySelector('#questions').classList.remove('hidden')
             document.querySelector('.flexContainer').classList.add('hidden')
+            document.querySelector('.hasReviewsWrapper').classList.add('hidden')
+            document.querySelector('.noReviewsBlock').classList.add('hidden')
             document.querySelector('.showQuestionsBtn').style.fontWeight = 'bold'
             document.querySelector('.showQuestionsBtn').style.borderBottom = '2px solid black'
             document.querySelector('.showReviewsBtn').style.fontWeight = 'normal'
             document.querySelector('.showReviewsBtn').style.borderBottom = 'none'
+            document.querySelector('.reviewsOrQuestions').textContent = 'Questions'
         })
 
         document.querySelector('.showReviewsBtn').addEventListener('click', () => {
             document.querySelector('#reviews').classList.remove('hidden')
             document.querySelector('#questions').classList.add('hidden')
             document.querySelector('.flexContainer').classList.remove('hidden')
+            if (reviewData.totalReviews > 0) {
+                document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
+            } else {
+                document.querySelector('.noReviewsBlock').classList.remove('hidden')
+            }
             document.querySelector('.showQuestionsBtn').style.fontWeight = 'normal'
             document.querySelector('.showQuestionsBtn').style.borderBottom = 'none'
             document.querySelector('.showReviewsBtn').style.fontWeight = 'bold'
             document.querySelector('.showReviewsBtn').style.borderBottom = '2px solid black'
+            document.querySelector('.reviewsOrQuestions').textContent = 'Reviews'
         })
 
         // question form logic

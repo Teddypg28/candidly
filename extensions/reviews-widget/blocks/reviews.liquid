@@ -23,83 +23,74 @@
 
 <script>
 
-// configures product rich snippet
-const richSnippetScriptTag = document.createElement('script')
-richSnippetScriptTag.type = "application/ld+json"
-richSnippetScriptTag.textContent = `
-    {
-        "@context": "https://schema.org/",
-        "@type": "Product",
-        "name": '{{product.title}}',
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": '{{avg_rating}}',
-            "reviewCount": '{{rating_count}}'
+    // configures product rich snippet
+    const richSnippetScriptTag = document.createElement('script')
+    richSnippetScriptTag.type = "application/ld+json"
+    richSnippetScriptTag.textContent = `
+        {
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": '{{product.title}}',
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": '{{avg_rating}}',
+                "reviewCount": '{{rating_count}}'
+            }
         }
-    }
-`
-document.querySelector('head').appendChild(richSnippetScriptTag)
+    `
+    document.querySelector('head').appendChild(richSnippetScriptTag)
 
-const customQuestions = []
+    const customQuestions = []
 
-const productTitle = '{{product.title}}'
-const productImage = '{{ product.featured_image | img_url: '400x' }}'
+    const productTitle = '{{product.title}}'
+    const productImage = '{{ product.featured_image | img_url: '400x' }}'
 
-let companyName = ""
-let showing = "reviews"
-let questionsWithAnswers = []
-let reviewData = {}
-const avgRating = parseFloat('{{avg_rating}}')
-const reviewProductId = '{{product.id}}'
+    let companyName = ""
+    let questionsWithAnswers = []
+    let reviewData = {}
+    const avgRating = parseFloat('{{avg_rating}}')
+    const reviewProductId = '{{product.id}}';
 
-// fetch custom questions attached to product id
-fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`)
-.then(data => data.json())
-.then(questions => {
-    // if there are custom questions, push them to the customQuestions key of the review settings object
-    if (questions.result.length > 0) {
-        questions.result.forEach(question => {
-            customQuestions.push(question)
-        })
-        customQuestions.sort((a, b) => {
-            return a.radioAnswerChoices.length - b.radioAnswerChoices.length
-        })
-    }
-})
-.then(() => {
-    fetch(`https://${window.Shopify.shop}/apps/api/q&a/${reviewProductId}`)
-        .then(data => data.json())
-        .then(result => {
-            if (!result.error) {
-                questionsWithAnswers = result.questions
-                companyName = result.companyName
-            }
-        })
-})
-.then(() => {
-    // fetch all of the reviews connected to the product id
-    fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`)
-        .then(res => res.json())
-        .then(data => { 
-            // set the global reviewData object to the returned review data so we can access it below
-            reviewData = data 
-        })
-        .then(() => {
+    (async function fetchReviewQuestionData() {
+      
+        // Fetch custom questions attached to product ID
+        const questionsRes = await fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`);
+        const questionsData = await questionsRes.json();
 
-            renderReviews()
-            renderQuestions()
-            if (reviewData.reviews.length > 0) {
-                createReviewStars()
-                document.querySelector('.hasReviewsWrapper').classList.remove('hidden')
-                document.querySelector('.noReviewsText').classList.add('hidden')
-            }
+        if (questionsData.result.length > 0) {
+            questionsData.result.forEach(question => customQuestions.push(question));
+            customQuestions.sort((a, b) => a.radioAnswerChoices.length - b.radioAnswerChoices.length);
+        }
 
-            // change reviews section background color
-            const divs = Array.from(document.querySelectorAll('div'))
-            const targetDiv = divs.find(div => div.id.includes('candidly'))
-            const section = targetDiv.closest('section')
-    })
-})
+        // Fetch Q&A
+        const qaRes = await fetch(`https://${window.Shopify.shop}/apps/api/q&a/${reviewProductId}`);
+        const qaData = await qaRes.json();
+
+        if (!qaData.error) {
+            questionsWithAnswers = qaData.questions;
+            companyName = qaData.companyName;
+        }
+
+        // Fetch reviews
+        const reviewsRes = await fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`);
+        const reviewJson = await reviewsRes.json();
+        reviewData = reviewJson;
+
+        renderWidgetSkeleton();
+
+        if (reviewData.totalReviews > 0) {
+            createReviewStars();
+            document.querySelector('.hasReviewsWrapper').classList.remove('hidden');
+        }
+
+        // Change reviews section background color
+        const divs = Array.from(document.querySelectorAll('div'));
+        const targetDiv = divs.find(div => div.id.includes('candidly'));
+        if (targetDiv) {
+            const section = targetDiv.closest('section');
+            // Apply background color here if needed
+        }
+    })();
 
 </script>
 

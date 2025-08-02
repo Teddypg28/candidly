@@ -7,10 +7,9 @@ import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {      
         const data = await request.json()
-    
-        const emailData: CustomerQuestionEmailVariables = data.emailData 
-    
-        if (!emailData.answer) {
+        const emailVariables: CustomerQuestionEmailVariables = data.emailVariables
+        
+        if (!emailVariables.answer) {
             return new Response(JSON.stringify({error: "missing required answer"}), {status: 401})
         }
 
@@ -28,7 +27,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         await sendEmail(
             emailSettings?.subject as string,
             emailSettings?.body || defaultCustomerQuestionEmailSettings.body, 
-            {...emailData, companyName: appSettings?.companyName}, 
+            {...emailVariables}, 
             emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
             data.toAddress, 
             fromEmailAddress,
