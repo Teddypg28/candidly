@@ -34,6 +34,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             "customer-question"
         )
 
+        await db.customerQuestion.update({where: {id: emailVariables.questionId as string}, data: {emailSent: true}})
+
         return new Response(JSON.stringify({status: "email successfully sent"}), {status: 200})
 
     } catch (error) {

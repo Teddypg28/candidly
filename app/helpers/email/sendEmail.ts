@@ -1,6 +1,8 @@
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
+import { SendEmailCommand } from '@aws-sdk/client-ses'
 import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, EmailHeaderStyles, ReviewRequestEmailVariables } from '~/types/types';
 import generateEmailMarkup from './generateEmailMarkup';
+
+import SESClient from '~/utils/SESClient';
 
 export default async function sendEmail(
   emailSubject: string,
@@ -13,14 +15,6 @@ export default async function sendEmail(
   ) {
 
     const emailMarkup = generateEmailMarkup(emailBody, emailVariables, emailHeaderStyles, type)
-
-    const sesClient = new SESClient({
-        region: process.env.AWS_REGION as string,
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-        }
-    })
 
     const emailParams = {
         Destination: {
@@ -44,7 +38,7 @@ export default async function sendEmail(
       };
       try {
         const emailCommand = new SendEmailCommand(emailParams)
-        await sesClient.send(emailCommand);
+        await SESClient.send(emailCommand);
       } catch (err) {
         console.error('Error sending email:', err);
       }

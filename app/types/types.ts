@@ -194,6 +194,7 @@ export interface CustomReviewFormAnswerOption {
 }
 
 export interface CustomerQuestionEmailVariables {
+    questionId: string
     firstName?: string
     question?: string
     answer: string

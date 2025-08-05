@@ -16,8 +16,13 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     const data = await request.json()
 
     const question = await db.customerQuestion.findFirst({where: {id: {equals: questionId}}, include: {answer: true}})
+
+    if (!question) {
+        return new Response('question not found', {status: 401})
+    }
+    
     if (question?.answer) {
-       return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}}})
+       return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}, emailSent: false}})
     } 
     
     await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question}})
@@ -81,6 +86,7 @@ export default function AnswerQuestion() {
 
     const emailCustomer = () => {
         const emailVariables: CustomerQuestionEmailVariables = {
+            questionId: data.customerQuestion?.id as string,
             question: data.customerQuestion?.title,
             answer: data.customerQuestion?.answer?.body as string, 
             firstName: data.customerQuestion?.firstName,
@@ -92,7 +98,7 @@ export default function AnswerQuestion() {
         <Page 
         title="Customer Question"
         backAction={{content: 'All Questions', url: '/app/question-answers'}}
-        primaryAction={{content: 'Email Customer Answer', disabled: !data.customerQuestion?.answer, onAction: emailCustomer, loading: navigation.state === "submitting"}}
+        primaryAction={{content: 'Email Customer Answer', disabled: data.customerQuestion?.emailSent, onAction: emailCustomer}}
         >
             <SaveBar open={isStateDirty}>
                 <button variant="primary" onClick={saveQuestionAnswerState}></button>
