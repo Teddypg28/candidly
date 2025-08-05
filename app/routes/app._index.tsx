@@ -12,13 +12,13 @@ import { AnalyticsData } from "~/types/types";
 import isBlockEnabled from "~/helpers/isBlockEnabled";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
-    const { session, admin, billing } = await authenticate.admin(request)
+    const { session, admin } = await authenticate.admin(request)
 
-    // const billingDetails = await billing.require({
-    //     plans: [MONTHLY_BASIC_PLAN, MONTHLY_ADV_PLAN],
-    //     isTest: true,
-    //     onFailure: async () => billing.request({ plan: MONTHLY_BASIC_PLAN }),
-    // });
+    const storeSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
+    if (!storeSubscription) {
+        const currentDate = new Date()
+        await db.subscription.create({data: {shop: session.shop, renewalDate: new Date(currentDate.setMonth(currentDate.getMonth() + 1)).toLocaleDateString()}})
+    }
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})

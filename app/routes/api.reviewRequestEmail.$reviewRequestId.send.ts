@@ -2,20 +2,21 @@ import { ActionFunctionArgs } from "@remix-run/node";
 import db from '../db.server'
 
 import sendEmail from "~/helpers/email/sendEmail";
-import { AppSettings, ReviewRequest, ReviewRequestEmailSettings } from "@prisma/client";
+import { ReviewRequest, ReviewRequestEmailSettings, Subscription } from "@prisma/client";
 import { ReviewRequestEmailVariables } from "~/types/types";
 import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
 export async function action( { request, params } : ActionFunctionArgs) {
-
   try {
 
     const reviewRequestId = params.reviewRequestId as number | string
-  
     const data = await request.json()
     const store = data.store 
-  
+
+    const subscriptionData = await db.subscription.findFirst({where: {shop: {equals: store}}}) as Subscription
+    if (subscriptionData.emailsLeft === 0) return new Response(JSON.stringify({message: 'No more review request emails left. Upgrade your plan.'}), {status: 401, headers: {'Content-Type': 'application/json'}})
+ 
     const storeSessionDetails = await db.session.findFirst({where: {shop: {equals: store}}})
     const accessToken = storeSessionDetails?.accessToken as string
   
@@ -28,7 +29,7 @@ export async function action( { request, params } : ActionFunctionArgs) {
             file?: File
         } | null 
     }
-    const storeGeneralSettings = await db.appSettings.findFirst({where: {store: {equals: store}}}) as AppSettings
+
     const storeEmailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: store}}, include: {logo: {omit: {emailDesignSettingsId: true, id: true}}}})
   
     let emailBody
@@ -105,9 +106,13 @@ export async function action( { request, params } : ActionFunctionArgs) {
       if (verificationStatus === "Success") fromEmailAddress = `reviews@${currentDomain}`
     }
   
-    // send the email
-    await sendEmail(emailSubject, emailBody, emailVariables, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, "theopop28@gmail.com", fromEmailAddress, "review-request")
-      
+    // send the email 
+    // CHANGE PLACEHOLDER EMAIL
+    await sendEmail(emailSubject, emailBody, emailVariables, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, "teddypg02@gmail.com", fromEmailAddress, "review-request")
+    
+    // update emails left count
+    await db.subscription.update({where: {id: subscriptionData.id}, data: {emailsLeft: subscriptionData.emailsLeft - 1}})
+
     return new Response(JSON.stringify({message: 'Email successfully sent'}), {status: 200, headers: {'Content-Type': 'application/json'}})
 
   } catch (error) {

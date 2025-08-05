@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Badge, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, IndexTableProps, Link, Page, useSetIndexFiltersMode } from "@shopify/polaris";
+import { Badge, Banner, BlockStack, Card, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, IndexTableProps, Link, Page, useSetIndexFiltersMode } from "@shopify/polaris";
 
 import db from '../db.server'
 
@@ -9,6 +9,7 @@ import { useState } from "react";
 import { initialReviewRequestTableState, ReviewRequestData, ReviewRequestTableState } from "~/types/types";
 import { createEachProductReviewRequest } from "~/helpers/createEachProductReviewRequest";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
+import { Subscription } from "@prisma/client";
 
 export async function loader({ request } : LoaderFunctionArgs) {
 
@@ -140,13 +141,21 @@ export async function loader({ request } : LoaderFunctionArgs) {
         })
     })
 
-    // Retrieve saved table view data
-
+    // retrieve saved table view data
     const savedTableViews = await db.savedReviewRequestTableView.findMany({where: {store: {equals: session.shop}}, omit: {id: true, store: true}, orderBy: {id: "asc"}})
 
-    // Serve both
+    // grab subscription data to display to store owner
+    let subscriptionData = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+    if (subscriptionData.renewalDate === new Date().toLocaleDateString()) {
+        const currentDate = new Date()
+        subscriptionData = await db.subscription.update({where: {id: subscriptionData.id}, data: {
+            emailsLeft: subscriptionData.type === "free" ? 50 : subscriptionData.type === "basic" ? 250 : subscriptionData.type === "pro" ? 500 : 0, 
+            renewalDate: new Date(currentDate.setMonth(currentDate.getMonth() + 1)).toLocaleDateString()
+        }})
+    }
 
-    return json({savedTableViews, reviewRequests})
+    // serve both
+    return json({savedTableViews, reviewRequests, subscriptionData})
 
 }
 
@@ -396,49 +405,56 @@ export default function ReviewRequests() {
         title="Review Requests"
         subtitle="These are all of the review requests that will be or have been sent to customers"
         >
-            {reviewRequests.length === 0 ?
-            
-            <Card>
-                <EmptyState 
-                heading="You Don't Have Any Review Requests Yet"
-                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                />
-            </Card>
+            <BlockStack gap={'300'}>
+                    <Banner
+                    title="Review Request Email Tracker"
+                    >
+                        You have {data.subscriptionData.emailsLeft} review request emails left on your plan.
+                    </Banner>
+                    {reviewRequests.length === 0 ?
+                    
+                    <Card>
+                        <EmptyState 
+                        heading="You Don't Have Any Review Requests Yet"
+                        image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                        />
+                    </Card>
 
-            :
+                    :
 
-            <Card>
-                <IndexFilters
-                sortOptions={sortOptions}
-                sortSelected={indexTableState.sortSelected}
-                onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
-                tabs={tabs}
-                mode={mode}
-                setMode={setMode}
-                filters={filters}
-                appliedFilters={appliedFilters}
-                onClearAll={clearAllFilters}
-                primaryAction={primaryAction}
-                queryValue={indexTableState.queryValue}
-                onQueryChange={(value) => setIndexTableState({...indexTableState, queryValue: value})}
-                onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
-                cancelAction={{onAction: cancelFilterChanges}}
-                onCreateNewView={createNewView}
-                queryPlaceholder="Search by email, date, or order number"
-                onSelect={changeTabs}
-                selected={indexTableState.selectedTab}
-                />
-                <IndexTable 
-                pagination={pagination}
-                selectable={false}
-                headings={[{title: 'Order Date'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
-                itemCount={filteredReviewRequests.length}
-                >
-                    {IndexTableMarkup}
-                </IndexTable>
-            </Card>
-        
-        }
+                    <Card>
+                        <IndexFilters
+                        sortOptions={sortOptions}
+                        sortSelected={indexTableState.sortSelected}
+                        onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
+                        tabs={tabs}
+                        mode={mode}
+                        setMode={setMode}
+                        filters={filters}
+                        appliedFilters={appliedFilters}
+                        onClearAll={clearAllFilters}
+                        primaryAction={primaryAction}
+                        queryValue={indexTableState.queryValue}
+                        onQueryChange={(value) => setIndexTableState({...indexTableState, queryValue: value})}
+                        onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
+                        cancelAction={{onAction: cancelFilterChanges}}
+                        onCreateNewView={createNewView}
+                        queryPlaceholder="Search by email, date, or order number"
+                        onSelect={changeTabs}
+                        selected={indexTableState.selectedTab}
+                        />
+                        <IndexTable 
+                        pagination={pagination}
+                        selectable={false}
+                        headings={[{title: 'Order Date'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
+                        itemCount={filteredReviewRequests.length}
+                        >
+                            {IndexTableMarkup}
+                        </IndexTable>
+                    </Card>
+                
+                }
+            </BlockStack>
         </Page>
 
     )

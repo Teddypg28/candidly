@@ -17,7 +17,7 @@ export async function action({ request } : ActionFunctionArgs) {
         const accessToken = storeSessionDetails?.accessToken
 
         // make sure the request includes all of the necessary data to submit the review
-        if (!store || !reviewRequestId || !authToken || !productId || !accessToken) {
+        if (!store || !reviewRequestId || !authToken || !productId || !accessToken || !rating) {
             return new Response(JSON.stringify({status: 'Missing required data'}), {status: 400})
         }
 

@@ -249,9 +249,11 @@ model RewardSetting {
 }
 
 model Subscription {
-  id   String @id @default(uuid())
-  shop String
-  type String
+  id          String @id @default(uuid())
+  shop        String
+  type        String @default("free")
+  emailsLeft  Int    @default(50)
+  renewalDate String
 }
 
 model Session {

@@ -20,10 +20,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session) {
         await db.session.deleteMany({ where: { shop } });
       }
-
       break;
     case "ORDERS_CREATE":
-
       if (session) {
           const data = {
             createdAt: new Date(payload.created_at),
@@ -53,6 +51,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate: nextRequestDate.toLocaleDateString()}})
         }
       }
+
+      break
+    case "APP_SUBSCRIPTIONS_UPDATE":
 
       break
     
