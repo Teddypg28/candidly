@@ -1,6 +1,6 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
 import { Banner, BlockStack, Button, Card, InlineGrid, InlineStack, Link, Page, ProgressBar, Select, Text } from "@shopify/polaris";
-import { authenticate, MONTHLY_BASIC_PLAN, MONTHLY_ADV_PLAN } from "~/shopify.server";
+import { authenticate } from "~/shopify.server";
 
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
 
@@ -12,12 +12,14 @@ import { AnalyticsData } from "~/types/types";
 import isBlockEnabled from "~/helpers/isBlockEnabled";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
-    const { session, admin } = await authenticate.admin(request)
 
+    const { session, admin } = await authenticate.admin(request)
+    
     const storeSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     if (!storeSubscription) {
         const currentDate = new Date()
-        await db.subscription.create({data: {shop: session.shop, renewalDate: new Date(currentDate.setMonth(currentDate.getMonth() + 1)).toLocaleDateString()}})
+        const oneMonthFromNow = new Date(currentDate.setMonth(currentDate.getMonth() + 1)).toLocaleDateString()
+        await db.subscription.create({data: {shop: session.shop, renewalDate: oneMonthFromNow}})
     }
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
@@ -84,19 +86,19 @@ export default function Index() {
             name: 'Visit the Settings Page', 
             description: 'Make any necessary changes to the default settings that are currently in place', 
             complete: data.appSettings,
-            url: '/app/settings/general'
+            url: `https://admin.shopify.com/store/${data.store.split('.')[0]}/apps/candidly-app/app/settings/general`
         },
         {
             name: 'Customize Your Review Request Email Template', 
             description: 'Add a logo and configure how you want your email to look when you send review requests to customers', 
             complete: data.reviewRequestEmailSettings,
-            url: '/app/email-template'
+            url: `https://admin.shopify.com/store/${data.store.split('.')[0]}/apps/candidly-app/app/email-templates`
         },
         {
             name: 'Customize Your Review Form', 
             description: 'Customize the look and messaging on the review form that your customers will fill out', 
             complete: data.reviewFormDesignSettings,
-            url: '/app/review-form'
+            url: `https://admin.shopify.com/store/${data.store.split('.')[0]}/apps/candidly-app/app/review-form`
         }
     ]
 

@@ -2,6 +2,8 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
+import fetchSubscriptionData from "~/helpers/fetchSubscriptionData";
+import { Session, Subscription } from "@prisma/client";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
@@ -36,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           await db.reviewRequest.create({ data })
         }
 
-      break
+      break;
     
     case "ORDERS_FULFILLED":
 
@@ -52,10 +54,61 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         }
       }
 
-      break
+      break;
     case "APP_SUBSCRIPTIONS_UPDATE":
 
-      break
+      if (payload.app_subscription.status === "ACTIVE") {
+        const storeSession = await db.session.findFirst({where: {shop: {equals: session?.shop}}}) as Session
+        const subscriptionDetails = await fetchSubscriptionData(payload.app_subscription.admin_graphql_api_id, storeSession.shop, storeSession.accessToken)
+        const subscription = await db.subscription.findFirst({where: {subscriptionId: {equals: payload.app_subscription.admin_graphql_api_id}}})
+        if (subscriptionDetails && subscription) {
+
+          const type = subscriptionDetails.price === 9.99 ? "basic" : subscriptionDetails.price === 19.99 ? "pro" : "advanced"
+          const emailsSent = new Date().toLocaleDateString() === subscription.renewalDate ? 0 : subscription.emailsSent 
+          
+          let emailQuota
+          if (subscription.type === type) {
+            switch (type) {
+              case "basic":
+                emailQuota = 1000
+                break;
+              case "pro":
+                emailQuota = 5000
+                break;
+              case "advanced":
+                emailQuota = 10000
+                break;
+            }
+          } else {
+            let direction: "upgrade" | "downgrade" = "downgrade"
+            if (subscription.type === "free" || subscription.type === "basic" || subscription.type === "pro" && type !== "basic") {
+              direction = "upgrade"
+            }
+
+            const renewalDate = new Date(subscription.renewalDate as string)
+
+            const daysLeftInCycle = Math.floor((renewalDate.getTime() - new Date().getTime()) / 1000 * 60 * 60 * 24)
+            const daysUsed = 30 - daysLeftInCycle
+            const daysRemaining = 30 - daysUsed
+
+            const alreadyPaidForEmailQuota = subscription.emailQuota as number
+
+            if (direction === "upgrade") {
+              // upgrade logic
+              const newEmailQuota = type === "basic" ? 1000 : type === "pro" ? 5000 : 10000
+              return emailQuota = alreadyPaidForEmailQuota + (newEmailQuota - alreadyPaidForEmailQuota) * (daysRemaining/30)
+            } else {
+              // downgrade logic
+              const newEmailQuota = type === "basic" ? 1000 : 5000
+              return emailQuota = newEmailQuota + ((alreadyPaidForEmailQuota - newEmailQuota) * (daysRemaining/30))
+            }
+          }
+
+          await db.subscription.updateMany({where: {shop: {equals: storeSession.shop}}, data: { type, renewalDate: new Date(subscriptionDetails.endsAt).toLocaleDateString(), emailsSent, emailQuota }})
+        
+        }
+      }
+      break;
     
     case "ORDERS_CANCELLED":
 
@@ -63,7 +116,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await db.reviewRequest.deleteMany({where: {store: {equals: session.shop}, AND: {orderId: {equals: payload.id}}}}) 
       }
 
-      break
+      break;
     case "CUSTOMERS_DATA_REQUEST":
     case "CUSTOMERS_REDACT":
     case "SHOP_REDACT":

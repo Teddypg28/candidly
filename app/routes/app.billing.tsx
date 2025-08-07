@@ -14,13 +14,41 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
-        const { admin } = await authenticate.admin(request)
+        const { session, admin } = await authenticate.admin(request)
     
         const billingData = await request.json()
+
+        const currentSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+
+        if (billingData.planName === "Free") {
+            const cancelSubscriptionMutation = `
+            #graphql
+            mutation AppSubscriptionCancel($id: ID!, $prorate: Boolean) {
+                appSubscriptionCancel(id: $id, prorate: $prorate) {
+                userErrors {
+                    field
+                    message
+                }
+                appSubscription {
+                    id
+                    status
+                }
+                }
+            }`
+
+            await admin.graphql(cancelSubscriptionMutation, {variables: {
+                "id": currentSubscription.subscriptionId,
+                "prorate": true
+            }})
+
+            await db.subscription.update({where: {id: currentSubscription.id}, data: {type: "free", renewalDate: null}})
+
+            return null
+        }
     
         const mutation = `
-            mutation AppSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!) {
-                appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems) {
+            mutation AppSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $test: Boolean) {
+                appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test) {
                 userErrors {
                     field
                     message
@@ -36,7 +64,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         const response = await admin.graphql(mutation, {
               variables: {
                   "name": `${billingData.planName} Plan`,
-                  "returnUrl": "http://super-duper.shopifyapps.com/",
+                  "returnUrl": `https://admin.shopify.com/store/${session.shop.split(".")[0]}/apps/candidly-app/app`,
                   "lineItems": [
                       {
                           "plan": {
@@ -49,14 +77,22 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                               }
                           }
                       }
-                  ]
+                  ],
+                  "test": true
               },
             },
           );
     
         const data = await response.json()
-    
-        return data.data.appSubscriptionCreate.confirmationUrl as string  
+
+        if (data.data.appSubscriptionCreate.userErrors.length === 0) {
+            await db.subscription.update({where: {id: currentSubscription.id}, data: {subscriptionId: data.data.appSubscriptionCreate.appSubscription.id}})
+            return data.data.appSubscriptionCreate.confirmationUrl as string  
+        }
+
+        return null
+        
+
     } catch (error) {
         return null
     }
@@ -90,6 +126,7 @@ export default function Billing() {
                                 <Text as="p" variant="headingLg" fontWeight="bold">Free <span style={{fontSize: '14px', color: 'white'}}>/ month</span></Text>
                             </BlockStack>
                             <Button 
+                            onClick={() => selectPlan("Free")}
                             variant="primary" 
                             disabled={subscriptionData.type === "free"}>
                                 {subscriptionData.type === "free" ? "Selected" : "Select"}
@@ -117,7 +154,7 @@ export default function Billing() {
                                 {subscriptionData.type === "basic" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">250 review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">1,000 review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
                             </BlockStack>
@@ -139,7 +176,7 @@ export default function Billing() {
                                 {subscriptionData.type === "pro" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">500 review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">5,000 review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
                             </BlockStack>
@@ -161,7 +198,7 @@ export default function Billing() {
                                 {subscriptionData.type === "advanced" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">Unlimited review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">10,000 review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
                             </BlockStack>

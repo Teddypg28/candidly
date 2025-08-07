@@ -26,7 +26,6 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
         title: string;
         body: string;
         firstName: string;
-        email: string | null;
         rating: number;
         date: Date;
         isPublished: boolean;
@@ -36,7 +35,7 @@ export default async function getAnalyticsData(session: SessionParams, admin: Ad
     // read reviews depending on date range
     switch (dateRange) {
         case 'all':
-            totalReviews = await db.productReview.findMany({where: {store: {equals: session.shop}}})
+            totalReviews = await db.productReview.findMany()
             break
         case 'today':
             break
