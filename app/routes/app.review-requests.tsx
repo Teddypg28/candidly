@@ -146,13 +146,6 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     // grab subscription data to display to store owner
     let subscriptionData = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
-    if (subscriptionData.renewalDate === new Date().toLocaleDateString()) {
-        const currentDate = new Date()
-        subscriptionData = await db.subscription.update({where: {id: subscriptionData.id}, data: {
-            emailsLeft: subscriptionData.type === "free" ? 50 : subscriptionData.type === "basic" ? 250 : subscriptionData.type === "pro" ? 500 : 0, 
-            renewalDate: new Date(currentDate.setMonth(currentDate.getMonth() + 1)).toLocaleDateString()
-        }})
-    }
 
     // serve both
     return json({savedTableViews, reviewRequests, subscriptionData})
@@ -409,7 +402,7 @@ export default function ReviewRequests() {
                     <Banner
                     title="Review Request Email Tracker"
                     >
-                        You have {data.subscriptionData.emailsLeft} review request emails left on your plan.
+                        You have {data.subscriptionData.emailQuota - data.subscriptionData.emailsSent} review request emails left on your plan.
                     </Banner>
                     {reviewRequests.length === 0 ?
                     

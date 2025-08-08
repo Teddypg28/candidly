@@ -3,7 +3,7 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 import fetchSubscriptionData from "~/helpers/fetchSubscriptionData";
-import { Session, Subscription } from "@prisma/client";
+import { Session } from "@prisma/client";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
@@ -85,27 +85,31 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               direction = "upgrade"
             }
 
-            const renewalDate = new Date(subscription.renewalDate as string)
+            const renewalDate = new Date(subscription.renewalDate)
+            renewalDate.setUTCHours(0, 0, 0, 0)
+            const isoStringRenewalDate = renewalDate.toISOString()
 
-            const daysLeftInCycle = Math.floor((renewalDate.getTime() - new Date().getTime()) / 1000 * 60 * 60 * 24)
+            const currentDate = new Date()
+            currentDate.setUTCHours(0, 0, 0, 0)
+            const isoStringCurrentDate = currentDate.toISOString()
+
+            const daysLeftInCycle = Math.floor((new Date(isoStringRenewalDate).getTime() - new Date(isoStringCurrentDate).getTime()) / (1000 * 60 * 60 * 24))
             const daysUsed = 30 - daysLeftInCycle
             const daysRemaining = 30 - daysUsed
 
-            const alreadyPaidForEmailQuota = subscription.emailQuota as number
+            const paidQuotaSoFar = subscription.emailQuota
 
             if (direction === "upgrade") {
               // upgrade logic
               const newEmailQuota = type === "basic" ? 1000 : type === "pro" ? 5000 : 10000
-              return emailQuota = alreadyPaidForEmailQuota + (newEmailQuota - alreadyPaidForEmailQuota) * (daysRemaining/30)
+              emailQuota = paidQuotaSoFar + ((newEmailQuota - paidQuotaSoFar) * (daysRemaining/30))
             } else {
               // downgrade logic
               const newEmailQuota = type === "basic" ? 1000 : 5000
-              return emailQuota = newEmailQuota + ((alreadyPaidForEmailQuota - newEmailQuota) * (daysRemaining/30))
+              emailQuota = (newEmailQuota * (daysRemaining/30)) + ((paidQuotaSoFar * (daysUsed/30)))
             }
           }
-
-          await db.subscription.updateMany({where: {shop: {equals: storeSession.shop}}, data: { type, renewalDate: new Date(subscriptionDetails.endsAt).toLocaleDateString(), emailsSent, emailQuota }})
-        
+          await db.subscription.update({where: {id: subscription.id}, data: { type, renewalDate: new Date(subscriptionDetails.endsAt).toLocaleDateString(), emailsSent, emailQuota }})
         }
       }
       break;

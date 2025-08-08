@@ -41,14 +41,29 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 "prorate": true
             }})
 
-            await db.subscription.update({where: {id: currentSubscription.id}, data: {type: "free", renewalDate: null}})
+            const renewalDate = new Date(currentSubscription.renewalDate)
+            renewalDate.setUTCHours(0, 0, 0, 0)
+            const isoStringRenewalDate = renewalDate.toISOString()
+
+            const currentDate = new Date()
+            currentDate.setUTCHours(0, 0, 0, 0)
+            const isoStringCurrentDate = currentDate.toISOString()
+
+            const daysLeftInCycle = Math.floor((new Date(isoStringRenewalDate).getTime() - new Date(isoStringCurrentDate).getTime()) / (1000 * 60 * 60 * 24))
+            const daysUsed = 30 - daysLeftInCycle
+
+            const paidQuotaSoFar = currentSubscription.emailQuota
+            const newEmailQuota = 50
+            const updatedEmailQuota = newEmailQuota + ((paidQuotaSoFar - newEmailQuota) * (daysUsed/30))
+
+            await db.subscription.update({where: {id: currentSubscription.id}, data: {type: "free", emailQuota: updatedEmailQuota}})
 
             return null
         }
     
         const mutation = `
-            mutation AppSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $test: Boolean) {
-                appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test) {
+            mutation AppSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $test: Boolean, $prorate: Boolean) {
+                appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test, prorate: $prorate) {
                 userErrors {
                     field
                     message
@@ -78,7 +93,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                           }
                       }
                   ],
-                  "test": true
+                  "test": true,
+                  "prorate": true
               },
             },
           );

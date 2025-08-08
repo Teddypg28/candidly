@@ -18,8 +18,8 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const storeSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     if (!storeSubscription) {
         const currentDate = new Date()
-        const oneMonthFromNow = new Date(currentDate.setMonth(currentDate.getMonth() + 1)).toLocaleDateString()
-        await db.subscription.create({data: {shop: session.shop, renewalDate: oneMonthFromNow}})
+        const nextBillingCycleStartDate = new Date(currentDate.setDate(currentDate.getDate() + 30)).toLocaleDateString()
+        await db.subscription.create({data: {shop: session.shop, renewalDate: nextBillingCycleStartDate}})
     }
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
