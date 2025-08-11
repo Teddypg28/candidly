@@ -253,7 +253,8 @@ model Subscription {
   shop           String
   type           String @default("free")
   emailsSent     Int    @default(0)
-  emailQuota     Int    @default(50)
+  emailQuota     Int
+  planStarted    String @default("")
   renewalDate    String @default("")
   subscriptionId String @default("")
 }

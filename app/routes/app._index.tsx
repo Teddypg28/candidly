@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
 import { AnalyticsData } from "~/types/types";
 import isBlockEnabled from "~/helpers/isBlockEnabled";
+import { free } from "~/emailQuotaVariables";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
 
@@ -19,7 +20,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     if (!storeSubscription) {
         const currentDate = new Date()
         const nextBillingCycleStartDate = new Date(currentDate.setDate(currentDate.getDate() + 30)).toLocaleDateString()
-        await db.subscription.create({data: {shop: session.shop, renewalDate: nextBillingCycleStartDate}})
+        await db.subscription.create({data: {shop: session.shop, renewalDate: nextBillingCycleStartDate, planStarted: new Date().toLocaleDateString(), emailQuota: free}})
     }
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})

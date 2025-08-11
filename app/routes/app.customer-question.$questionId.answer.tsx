@@ -2,7 +2,7 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, Card, Layout, Page, TextField, Thumbnail } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
-import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { CustomerQuestionEmailVariables } from "~/types/types";
@@ -22,7 +22,9 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     }
     
     if (question?.answer) {
-       return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}, emailSent: false}})
+        console.log(JSON.stringify(question.answer.body), JSON.stringify(data.answer))
+        const emailSent = JSON.stringify(question.answer.body) === JSON.stringify(data.answer)
+       return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}, emailSent}})
     } 
     
     await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question}})
@@ -69,7 +71,6 @@ export default function AnswerQuestion() {
     const data = useLoaderData<typeof loader>()
 
     const submit = useSubmit()
-    const navigation = useNavigation()
 
     const [questionAnswerState, setQuestionAnswerState] = useState({
         question: data.customerQuestion?.title,

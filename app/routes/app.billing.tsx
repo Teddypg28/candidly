@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
 import { Subscription } from "@prisma/client";
+import { advanced, basic, free, pro } from "~/emailQuotaVariables";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session } = await authenticate.admin(request)
@@ -13,6 +14,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 }
 
 export const action = async ({ request } : ActionFunctionArgs) => {
+
     try {
         const { session, admin } = await authenticate.admin(request)
     
@@ -53,7 +55,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             const daysUsed = 30 - daysLeftInCycle
 
             const paidQuotaSoFar = currentSubscription.emailQuota
-            const newEmailQuota = 50
+            const newEmailQuota = free
             const updatedEmailQuota = newEmailQuota + ((paidQuotaSoFar - newEmailQuota) * (daysUsed/30))
 
             await db.subscription.update({where: {id: currentSubscription.id}, data: {type: "free", emailQuota: updatedEmailQuota}})
@@ -62,8 +64,21 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         }
     
         const mutation = `
-            mutation AppSubscriptionCreate($name: String!, $lineItems: [AppSubscriptionLineItemInput!]!, $returnUrl: URL!, $test: Boolean, $prorate: Boolean) {
-                appSubscriptionCreate(name: $name, returnUrl: $returnUrl, lineItems: $lineItems, test: $test, prorate: $prorate) {
+            mutation AppSubscriptionCreate(
+                    $name: String!, 
+                    $lineItems: [AppSubscriptionLineItemInput!]!, 
+                    $returnUrl: URL!, 
+                    $test: Boolean,
+                    $replacementBehavior: AppSubscriptionReplacementBehavior
+                )
+                {
+                appSubscriptionCreate(
+                    name: $name, 
+                    returnUrl: $returnUrl, 
+                    lineItems: $lineItems, 
+                    test: $test,
+                    replacementBehavior: $replacementBehavior
+                    ) {
                 userErrors {
                     field
                     message
@@ -85,7 +100,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                           "plan": {
                               "appRecurringPricingDetails": {
                                   "price": {
-                                      "amount": billingData.planName === "Basic" ? 9.99 : billingData.planName === "Pro" ? 19.99 : 29.99,
+                                      "amount": billingData.planName === "Basic" ? 9.99 : billingData.planName === "Pro" ? 19.99 : 39.99,
                                       "currencyCode": "USD"
                                   },
                                   "interval": "EVERY_30_DAYS"
@@ -93,23 +108,20 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                           }
                       }
                   ],
-                  "test": true,
-                  "prorate": true
+                  "test": false,
+                  "replacementBehavior": "APPLY_IMMEDIATELY",
               },
             },
           );
-    
+
         const data = await response.json()
 
-        if (data.data.appSubscriptionCreate.userErrors.length === 0) {
-            await db.subscription.update({where: {id: currentSubscription.id}, data: {subscriptionId: data.data.appSubscriptionCreate.appSubscription.id}})
-            return data.data.appSubscriptionCreate.confirmationUrl as string  
-        }
+        if (data.data.appSubscriptionCreate.userErrors.length === 0) return data.data.appSubscriptionCreate.confirmationUrl
 
         return null
         
-
     } catch (error) {
+        console.log(error)
         return null
     }
 }
@@ -148,9 +160,11 @@ export default function Billing() {
                                 {subscriptionData.type === "free" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">50 review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">{free} review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
-                                <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Customizable email templates</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Q&A</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Reward incentives</Text>
                             </BlockStack>
                         </BlockStack>
                     </Card>
@@ -170,9 +184,11 @@ export default function Billing() {
                                 {subscriptionData.type === "basic" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">1,000 review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">{basic} review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
-                                <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Customizable email templates</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Q&A</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Reward incentives</Text>
                             </BlockStack>
                         </BlockStack>
                     </Card>
@@ -192,9 +208,11 @@ export default function Billing() {
                                 {subscriptionData.type === "pro" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">5,000 review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">{pro} review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
-                                <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Customizable email templates</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Q&A</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Reward incentives</Text>
                             </BlockStack>
                         </BlockStack>
                     </Card>
@@ -204,7 +222,7 @@ export default function Billing() {
                         <BlockStack gap={'800'}>
                             <BlockStack gap={'300'}>
                                 <Text as="p" variant="bodySm">Advanced</Text>
-                                <Text as="p" variant="headingLg" fontWeight="bold">$29.99 <span style={{fontSize: '14px', color: 'gray'}}>/ month</span></Text>
+                                <Text as="p" variant="headingLg" fontWeight="bold">$39.99 <span style={{fontSize: '14px', color: 'gray'}}>/ month</span></Text>
                             </BlockStack>
                             <Button 
                             variant="primary" 
@@ -214,9 +232,11 @@ export default function Billing() {
                                 {subscriptionData.type === "advanced" ? "Selected" : "Select"}
                             </Button>
                             <BlockStack>
-                                <Text tone="subdued" as="p" variant="bodyMd">10,000 review requests</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">{advanced} review requests</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
-                                <Text tone="subdued" as="p" variant="bodyMd">Review rewards</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Customizable email templates</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Q&A</Text>
+                                <Text tone="subdued" as="p" variant="bodyMd">Reward incentives</Text>
                             </BlockStack>
                         </BlockStack>
                     </Card>

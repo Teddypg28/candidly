@@ -3,7 +3,11 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 import fetchSubscriptionData from "~/helpers/fetchSubscriptionData";
-import { Session } from "@prisma/client";
+import { Session, Subscription } from "@prisma/client";
+
+import { getCurrentDate } from "~/helpers/getCurrentDate";
+
+import { basic, pro, advanced } from "~/emailQuotaVariables";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
@@ -60,7 +64,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (payload.app_subscription.status === "ACTIVE") {
         const storeSession = await db.session.findFirst({where: {shop: {equals: session?.shop}}}) as Session
         const subscriptionDetails = await fetchSubscriptionData(payload.app_subscription.admin_graphql_api_id, storeSession.shop, storeSession.accessToken)
-        const subscription = await db.subscription.findFirst({where: {subscriptionId: {equals: payload.app_subscription.admin_graphql_api_id}}})
+        const subscription = await db.subscription.findFirst({where: {shop: {equals: session?.shop}}}) as Subscription
+        
         if (subscriptionDetails && subscription) {
 
           const type = subscriptionDetails.price === 9.99 ? "basic" : subscriptionDetails.price === 19.99 ? "pro" : "advanced"
@@ -70,13 +75,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           if (subscription.type === type) {
             switch (type) {
               case "basic":
-                emailQuota = 1000
+                emailQuota = basic
                 break;
               case "pro":
-                emailQuota = 5000
+                emailQuota = pro
                 break;
               case "advanced":
-                emailQuota = 10000
+                emailQuota = advanced
                 break;
             }
           } else {
@@ -89,27 +94,36 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             renewalDate.setUTCHours(0, 0, 0, 0)
             const isoStringRenewalDate = renewalDate.toISOString()
 
-            const currentDate = new Date()
+            const currentDate = getCurrentDate()
             currentDate.setUTCHours(0, 0, 0, 0)
             const isoStringCurrentDate = currentDate.toISOString()
 
-            const daysLeftInCycle = Math.floor((new Date(isoStringRenewalDate).getTime() - new Date(isoStringCurrentDate).getTime()) / (1000 * 60 * 60 * 24))
-            const daysUsed = 30 - daysLeftInCycle
-            const daysRemaining = 30 - daysUsed
+            const planStarted = new Date(subscription.planStarted)
+            planStarted.setUTCHours(0, 0, 0, 0)
+            const isoStringPlanStartedDate = planStarted.toISOString()
+
+            const daysRemaining = Math.floor((new Date(isoStringRenewalDate).getTime() - new Date(isoStringCurrentDate).getTime()) / (1000 * 60 * 60 * 24))
+            const daysUsed = Math.floor((new Date(isoStringCurrentDate).getTime() - new Date(isoStringPlanStartedDate).getTime()) / (1000 * 60 * 60 * 24))
 
             const paidQuotaSoFar = subscription.emailQuota
 
             if (direction === "upgrade") {
               // upgrade logic
-              const newEmailQuota = type === "basic" ? 1000 : type === "pro" ? 5000 : 10000
+              const newEmailQuota = type === "basic" ? basic : type === "pro" ? pro : advanced
               emailQuota = paidQuotaSoFar + ((newEmailQuota - paidQuotaSoFar) * (daysRemaining/30))
             } else {
               // downgrade logic
-              const newEmailQuota = type === "basic" ? 1000 : 5000
+              const newEmailQuota = type === "basic" ? basic : pro
               emailQuota = (newEmailQuota * (daysRemaining/30)) + ((paidQuotaSoFar * (daysUsed/30)))
             }
           }
-          await db.subscription.update({where: {id: subscription.id}, data: { type, renewalDate: new Date(subscriptionDetails.endsAt).toLocaleDateString(), emailsSent, emailQuota }})
+          await db.subscription.update({where: {id: subscription.id}, data: { 
+            type, 
+            renewalDate: new Date(subscriptionDetails.endsAt).toLocaleDateString(), 
+            emailsSent, 
+            emailQuota, 
+            planStarted: getCurrentDate().toLocaleDateString(), 
+          }})
         }
       }
       break;

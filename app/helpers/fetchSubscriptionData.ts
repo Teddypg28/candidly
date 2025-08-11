@@ -4,12 +4,7 @@ export default async function fetchSubscriptionData(subscriptionId: string, stor
     query {
         node(id: "${subscriptionId}") {
           ...on AppSubscription {
-            createdAt
             currentPeriodEnd
-            id
-            name
-            status
-            test
             lineItems {
               id
               plan {
