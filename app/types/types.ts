@@ -166,6 +166,7 @@ export interface AppSettings {
     store: string
     autoPublishReviews: string[]
     minReviewRating: number 
+    isReviewFormDisabled: string
     firstReviewRequest: number
     secondReviewRequest: number
     companyName: string

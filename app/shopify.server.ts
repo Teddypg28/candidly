@@ -10,6 +10,8 @@ import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
 import prisma from "./db.server";
 
 import './reviewRequestEmailScheduler'
+import './subscriptionUpdater'
+import './reviewPublisher'
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,

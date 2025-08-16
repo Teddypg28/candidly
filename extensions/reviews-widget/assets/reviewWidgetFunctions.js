@@ -315,6 +315,9 @@ const renderWidgetSkeleton = () => {
                 <div id='questions' class='hidden'></div>
             </div>
         `
+
+        if (isReviewFormDisabled === "true") document.querySelector('.writeReviewBtn').classList.add('hidden')
+
         const reviewFormOverlay = document.createElement('div')
         reviewFormOverlay.className = 'hidden reviewFormOverlay'
         document.body.appendChild(reviewFormOverlay)

@@ -16,6 +16,7 @@ import { ProductReview } from "~/types/types";
 import s3Client from "~/utils/s3Client";
 import { ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import uploadMedia from "~/helpers/uploadMedia";
+import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     try {
@@ -48,6 +49,8 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     try {
+        const { session, admin } = await authenticate.admin(request)
+        
         const allFormData = await request.formData()
         const action = allFormData.get('action')
         if (action === 'delete') {
@@ -60,6 +63,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             }))
             // delete the review
             await db.productReview.delete({where: {id: params.id}})
+            updateProductRatingMetafields(params.id as string, 0, admin, session)
             return redirect('/app/reviews')
         } 
 

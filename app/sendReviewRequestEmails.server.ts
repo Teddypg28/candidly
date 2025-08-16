@@ -4,7 +4,7 @@ import { AppSettings } from './types/types'
 export default async function sendReviewRequestEmails() {
     const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date().toLocaleDateString()}, AND: {isComplete: {equals: false}}}})
 
-    await Promise.all(requestsToSendToday.map(async (request) => {
+    await Promise.allSettled(requestsToSendToday.map(async (request) => {
 
         await fetch(`https://oz-dsl-tvs-sample.trycloudflare.com/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
 

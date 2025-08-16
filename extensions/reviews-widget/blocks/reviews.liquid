@@ -44,6 +44,7 @@
     const productTitle = '{{product.title}}'
     const productImage = '{{ product.featured_image | img_url: '400x' }}'
 
+    let isReviewFormDisabled
     let companyName = ""
     let questionsWithAnswers = []
     let reviewData = {}
@@ -51,6 +52,11 @@
     const reviewProductId = '{{product.id}}';
 
     (async function fetchReviewQuestionData() {
+
+        // See whether or not they want to allow anyone to fill out reviews
+        const reviewFormDisabledRes = await fetch(`https://${window.Shopify.shop}/apps/api/settings`)
+        const isReviewFormDisabledData = await reviewFormDisabledRes.json()
+        isReviewFormDisabled = isReviewFormDisabledData.disabled
       
         // Fetch custom questions attached to product ID
         const questionsRes = await fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`);

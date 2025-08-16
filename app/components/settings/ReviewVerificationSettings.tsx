@@ -41,6 +41,19 @@ export default function ReviewVerificationSettings({state, setState}: SettingsPa
                             />
                         </BlockStack>
                     </BlockStack>}
+                    <BlockStack gap='300'>
+                        <Text as="h1" variant="bodyLg" fontWeight="bold">Disable Review Form on Product Page</Text>
+                        <ChoiceList 
+                        title=''
+                        titleHidden
+                        onChange={(selected) => setState({...state, isReviewFormDisabled: selected.toString()})}
+                        selected={[state.isReviewFormDisabled]}
+                        choices={[
+                            {label: 'True', value: 'true'},
+                            {label: 'False', value: 'false'}
+                        ]}
+                        />
+                    </BlockStack>
                 </BlockStack>
             </Card>
         </>

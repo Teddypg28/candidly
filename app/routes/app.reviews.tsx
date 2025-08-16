@@ -66,6 +66,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             return await updateProductRatingMetafields(review.productId, 0, admin, session)
         })) 
     }
+
+    return true
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
@@ -369,11 +371,6 @@ export default function Reviews() {
             })
         }
     }
-
-    // const deleteSelectedReviews = useCallback(async () => {
-    //     submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
-    //     removeSelectedResources(selectedResources)
-    // }, [selectedResources])
 
     const publishSelectedReviews = useCallback(async () => {
         submit(JSON.stringify({reviewIds: selectedResources, action: 'publishReviews'}), {method: 'POST', encType: 'application/json'})
