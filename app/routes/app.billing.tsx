@@ -161,10 +161,8 @@ export default function Billing() {
                             </Button>
                             <BlockStack>
                                 <Text tone="subdued" as="p" variant="bodyMd">{free} review requests</Text>
-                                <Text tone="subdued" as="p" variant="bodyMd">Unlimited custom questions</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Customizable email templates</Text>
                                 <Text tone="subdued" as="p" variant="bodyMd">Q&A</Text>
-                                <Text tone="subdued" as="p" variant="bodyMd">Reward incentives</Text>
                             </BlockStack>
                         </BlockStack>
                     </Card>

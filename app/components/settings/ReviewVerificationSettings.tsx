@@ -4,7 +4,6 @@ import { SettingsPageProps } from "~/types/types"
 
 export default function ReviewVerificationSettings({state, setState}: SettingsPageProps) {
     return (
-
         <>
             <Card>
                 <BlockStack gap='400'>

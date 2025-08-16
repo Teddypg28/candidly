@@ -1,4 +1,4 @@
-import { BlockStack, Button, Card, ChoiceList, InlineError, InlineStack, Layout, Page, Select, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, ChoiceList, InlineError, InlineStack, Layout, Link, Page, Select, Text, Thumbnail } from "@shopify/polaris";
 import { ImageIcon } from "@shopify/polaris-icons";
 
 import { useState } from "react";
@@ -20,57 +20,64 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     const { session } = await authenticate.admin(request)
 
-    const payload = await request.json()
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
 
-    const currentReward = await db.reward.findFirst({where: {store: {equals: session.shop}}}) as RewardShape
-    // update reward type
-    await db.reward.update({where: {id: currentReward.id}, data: {type: payload["type"]}})
+    if (subscription?.type !== "free") {
 
-    await Promise.all(['subpar', 'good', 'perfect', 'solo'].map(async (reviewType) => {
-        // grab the eligible products & eligible collections (if any) from request data
-        const eligibleProducts = payload['rewards'][reviewType].eligibleProducts as EligibleProduct[]
-        const eligibleCollections = payload['rewards'][reviewType].eligibleCollections as EligibleCollection[]
-        delete payload['rewards'][reviewType]['eligibleProducts']
-        delete payload['rewards'][reviewType]['eligibleCollections']
-        // update reward setting
-        const updatedRewardSetting = await db.rewardSetting.update({where: {id: currentReward[`${reviewType}Id` as keyof typeof Reward]}, data: {...payload['rewards'][reviewType]}})
-        // delete db records of eligible products that are no longer in the updated data
-        const currentProductDbRecords = await db.eligibleProduct.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
-        // updated data showing just the ids of the products
-        let updatedEligibleProductIds = eligibleProducts.map(product => product.productId)
-        await Promise.all(currentProductDbRecords.map(async (currentDbRecord) => {
-            // if product id of eligible product from db not in updated eligible product ids, delete it from db
-            if (!updatedEligibleProductIds.includes(currentDbRecord.productId)) {
-                await db.eligibleProduct.delete({where: {id: currentDbRecord.id}})
-            }
-            updatedEligibleProductIds = updatedEligibleProductIds.filter(productId => productId !== currentDbRecord.productId)
+        const payload = await request.json()
+    
+        const currentReward = await db.reward.findFirst({where: {store: {equals: session.shop}}}) as RewardShape
+        // update reward type
+        await db.reward.update({where: {id: currentReward.id}, data: {type: payload["type"]}})
+    
+        await Promise.all(['subpar', 'good', 'perfect', 'solo'].map(async (reviewType) => {
+            // grab the eligible products & eligible collections (if any) from request data
+            const eligibleProducts = payload['rewards'][reviewType].eligibleProducts as EligibleProduct[]
+            const eligibleCollections = payload['rewards'][reviewType].eligibleCollections as EligibleCollection[]
+            delete payload['rewards'][reviewType]['eligibleProducts']
+            delete payload['rewards'][reviewType]['eligibleCollections']
+            // update reward setting
+            const updatedRewardSetting = await db.rewardSetting.update({where: {id: currentReward[`${reviewType}Id` as keyof typeof Reward]}, data: {...payload['rewards'][reviewType]}})
+            // delete db records of eligible products that are no longer in the updated data
+            const currentProductDbRecords = await db.eligibleProduct.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
+            // updated data showing just the ids of the products
+            let updatedEligibleProductIds = eligibleProducts.map(product => product.productId)
+            await Promise.all(currentProductDbRecords.map(async (currentDbRecord) => {
+                // if product id of eligible product from db not in updated eligible product ids, delete it from db
+                if (!updatedEligibleProductIds.includes(currentDbRecord.productId)) {
+                    await db.eligibleProduct.delete({where: {id: currentDbRecord.id}})
+                }
+                updatedEligibleProductIds = updatedEligibleProductIds.filter(productId => productId !== currentDbRecord.productId)
+            }))
+            // the remaining product ids need to be created 
+            await Promise.all(updatedEligibleProductIds.map(async (productId) => {
+                const data = eligibleProducts.find(product => product.productId === productId) as EligibleProduct
+                await db.eligibleProduct.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
+            }))
+            const currentCollectionDbRecords = await db.eligibleCollection.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
+            // updated data showing just the ids of the collections
+            let updatedEligibleCollectionIds = eligibleCollections.map(collection => collection.collectionId)
+            await Promise.all(currentCollectionDbRecords.map(async (currentDbRecord) => {
+                // if product id of eligible product from db not in updated eligible product ids, delete it from db
+                if (!updatedEligibleCollectionIds.includes(currentDbRecord.collectionId)) {
+                    await db.eligibleCollection.delete({where: {id: currentDbRecord.id}})
+                }
+                updatedEligibleCollectionIds = updatedEligibleCollectionIds.filter(collectionId => collectionId !== currentDbRecord.collectionId)
+            }))
+            // the remaining product ids need to be created 
+            await Promise.all(updatedEligibleCollectionIds.map(async (collectionId) => {
+                const data = eligibleCollections.find(collection => collection.collectionId === collectionId) as EligibleCollection
+                await db.eligibleCollection.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
+            }))
         }))
-        // the remaining product ids need to be created 
-        await Promise.all(updatedEligibleProductIds.map(async (productId) => {
-            const data = eligibleProducts.find(product => product.productId === productId) as EligibleProduct
-            await db.eligibleProduct.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
-        }))
-        const currentCollectionDbRecords = await db.eligibleCollection.findMany({where: {rewardSettingId: {equals: updatedRewardSetting.id}}})
-        // updated data showing just the ids of the collections
-        let updatedEligibleCollectionIds = eligibleCollections.map(collection => collection.collectionId)
-        await Promise.all(currentCollectionDbRecords.map(async (currentDbRecord) => {
-            // if product id of eligible product from db not in updated eligible product ids, delete it from db
-            if (!updatedEligibleCollectionIds.includes(currentDbRecord.collectionId)) {
-                await db.eligibleCollection.delete({where: {id: currentDbRecord.id}})
-            }
-            updatedEligibleCollectionIds = updatedEligibleCollectionIds.filter(collectionId => collectionId !== currentDbRecord.collectionId)
-        }))
-        // the remaining product ids need to be created 
-        await Promise.all(updatedEligibleCollectionIds.map(async (collectionId) => {
-            const data = eligibleCollections.find(collection => collection.collectionId === collectionId) as EligibleCollection
-            await db.eligibleCollection.create({data: {...data, rewardSettingId: updatedRewardSetting.id}})
-        }))
-    }))
-    return true
+        return true
+    }
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session, admin } = await authenticate.admin(request)
+
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
 
     // fetch rewardSettings for store
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
@@ -108,7 +115,8 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
                 collections: selectedCollections 
             },
             selectedBxgyProducts,
-            type: rewardSettings.type
+            type: rewardSettings.type,
+            subscriptionType: subscription?.type
         }
     }
 
@@ -149,7 +157,8 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             collections: {subpar: [], good: [], perfect: [], solo: []}
         },
         selectedBxgyProducts: {subpar: [], good: [], perfect: [], solo: []},
-        type: initializedRewardSettings.type
+        type: initializedRewardSettings.type,
+        subscriptionType: subscription?.type
     }
 }
 
@@ -295,16 +304,23 @@ export default function Reward() {
             </SaveBar>
             <Layout>
                 <Layout.Section>
-                    <ChoiceList 
-                    choices={[
-                        {label: 'Single Reward', value: 'solo', helpText: 'Same reward for each review'},
-                        {label: 'Reward Tiers', value: 'tiers', helpText: 'Different rewards based on the quality of the review'},
-                        {label: 'No Rewards', value: 'none', helpText: 'Disable all rewards'},
-                    ]}
-                    selected={[rewardState.type]}
-                    onChange={changeRewardType}
-                    title="Reward Type"
-                    />
+                    <BlockStack gap="400">
+                        {data.subscriptionType === "free" &&
+                        <Banner title="You are currently on the free plan">
+                            <Link url="/app/billing">Upgrade</Link> your plan to create your first reward and incentivize customers to leave awesome reviews
+                        </Banner>}
+                        <ChoiceList 
+                        disabled={data.subscriptionType === "free"}
+                        choices={[
+                            {label: 'Single Reward', value: 'solo', helpText: 'Same reward for each review'},
+                            {label: 'Reward Tiers', value: 'tiers', helpText: 'Different rewards based on the quality of the review'},
+                            {label: 'No Rewards', value: 'none', helpText: 'Disable all rewards'},
+                        ]}
+                        selected={[rewardState.type]}
+                        onChange={changeRewardType}
+                        title="Reward Type"
+                        />
+                    </BlockStack>
                 </Layout.Section>
                 <Layout.Section variant="oneHalf">
                     {rewardState.type !== "none" &&

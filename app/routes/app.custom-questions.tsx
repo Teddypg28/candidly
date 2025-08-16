@@ -1,4 +1,4 @@
-import { Badge, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
+import { Badge, Banner, BlockStack, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
 
 import { Card } from "@shopify/polaris"
 
@@ -11,6 +11,7 @@ import { initialCustomQuestionTableState } from "~/types/types";
 
 import db from '../db.server'
 import CustomQuestionConfigurationDetails from "~/components/CustomQuestionConfigurationDetails";
+import { Subscription } from "@prisma/client";
 
 export const action = async ({request} : ActionFunctionArgs) => {
     const { session } = await authenticate.admin(request)
@@ -57,6 +58,8 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
 
+        const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+
         const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true, textAnswers: true, answerChoiceSnapshots: true}, omit: {store: true}})
         const savedViews = await db.savedCustomQuestionTableView.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
 
@@ -81,11 +84,11 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
             }
         }))
 
-        return json({ questions: questionData, savedViews })
+        return json({ questions: questionData, savedViews, subscriptionType: subscription.type })
 
     } catch (error) {
         console.error(error)
-        return json({questions: [], savedViews: []}, {status: 400})
+        return json({questions: [], savedViews: [], subscriptionType: "free"}, {status: 400})
     }
 }
 
@@ -265,52 +268,57 @@ const CustomQuestions = () => {
         title="Custom Review Form Questions"
         subtitle="Generate any questions that you want to ask customers"
         backAction={{onAction: () => nav('/app')}}
-        primaryAction={{content: 'Create New Question', onAction: () => nav('/app/question/new')}}
+        primaryAction={{content: 'Create New Question', onAction: () => nav('/app/question/new'), disabled: questionsState.subscriptionType === "free"}}
         >
-            {questions.length === 0 ?
+            <BlockStack gap="400">
+                {questionsState.subscriptionType === "free" &&
+                <Banner title="You are currently on the free plan">
+                    <Link url="/app/billing">Upgrade</Link> your plan to create your first custom question
+                </Banner>}
+                {questions.length === 0 ?
+                <Card>
+                    <EmptyState
+                    action={{content: 'Create Your First Question', onAction: () => nav('/app/question/new'), disabled: questionsState.subscriptionType === "free"}}
+                    heading="You Don't Have Any Custom Questions Yet!"
+                    image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                    >
+                    </EmptyState>
+                </Card>
 
-            <Card>
-                <EmptyState
-                action={{content: 'Create Your First Question', onAction: () => nav('/app/question/new')}}
-                heading="You Don't Have Any Custom Questions Yet!"
-                image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
-                >
-                </EmptyState>
-            </Card>
-
-            :
-            
-            <Card>
-                <IndexFilters
-                filters={filters}
-                sortOptions={sortOptions}
-                sortSelected={indexTableState.sortSelected}
-                onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
-                mode={mode}
-                setMode={setMode}
-                queryValue={indexTableState.queryValue}
-                queryPlaceholder="Search by question title"
-                onQueryChange={(value) => setIndexTableState({...indexTableState, queryValue: value})}
-                onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
-                onClearAll={clearAll}
-                onCreateNewView={createNewView}
-                cancelAction={{onAction: cancelFilters}}
-                tabs={tabs}
-                selected={indexTableState.selectedTab}
-                onSelect={changeTabs}
-                primaryAction={primaryAction}
-                appliedFilters={appliedFilters}
-                />
-                <IndexTable
-                itemCount={IndexTableMarkup.length}
-                headings={[{title: 'Title'}, {title: 'Configuration'}, {title: "Published"}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
-                selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
-                onSelectionChange={handleSelectionChange}
-                >
-                    {IndexTableMarkup}
-                </IndexTable>
-            </Card>
-            }
+                :
+                
+                <Card>
+                    <IndexFilters
+                    filters={filters}
+                    sortOptions={sortOptions}
+                    sortSelected={indexTableState.sortSelected}
+                    onSort={(value) => setIndexTableState({...indexTableState, sortSelected: value})}
+                    mode={mode}
+                    setMode={setMode}
+                    queryValue={indexTableState.queryValue}
+                    queryPlaceholder="Search by question title"
+                    onQueryChange={(value) => setIndexTableState({...indexTableState, queryValue: value})}
+                    onQueryClear={() => setIndexTableState({...indexTableState, queryValue: ''})}
+                    onClearAll={clearAll}
+                    onCreateNewView={createNewView}
+                    cancelAction={{onAction: cancelFilters}}
+                    tabs={tabs}
+                    selected={indexTableState.selectedTab}
+                    onSelect={changeTabs}
+                    primaryAction={primaryAction}
+                    appliedFilters={appliedFilters}
+                    />
+                    <IndexTable
+                    itemCount={IndexTableMarkup.length}
+                    headings={[{title: 'Title'}, {title: 'Configuration'}, {title: "Published"}, {title: 'Number of Customer Answers'}, {title: 'Top Answer'}]}
+                    selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
+                    onSelectionChange={handleSelectionChange}
+                    >
+                        {IndexTableMarkup}
+                    </IndexTable>
+                </Card>
+                }
+            </BlockStack>
         {questions.length > 0 &&
         <PageActions 
         secondaryActions={[

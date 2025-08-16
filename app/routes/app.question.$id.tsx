@@ -21,6 +21,8 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
 
+        const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
+
         const data = await request.json()
 
         if (data.action === 'delete') {
@@ -36,7 +38,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             return await db.reviewFormQuestion.update({where: {id: params.id, AND: {store: {equals: session.shop}}}, data: {published: true}})
         }
 
-        if (params.id === 'new') {
+        if (params.id === 'new' && subscription?.type !== "free") {
             const answerChoices = [...data.radioAnswerChoices]
             delete data['radioAnswerChoices']
             const question = await db.reviewFormQuestion.create({data: {...data, store: session.shop, radioAnswerChoices: {createMany: {data: answerChoices}}}, include: {radioAnswerChoices: true}})

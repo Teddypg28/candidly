@@ -22,6 +22,7 @@ import standardizeLineBreaks from "~/helpers/email/standardizeLineBreaks";
 import generateReviewRequestEmailBody from "~/helpers/email/generateReviewRequestEmailBody";
 import generateCustomerQuestionEmailBody from "~/helpers/email/generateCustomerQuestionEmailBody";
 import generateCustomerRewardEmailBody from "~/helpers/email/generateCustomerRewardEmailBody";
+import { Subscription } from "@prisma/client";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {
@@ -82,6 +83,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session } = await authenticate.admin(request)
 
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({
         where: {store: {equals: session.shop}}, 
         omit: {id: true}, 
@@ -108,7 +111,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         [defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings].forEach(settings => {
             standardizeLineBreaks(settings)
         })
-        return json({settings: {reviewRequestEmailSettings, customerQuestionEmailSettings, customerRewardEmailSettings, emailDesignSettings}, companyName})
+        return json({settings: {reviewRequestEmailSettings, customerQuestionEmailSettings, customerRewardEmailSettings, emailDesignSettings}, companyName, subscriptionType: subscription.type})
     }
 
     // initialize settings
@@ -129,7 +132,8 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             customerRewardEmailSettings: initialCustomerRewardEmailSettings, 
             emailDesignSettings: initialEmailDesignSettings
         }, 
-        companyName
+        companyName,
+        subscriptionType: subscription.type
     })
 }
 
@@ -169,7 +173,7 @@ export default function EmailTemplates() {
         } else if (tabName === "customerQuestionEmailSettings") {
             setSelectedTab("customerQuestionEmailSettings")
             setEmailBody(settings.customerQuestionEmailSettings.body)
-        } else if (tabName === "customerRewardEmailSettings") {
+        } else if (tabName === "customerRewardEmailSettings" && data.subscriptionType !== "free") {
             setSelectedTab("customerRewardEmailSettings")
             setEmailBody(settings.customerRewardEmailSettings.body)
         }
@@ -247,6 +251,7 @@ export default function EmailTemplates() {
     const testCustomerQuestionEmailVariables: CustomerQuestionEmailVariables = {
         question: "Is this a sample question used for the test email?",
         answer: "Yep! And this is a sample answer used for the test email!",
+        questionId: "test"
     }
 
     const testCustomerRewardEmailVariables: CustomerRewardEmailVariables = {
@@ -428,6 +433,10 @@ export default function EmailTemplates() {
                 </Card>
             </Modal>
             <BlockStack gap='300'>
+                {data.subscriptionType === "free" && 
+                <Banner title="You are currently on the free plan">
+                    To update the "Customer Reward" email template, upgrade your plan
+                </Banner>}
                 <div className={styles.tabContainer}>
                     <div 
                     className={styles.tab} 
@@ -446,7 +455,7 @@ export default function EmailTemplates() {
                     <div 
                     className={styles.tab}
                     style={{backgroundColor: selectedTab === "customerRewardEmailSettings" ? "rgb(201, 201, 201)" : "rgb(230, 230, 230)"}}
-                    onClick={() => changeTabs("customerRewardEmailSettings")}
+                    onClick={() =>  changeTabs("customerRewardEmailSettings")}
                     >
                         Customer Reward
                     </div>
