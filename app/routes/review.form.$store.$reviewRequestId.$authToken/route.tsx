@@ -66,6 +66,8 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, include: {subpar: true, good: true, perfect: true, solo: true}})
 
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
+
     return {
         formSettings, 
         customerData: {firstName: reviewRequest.firstName, email: reviewRequest.email}, 
@@ -74,7 +76,8 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
         questions, 
         rewardSettings,
         rewardTierNames: await fetchRewardTierRewards(rewardSettings?.id),
-        stars
+        stars,
+        subscriptionType: subscription?.type || "free"
     }
 }
 
@@ -420,7 +423,7 @@ export default function ReviewForm() {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
                 // send reward to customer if rewards are configured
-                if (data.rewardSettings?.type !== "none") {
+                if (data.subscriptionType !== "free" && data.rewardSettings?.type !== "none") {
                     const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: "teddypg02@gmail.com"}
                     if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
                     await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})

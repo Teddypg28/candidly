@@ -6,8 +6,7 @@ import db from '../db.server'
 import { authenticate } from "~/shopify.server";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useState } from "react";
-import { initialReviewRequestTableState, ReviewRequestData, ReviewRequestTableState } from "~/types/types";
-import { createEachProductReviewRequest } from "~/helpers/createEachProductReviewRequest";
+import { initialReviewRequestTableState, ReviewRequestTableState } from "~/types/types";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 import { Subscription } from "@prisma/client";
 

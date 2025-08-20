@@ -2,6 +2,9 @@ import db from '../../db.server'
 
 const fetchConfiguredQuestions = async (productId: number, store: string, accessToken: string) => {
 
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: store}}})
+    if (!subscription || subscription.type === "free") return []
+
     const matchingCollectionIdsQuery = `
     query {
         product(id: "gid://shopify/Product/${productId}") {

@@ -22,9 +22,8 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
     }
     
     if (question?.answer) {
-        console.log(JSON.stringify(question.answer.body), JSON.stringify(data.answer))
         const emailSent = JSON.stringify(question.answer.body) === JSON.stringify(data.answer)
-       return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}, emailSent}})
+        return await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question, answer: {update: {data: {body: data.answer}}}, emailSent}})
     } 
     
     await db.customerQuestion.update({where: {id: questionId}, data: {title: data.question}})
