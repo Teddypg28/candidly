@@ -52,7 +52,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
             const queryResult = await admin.graphql(query)
             const queryResultData = await queryResult.json()
 
-            await Promise.allSettled(queryResultData.data.orders.nodes.map(async (node: any) => {
+            await Promise.all(queryResultData.data.orders.nodes.map(async (node: any) => {
     
                 if (node.cancelledAt === null && node.email !== null) {
 
@@ -127,19 +127,12 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     // Retrieve review request data
 
-    const reviewRequestData = await db.reviewRequest.findMany({where: {store: {equals: session.shop}}})
-
-    const results = await Promise.all(reviewRequestData.map(async (request) => {
-        return createEachProductReviewRequest(request, admin)
-    }))
-
-    const reviewRequests: ReviewRequestData[] = []
-
-    results.forEach((result: any) => {
-        result.forEach((requestObject: any) => {
-            reviewRequests.push(requestObject)
-        })
-    })
+    const reviewRequests = (await db.reviewRequest.findMany({
+        where: { store: { equals: session.shop } }
+      })).map(request => ({
+        ...request,
+        orderId: request.orderId.toString()
+      }))
 
     // retrieve saved table view data
     const savedTableViews = await db.savedReviewRequestTableView.findMany({where: {store: {equals: session.shop}}, omit: {id: true, store: true}, orderBy: {id: "asc"}})
