@@ -52,9 +52,9 @@ export async function loader({ request } : LoaderFunctionArgs) {
             const queryResult = await admin.graphql(query)
             const queryResultData = await queryResult.json()
 
-            await Promise.all(queryResultData.data.orders.nodes.map(async (node: any) => {
+            await Promise.allSettled(queryResultData.data.orders.nodes.map(async (node: any) => {
     
-                if (node.cancelledAt === null) {
+                if (node.cancelledAt === null && node.email !== null) {
 
                     const numOfDaysSince = Math.round((new Date().valueOf() - new Date(node.createdAt).valueOf()) / (1000 * 60 * 60 * 24))
                     let nextRequestDate
@@ -76,7 +76,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
                         createdAt: node.createdAt,
                         orderId: node.id.split('Order/')[1],
                         firstName: node.customer?.firstName || "",
-                        email: node.email,
+                        email: node.email || "",
                         authToken: await generateReviewRequestHash(),
                         nextRequestDate,
                         fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending'
@@ -171,7 +171,6 @@ export async function action({ request } : ActionFunctionArgs) {
         } else {
             await db.savedReviewRequestTableView.updateMany({ where: {store: {equals: session.shop}, AND: {name: {equals: state.name}}}, data : { ...state, store: session.shop } })
         }
-
     } else {
         await db.savedReviewRequestTableView.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: data.viewNameToDelete}}}})
     }

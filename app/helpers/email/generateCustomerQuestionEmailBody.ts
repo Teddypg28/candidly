@@ -5,7 +5,8 @@ export default function generateCustomerQuestionEmailBody(emailBody: string, dat
     const dynamicVariableData: CustomerQuestionEmailVariables = {
         firstName: data.firstName,
         question: data.question,
-        answer: data.answer
+        answer: data.answer,
+        questionId: ""
     }
 
     let updatedEmailBody = emailBody.replaceAll('\n', '<br />')

@@ -382,9 +382,14 @@ export default function Reviews() {
         removeSelectedResources(selectedResources)
     }, [selectedResources])
 
+    const deleteSelectedReviews = useCallback(async () => {
+        submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
+        removeSelectedResources(selectedResources)
+    }, [selectedResources])
+
     const exportAsCsv = () => {
-        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.id, review.media.map(mediaObj => mediaObj.url)])
-        const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'store'].includes(key))
+        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.media.map(mediaObj => mediaObj.url)])
+        const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'reviewRequestId', 'store'].includes(key))
         rows.unshift(rowHeadings)
         const encodedReviewData = rows.map(row => row.join()).join('\n')
         setFileData(`data:text/csv;charset=utf-8,${encodedReviewData}`)
@@ -546,6 +551,7 @@ export default function Reviews() {
                 <PageActions 
                 primaryAction={{content: 'Publish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === true), onAction: publishSelectedReviews}}
                 secondaryActions={[
+                    {content: 'Delete', onAction: deleteSelectedReviews, disabled: selectedResources.length === 0, destructive: true},
                     {content: 'Unpublish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === false), onAction: unpublishSelectedReviews}
                 ]}
                 />

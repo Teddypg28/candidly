@@ -54,12 +54,16 @@
     (async function fetchReviewQuestionData() {
 
         // See whether or not they want to allow anyone to fill out reviews
-        const reviewFormDisabledRes = await fetch(`https://${window.Shopify.shop}/apps/api/settings`)
+        const reviewFormDisabledRes = await fetch(`https://${window.Shopify.shop}/apps/api/settings`, { headers: new Headers({
+            "ngrok-skip-browser-warning": "69420"
+        })})
         const isReviewFormDisabledData = await reviewFormDisabledRes.json()
         isReviewFormDisabled = isReviewFormDisabledData.disabled
       
         // Fetch custom questions attached to product ID
-        const questionsRes = await fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`);
+        const questionsRes = await fetch(`https://${window.Shopify.shop}/apps/api/questions/${reviewProductId}`, { headers: new Headers({
+            "ngrok-skip-browser-warning": "69420",
+        })});
         const questionsData = await questionsRes.json();
 
         if (questionsData.result.length > 0) {
@@ -68,7 +72,9 @@
         }
 
         // Fetch Q&A
-        const qaRes = await fetch(`https://${window.Shopify.shop}/apps/api/q&a/${reviewProductId}`);
+        const qaRes = await fetch(`https://${window.Shopify.shop}/apps/api/q&a/${reviewProductId}`, { headers: new Headers({
+            "ngrok-skip-browser-warning": "69420",
+        })});
         const qaData = await qaRes.json();
 
         if (!qaData.error) {
@@ -77,7 +83,9 @@
         }
 
         // Fetch reviews
-        const reviewsRes = await fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`);
+        const reviewsRes = await fetch(`https://${window.Shopify.shop}/apps/api/reviews/${reviewProductId}?page=1&limit=5`, { headers: new Headers({
+            "ngrok-skip-browser-warning": "69420",
+        })});
         const reviewJson = await reviewsRes.json();
         reviewData = reviewJson;
 

@@ -136,8 +136,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       break;
     case "CUSTOMERS_DATA_REQUEST":
+      throw new Response("Unhandled webhook topic", { status: 200 });
     case "CUSTOMERS_REDACT":
+      throw new Response("Unhandled webhook topic", { status: 200 });
     case "SHOP_REDACT":
+      throw new Response("Unhandled webhook topic", { status: 200 });
     default:
       throw new Response("Unhandled webhook topic", { status: 404 });
   }

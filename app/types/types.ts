@@ -23,15 +23,15 @@ export const initialRewardState: Reward = {
 }
 
 export const sampleReviewData = [
-    ['title, body', 'firstName', 'email', 'rating', 'date', 'isPublished'],
+    ['title, body', 'firstName', 'rating', 'date', 'isPublished', 'media'],
     [
-        'PowderedSlopes is awesome!',
-        "This is definitely one of the best snowboards I've ever tried",
-        'Katie',
-        'katielovessnowboarding@gmail.com',
+        'This is a sample review title!',
+        "This is a sample review body!",
+        'Name',
         5,
         new Date().toLocaleDateString(),
-        false
+        false,
+        ['https://s3.amazonaws.com/bucketname/foldername/imagename.jpg']
     ]
 ]
 

@@ -15,12 +15,13 @@ export async function action( { request, params } : ActionFunctionArgs) {
     const store = data.store 
 
     const subscriptionData = await db.subscription.findFirst({where: {shop: {equals: store}}}) as Subscription
-    if (subscriptionData.emailsLeft === 0) return new Response(JSON.stringify({message: 'No more review request emails left. Upgrade your plan.'}), {status: 401, headers: {'Content-Type': 'application/json'}})
+    if (subscriptionData.emailsSent === subscriptionData.emailQuota) return new Response(JSON.stringify({message: 'No more review request emails left. Upgrade your plan.'}), {status: 401, headers: {'Content-Type': 'application/json'}})
  
     const storeSessionDetails = await db.session.findFirst({where: {shop: {equals: store}}})
     const accessToken = storeSessionDetails?.accessToken as string
   
     const reviewRequest = await db.reviewRequest.findFirst({where: {id: {equals: reviewRequestId as string}}}) as ReviewRequest
+    
     const storeEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: store}}}) as ReviewRequestEmailSettings 
     & {
         logo: {
@@ -105,13 +106,12 @@ export async function action( { request, params } : ActionFunctionArgs) {
       const verificationStatus = await verifyRecords(currentDomain)
       if (verificationStatus === "Success") fromEmailAddress = `reviews@${currentDomain}`
     }
-  
+
     // send the email 
-    // CHANGE PLACEHOLDER EMAIL
-    await sendEmail(emailSubject, emailBody, emailVariables, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, "teddypg02@gmail.com", fromEmailAddress, "review-request")
+    await sendEmail(emailSubject, emailBody, emailVariables, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, reviewRequest.email, fromEmailAddress, "review-request")
     
     // update emails left count
-    await db.subscription.update({where: {id: subscriptionData.id}, data: {emailsLeft: subscriptionData.emailsLeft - 1}})
+    await db.subscription.update({where: {id: subscriptionData.id}, data: {emailsSent: subscriptionData.emailsSent + 1}})
 
     return new Response(JSON.stringify({message: 'Email successfully sent'}), {status: 200, headers: {'Content-Type': 'application/json'}})
 
