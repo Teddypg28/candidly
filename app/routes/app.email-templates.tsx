@@ -11,7 +11,7 @@ import styles from '../styles/EmailTemplates.module.css'
 
 import { authenticate } from "~/shopify.server";
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import { useFetcher, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings, ReviewRequestEmailVariables } from "~/types/types";
 import { SaveBar } from "@shopify/app-bridge-react";
 
@@ -108,7 +108,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
     if (reviewRequestEmailSettings && customerQuestionEmailSettings && customerRewardEmailSettings && emailDesignSettings) { 
         // convert each email body to consistent line break format
-        [defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings].forEach(settings => {
+        [reviewRequestEmailSettings, customerQuestionEmailSettings, customerRewardEmailSettings].forEach(settings => {
             standardizeLineBreaks(settings)
         })
         return json({settings: {reviewRequestEmailSettings, customerQuestionEmailSettings, customerRewardEmailSettings, emailDesignSettings}, companyName, subscriptionType: subscription.type})
@@ -152,6 +152,7 @@ export default function EmailTemplates() {
     const [emailBody, setEmailBody] = useState(data.settings.reviewRequestEmailSettings.initialEmailBody)
     
     const [errors, setErrors] = useState<any>({})
+    const fetcher = useFetcher()
 
     const cleanSettings = data.settings
 
@@ -258,7 +259,15 @@ export default function EmailTemplates() {
         discountCode: "TEST-EMAIL-DISCOUNT-CODE",
     }
 
-    const sendTestEmail = () => { 
+    const logTestEmailResult = (result: "success" | "fail") => {
+        if (result === "success") {
+            shopify.toast.show("Test email successfully sent! Check the email you have configured in settings.", {duration: 3000})
+        } else {
+            shopify.toast.show("Test email failed to send. Try again in a bit.", {duration: 3000})
+        }
+    }
+
+    const sendTestEmail = async () => { 
         const formData = new FormData()
         formData.append('body', emailBody)
         formData.append('store', data.settings.emailDesignSettings.store)
@@ -282,7 +291,12 @@ export default function EmailTemplates() {
             formData.append('subject', settings["customerRewardEmailSettings"].subject)
 
         }
-        submit(formData, {action: '/api/test-email/send', method: 'POST', encType: 'multipart/form-data', navigate: false})
+        const res = await fetch('/api/test-email/send', {method: 'POST', body: formData})
+        if (res.status === 200) {
+            logTestEmailResult("success")
+        } else {
+            logTestEmailResult("fail")
+        }
     }
 
     const generateSampleEmailBody = () => {

@@ -1,1 +1,1 @@
-export default "televisions-downtown-refresh-lighting.trycloudflare.com"
+export default "trycandidly.app"

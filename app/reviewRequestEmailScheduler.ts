@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import sendReviewRequestEmails from './sendReviewRequestEmails.server';
 
 new CronJob(
-  '06 19 * * *', 
+  '30 08 * * *', 
   async function () {
     await sendReviewRequestEmails()
   },
