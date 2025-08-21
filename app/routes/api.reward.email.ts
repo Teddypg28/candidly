@@ -39,7 +39,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 const tierRewardSettingsIds = [reward.subparId, reward.goodId, reward.perfectId]
                 const rewardSetting = await db.rewardSetting.findFirst({where: {id: {equals: tierRewardSettingsIds[reviewScore-1]}}, include: {eligibleCollections: true, eligibleProducts: true}})
 
-                if (!rewardSetting) return new Response(JSON.stringify({status: "no reward setting found"}), {status: 200})
+                if (!rewardSetting) return new Response(JSON.stringify({status: "no reward setting found"}), {status: 400})
                 
                 if (rewardSetting.selectedRewardType === "free-shipping") {
                     rewardTitle = "Free Shipping"
@@ -126,6 +126,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
             }
         }
+
+        if (discountCode === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
 
         const emailData = {
             reward: rewardTitle, 

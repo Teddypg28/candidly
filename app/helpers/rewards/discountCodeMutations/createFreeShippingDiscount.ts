@@ -64,7 +64,7 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
               startsAt: new Date(),
               appliesOncePerCustomer: true,
               customerSelection: {
-                all: false
+                all: true
               },
               usageLimit: 1,
               title: "Free Shipping Coupon",
@@ -74,7 +74,7 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
                   greaterThanOrEqualToSubtotal: reward.minPurchaseDollarValue
                 }
               } : reward?.minPurchaseType === "quantity" ? {
-                quantity: {greaterThanOrEqualToQuantity: reward.minPurchaseQuantityValue}
+                quantity: {greaterThanOrEqualToQuantity: reward.minPurchaseQuantityValue.toString()}
               } : 
               {},
               destination: {
@@ -95,7 +95,7 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
         const errors = data.data.discountCodeFreeShippingCreate.userErrors
 
         if (errors.length > 0) return null
-        
+
         return randomDiscountCode
     }
 

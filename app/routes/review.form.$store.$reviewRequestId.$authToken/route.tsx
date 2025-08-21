@@ -61,7 +61,7 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
             return questions
         }
         return null
-    })).then(res => res.flat().flatMap(q => q ? [q] : []))
+    })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, include: {subpar: true, good: true, perfect: true, solo: true}})
@@ -95,6 +95,8 @@ export default function ReviewForm() {
 
     const [currentStep, setCurrentStep] = useState<number>(1)
     const [uploadedMedia, setUploadedMedia] = useState<any>([])
+    const [currentProductIndex, setCurrentProductIndex] = useState(0)
+
     const uploadedMediaRef = useRef<any>([])
 
     const currentStarRating = useRef(data.stars)
@@ -433,6 +435,7 @@ export default function ReviewForm() {
                 setReviewSuccessfullySubmitted(true)
                 if (productsToReview.current.length > 0) {
                     setTimeout(() => {
+                        setCurrentProductIndex(prevCurrentProductIndex => {return prevCurrentProductIndex+1})
                         setReviewSuccessfullySubmitted(false)
                         setCurrentStep(1)
                         setUserInputState({...initialUserReviewFormInputState, firstName: data.customerData.firstName})
@@ -516,7 +519,7 @@ export default function ReviewForm() {
 
     const renderQuestions = useCallback(() => {
         if (data.questions.length > 0) {
-            data.questions.forEach((question) => {
+            data.questions[currentProductIndex].forEach((question) => {
                 insertCustomQuestion(question)
             })
             const customQuestionDropdowns = document.querySelectorAll(`.${styles.customQuestionDropdown}`)
