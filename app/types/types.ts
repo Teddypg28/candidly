@@ -46,9 +46,7 @@ export const defaultReviewRequestEmailSettings: ReviewRequestEmailSettings = {
         It’ll only take a minute of your time—and it would mean the world to us!
 
         {{stars}}
-        Thanks a ton for being a part of our journey. We can’t wait to hear what you think!
-        
-        - {{companyName}}`
+        Thanks a ton for being a part of our journey. We can’t wait to hear what you think!`
     ),
     followUpEmailBody: (
         `

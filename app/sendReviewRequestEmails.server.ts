@@ -1,4 +1,5 @@
 import db from './db.server'
+import appUrl from './helpers/appUrl'
 import { AppSettings } from './types/types'
 
 export default async function sendReviewRequestEmails() {
@@ -6,7 +7,7 @@ export default async function sendReviewRequestEmails() {
 
     await Promise.allSettled(requestsToSendToday.map(async (request) => {
 
-        await fetch(`https://trycandidly.app/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
+        await fetch(`https://${appUrl}/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
 
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: request.store}}}) as AppSettings
 

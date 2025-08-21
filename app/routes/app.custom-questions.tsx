@@ -56,9 +56,11 @@ export const action = async ({request} : ActionFunctionArgs) => {
 
 export const loader = async ({request} : LoaderFunctionArgs) => {
     try {
-        const { session } = await authenticate.admin(request)
+        const { session, redirect } = await authenticate.admin(request)
 
         const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+
+        if (subscription.type === "free") return redirect('/app/billing')
 
         const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true, textAnswers: true, answerChoiceSnapshots: true}, omit: {store: true}})
         const savedViews = await db.savedCustomQuestionTableView.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
@@ -84,7 +86,7 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
             }
         }))
 
-        return json({ questions: questionData, savedViews, subscriptionType: subscription.type })
+        return json({ questions: questionData, savedViews })
 
     } catch (error) {
         console.error(error)
@@ -268,17 +270,13 @@ const CustomQuestions = () => {
         title="Custom Review Form Questions"
         subtitle="Generate any questions that you want to ask customers"
         backAction={{onAction: () => nav('/app')}}
-        primaryAction={{content: 'Create New Question', onAction: () => nav('/app/question/new'), disabled: questionsState.subscriptionType === "free"}}
+        primaryAction={{content: 'Create New Question', onAction: () => nav('/app/question/new')}}
         >
             <BlockStack gap="400">
-                {questionsState.subscriptionType === "free" &&
-                <Banner title="You are currently on the free plan">
-                    <Link url="/app/billing">Upgrade</Link> your plan to create your first custom question
-                </Banner>}
                 {questions.length === 0 ?
                 <Card>
                     <EmptyState
-                    action={{content: 'Create Your First Question', onAction: () => nav('/app/question/new'), disabled: questionsState.subscriptionType === "free"}}
+                    action={{content: 'Create Your First Question', onAction: () => nav('/app/question/new')}}
                     heading="You Don't Have Any Custom Questions Yet!"
                     image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
                     >

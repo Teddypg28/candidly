@@ -1,4 +1,5 @@
 import { ReviewRequestEmailVariables } from "~/types/types";
+import appUrl from "../appUrl";
 
 export default function generateReviewRequestEmailBody(emailBody: string, data: ReviewRequestEmailVariables) {
 
@@ -18,7 +19,7 @@ export default function generateReviewRequestEmailBody(emailBody: string, data: 
     queryString += questionQueryString
 
     // replace temporary app url
-    const href = data.reviewRequestId ? `https://trycandidly.app/review/form/${data.store?.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
+    const href = data.reviewRequestId ? `https://${appUrl}/review/form/${data.store?.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
     
     const dynamicVariableData: any = {
         firstName: data.firstName,

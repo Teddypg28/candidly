@@ -90,7 +90,7 @@ export default function ReviewForm() {
 
     const [userInputState, setUserInputState] = useState<UserReviewFormInputState>({
         ...initialUserReviewFormInputState, 
-        firstName: data.customerData.firstName,
+        firstName: data.customerData.firstName
     })
 
     const [currentStep, setCurrentStep] = useState<number>(1)
@@ -434,6 +434,8 @@ export default function ReviewForm() {
                 if (productsToReview.current.length > 0) {
                     setTimeout(() => {
                         setReviewSuccessfullySubmitted(false)
+                        setCurrentStep(1)
+                        setUserInputState({...initialUserReviewFormInputState, firstName: data.customerData.firstName})
                     }, 2000)
                 }
             } 

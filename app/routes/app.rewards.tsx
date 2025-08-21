@@ -1,10 +1,10 @@
-import { Banner, BlockStack, Button, Card, ChoiceList, InlineError, InlineStack, Layout, Link, Page, Select, Text, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Button, Card, ChoiceList, InlineError, InlineStack, Layout, Page, Select, Text, Thumbnail } from "@shopify/polaris";
 import { ImageIcon } from "@shopify/polaris-icons";
 
 import { useState } from "react";
 import RewardChoice from "~/components/RewardChoice";
 import { Reward as RewardStateReward, RewardState, initialRewardState, SelectedProduct_Reward, EligibleProduct, SelectedCollection_Reward, EligibleCollection } from "~/types/types";
-import { Reward as RewardShape } from "@prisma/client";
+import { Reward as RewardShape, Subscription } from "@prisma/client";
 
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "~/shopify.server";
@@ -75,9 +75,11 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 }
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
-    const { session, admin } = await authenticate.admin(request)
+    const { session, admin, redirect } = await authenticate.admin(request)
 
-    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+
+    if (subscription.type === "free") return redirect('/app/billing')
 
     // fetch rewardSettings for store
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
@@ -116,7 +118,6 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             },
             selectedBxgyProducts,
             type: rewardSettings.type,
-            subscriptionType: subscription?.type
         }
     }
 
@@ -158,7 +159,6 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
         },
         selectedBxgyProducts: {subpar: [], good: [], perfect: [], solo: []},
         type: initializedRewardSettings.type,
-        subscriptionType: subscription?.type
     }
 }
 
@@ -305,12 +305,7 @@ export default function Reward() {
             <Layout>
                 <Layout.Section>
                     <BlockStack gap="400">
-                        {data.subscriptionType === "free" &&
-                        <Banner title="You are currently on the free plan">
-                            <Link url="/app/billing">Upgrade</Link> your plan to create your first reward and incentivize customers to leave awesome reviews
-                        </Banner>}
                         <ChoiceList 
-                        disabled={data.subscriptionType === "free"}
                         choices={[
                             {label: 'Single Reward', value: 'solo', helpText: 'Same reward for each review'},
                             {label: 'Reward Tiers', value: 'tiers', helpText: 'Different rewards based on the quality of the review'},
