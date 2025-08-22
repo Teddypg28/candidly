@@ -108,7 +108,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                           }
                       }
                   ],
-                  "test": false,
+                  "test": true,
                   "replacementBehavior": "APPLY_IMMEDIATELY",
               },
             },

@@ -38,6 +38,7 @@ const createReviewStars = () => {
     totalNumReviewsContainer.textContent = `${reviewData.totalReviews} ${reviewData.totalReviews === 1 ? 'Review' : 'Reviews'}`
     totalNumReviewsContainer.style.marginLeft = '10px'
     totalNumReviewsContainer.style.padding = '0px'
+    totalNumReviewsContainer.style.textTransform = 'none'
     navigationTag.appendChild(totalNumReviewsContainer)
     
     const priceContainer = document.querySelector('.price__container') || document.querySelector('product-price')

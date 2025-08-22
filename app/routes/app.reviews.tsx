@@ -44,7 +44,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     if (action === 'deleteReviews') {
         return await Promise.all(data.reviewIds.map(async (id: string) => {
-            return await db.productReview.delete({where: { id }})
+            const productReview = await db.productReview.delete({where: { id }})
+            return await updateProductRatingMetafields(productReview.productId, productReview.rating, admin, session)
         }))
     }
 

@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://ongoing-ticket-maritime-op.trycloudflare.com"
+application_url = "https://shipping-mathematics-lands-costs.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://ongoing-ticket-maritime-op.trycloudflare.com/auth/callback",
-  "https://ongoing-ticket-maritime-op.trycloudflare.com/auth/shopify/callback",
-  "https://ongoing-ticket-maritime-op.trycloudflare.com/api/auth/callback"
+  "https://shipping-mathematics-lands-costs.trycloudflare.com/auth/callback",
+  "https://shipping-mathematics-lands-costs.trycloudflare.com/auth/shopify/callback",
+  "https://shipping-mathematics-lands-costs.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://ongoing-ticket-maritime-op.trycloudflare.com/api"
+url = "https://shipping-mathematics-lands-costs.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 
