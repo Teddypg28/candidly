@@ -49,7 +49,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                     const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyReceiveProductId)
 
                     rewardTitle = `Buy ${rewardSetting.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle} Get ${rewardSetting.bxgyReceiveAmount} ${bxgyReceiveProductTitle} ${rewardSetting.bxgyRewardType === "free" ? "Free" :
-                    rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount}%`} off`
+                    rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount}% off`}`
                     discountCode = await createBxgyDiscount(rewardSetting.id, reward.store) || ""
                 } else {
                     if (rewardSetting.selectedRewardType === "dollar") {
@@ -61,20 +61,20 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 }
                 const minPurchaseStatement = fetchMinPurchaseRequirementStatement(rewardSetting)
                 rewardTitle += minPurchaseStatement
-                if (rewardSetting.productCollectionConfiguration[0] === "all") {
-                    rewardTitle += "(it is eligible for all products/collections)"
-                } else if (rewardSetting.productCollectionConfiguration[0] === "products") {
+                if (rewardSetting.productCollectionConfiguration === "all") {
+                    rewardTitle += " (it is eligible for all products/collections)"
+                } else if (rewardSetting.productCollectionConfiguration === "products") {
                     const eligibleProducts = await Promise.all(rewardSetting.eligibleProducts.map(async (product) => {
                         return await fetchProductTitle(reward.store, product.productId)
                     }))
                     const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
-                    rewardTitle += `(it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
+                    rewardTitle += ` (it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
                 } else  {
                     const eligibleCollections = await Promise.all(rewardSetting.eligibleCollections.map(async (collection) => {
                         return await fetchCollectionTitle(reward.store, collection.collectionId)
                     }))
                     const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
-                    rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
+                    rewardTitle += ` (it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
                 }
             }
         }
@@ -95,15 +95,15 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyReceiveProductId)
 
                 rewardTitle = `Buy ${soloReward.bxgyPurchaseAmount}: ${bxgyPurchaseProductTitle}, Get ${soloReward.bxgyReceiveAmount}: ${bxgyReceiveProductTitle} - ${soloReward.bxgyRewardType === "free" ? "Free" :
-                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off`
+                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off `
                 
                 discountCode = await createBxgyDiscount(soloReward.id, reward.store) || ""
             } else {
                 if (soloReward.selectedRewardType === "dollar") {
-                    rewardTitle = `$${soloReward.dollarAmount} off`
+                    rewardTitle = `$${soloReward.dollarAmount} off `
 
                 } else if (soloReward.selectedRewardType === "percent") {
-                    rewardTitle = `${soloReward.percentageAmount * 100}% off`
+                    rewardTitle = `${soloReward.percentageAmount * 100}% off `
                 } 
                 discountCode = await createBasicDiscount(soloReward.id, reward.store) || ""
             } 
@@ -111,19 +111,19 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             const minPurchaseStatement = fetchMinPurchaseRequirementStatement(soloReward)
             rewardTitle += minPurchaseStatement
             if (soloReward.productCollectionConfiguration[0] === "all") {
-                rewardTitle += " (it is eligible for all products/collections)"
+                rewardTitle += "(it is eligible for all products/collections)"
             } else if (soloReward.productCollectionConfiguration[0] === "products") {
                 const eligibleProducts = await Promise.all(soloReward.eligibleProducts.map(async (product) => {
                     return await fetchProductTitle(reward.store, product.productId)
                 }))
                 const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
-                rewardTitle += ` (it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
+                rewardTitle += `(it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
             } else  {
                 const eligibleCollections = await Promise.all(soloReward.eligibleCollections.map(async (collection) => {
                     return await fetchCollectionTitle(reward.store, collection.collectionId)
                 }))
                 const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
-                rewardTitle += ` (it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
+                rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
             }
         }
 

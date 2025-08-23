@@ -6,7 +6,7 @@ import { MutableRefObject } from "react"
 export const initialRewardState: Reward = {
     selectedRewardType: 'free-shipping', 
     dollarAmount: 10, 
-    percentageAmount: 10, 
+    percentageAmount: 0.1, 
     bxgyRewardType: "free", 
     bxgyPurchaseAmount: 1, 
     bxgyReceiveAmount: 1, 

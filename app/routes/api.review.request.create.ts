@@ -35,7 +35,7 @@ export async function action({ request } : ActionFunctionArgs) {
 
         // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
         const uploadedMedia = formData.getAll('media') as File[] | String
-        formData.delete('media')
+        delete data['media']
 
         // remove authToken
         delete data['authToken']

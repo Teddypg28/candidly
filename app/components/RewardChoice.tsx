@@ -108,7 +108,7 @@ export default function RewardChoice({type, state, setState, bxgyProductState, s
                 disabled={isError && !errors['fixedAmount']}
                 error={errors['fixedAmount']}
                 value={state.rewards[type as keyof typeof state.rewards].dollarAmount.toString()}
-                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], fixedAmount: parseInt(value)}}})}
+                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], dollarAmount: parseInt(value)}}})}
                 min={1}
                 />
                 {errors['fixedAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}
