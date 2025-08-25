@@ -63,6 +63,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             }))
             // delete the review
             await db.productReview.delete({where: {id: params.id}})
+            // update metafields
             await updateProductRatingMetafields(params.id as string, 0, admin, session)
             return redirect('/app/reviews')
         } 

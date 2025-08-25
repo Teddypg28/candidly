@@ -8,7 +8,6 @@ import { useState } from "react";
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
-import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()
@@ -22,14 +21,13 @@ export async function loader({ request } : LoaderFunctionArgs) {
     const reviewFormQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
     
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
-    const rewardTierNames = await fetchRewardTierRewards(rewardSettings?.id)
 
     if (reviewFormSettings) {
-        return json({settings: reviewFormSettings, questions: reviewFormQuestions, rewardNames: rewardTierNames})
+        return json({settings: reviewFormSettings, questions: reviewFormQuestions})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {store: session.shop}})
 
-    return json({settings: defaultSettings, questions: reviewFormQuestions, rewardNames: []})
+    return json({settings: defaultSettings, questions: reviewFormQuestions})
 }
 
 export default function ReviewFormTemplate() {
@@ -57,9 +55,6 @@ export default function ReviewFormTemplate() {
                 <button onClick={() => { setSettingsState(cleanState) }}></button>
             </SaveBar>
             <BlockStack gap={'200'}>
-                <Banner title="Reward Tiers">
-                    Note: if you do not have any reward tiers configured, the tiers graphic and progress bars will not appear on the form.
-                </Banner>
                 <BlockStack gap='200'>
                     <Layout>
                         <Layout.Section variant="oneThird">
@@ -112,7 +107,6 @@ export default function ReviewFormTemplate() {
                             starRatingHeading={settingsState.starRatingHeading}
                             titleHeading={settingsState.titleHeading}
                             titlePlaceholder={settingsState.titlePlaceholder}
-                            rewardNames={data.rewardNames}
                             />
                         </Layout.Section>
                     </Layout>

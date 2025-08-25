@@ -9,10 +9,6 @@ import { ReviewFormSettings } from "@prisma/client";
 
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
-import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
-import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
-
-import isGibberish from "~/helpers/gibberish/isGibberish";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
@@ -64,7 +60,7 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
-    const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, include: {subpar: true, good: true, perfect: true, solo: true}})
+    const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
 
     const subscription = await db.subscription.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
 
@@ -75,7 +71,6 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
         productDataObjects, 
         questions, 
         rewardSettings,
-        rewardTierNames: await fetchRewardTierRewards(rewardSettings?.id),
         stars,
         subscriptionType: subscription?.type || "free"
     }
@@ -102,8 +97,6 @@ export default function ReviewForm() {
     const currentStarRating = useRef(data.stars)
 
     const [uploadMediaError, setUploadMediaError] = useState('')
-
-    const reviewScore = fetchRewardTiersScore(userInputState.title, userInputState.body, uploadedMediaRef)
 
     const steps = [
         {
@@ -423,23 +416,14 @@ export default function ReviewForm() {
         const errors = validateFormFields()
         if (errors) return
 
-        if (["title", "body"].includes(steps[currentStep-1].key)) {
-            const gibberish = isGibberish(userInputState[steps[currentStep-1].key as keyof typeof userInputState] as "body" || "title")
-            if (gibberish) {
-                return document.querySelector('#gibberishDetectedMessage')?.classList.remove(styles.hidden)
-            }
-            document.querySelector('#gibberishDetectedMessage')?.classList.add(styles.hidden)
-        }
-
         if (currentStep !== steps.length) {
             setCurrentStep(currentStep => {return currentStep + 1})
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
                 // send reward to customer if rewards are configured
-                if (data.subscriptionType !== "free" && data.rewardSettings?.type !== "none") {
-                    const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: "teddypg02@gmail.com"}
-                    if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
+                if (data.subscriptionType !== "free" && !data.rewardSettings?.disabled) {
+                    const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: data.customerData.email}
                     await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
                 }
                 // update products to review
@@ -631,12 +615,8 @@ export default function ReviewForm() {
         }
     }, [])
 
-    const progressMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `writing the perfect ${steps[currentStep-1].key}` : "uploading the perfect amount of media"
-    const perfectedMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `wrote the perfect ${steps[currentStep-1].key}!` : 'uploaded the perfect amount of media!'
-    const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
-
   return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings?.type !== "none"} firstName={userInputState.firstName as string} /> :
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={!data.rewardSettings?.disabled} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>
@@ -645,22 +625,6 @@ export default function ReviewForm() {
             </div>
             <img src={productsToReview.current[0].image || undefined} height={'70px'} width={'70px'} />
         </div>
-        {data.rewardSettings?.type === "tiers" && 
-            <div className={styles.rewardTiersMainContainer}>
-                <h1 style={{padding: 0, margin: 0, fontSize: '20px'}}>Reward Tiers</h1>
-                <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
-                <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
-                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{data.rewardTierNames[0]}</p>
-                    </div>
-                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p className={styles.rewardTierName}>{data.rewardTierNames[1]}</p>
-                    </div>
-                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{data.rewardTierNames[2]}</p>
-                    </div>
-                </div>
-            </div>}
         <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
@@ -671,13 +635,6 @@ export default function ReviewForm() {
                 </div>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
-                    {data.rewardSettings?.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
-                        <div className={styles.progressBarContainer}>
-                            <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
-                                <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
-                            </div>
-                            <p className={styles.progressMessage} style={{fontWeight: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? 'bolder' : 'normal', color: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score == 3 ? '#67af98' : 'black'}}>{progressMessage}</p>
-                        </div>}
                     {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}   
                     <p id="gibberishDetectedMessage" className={`${styles.reviewFormValidationError} ${styles.hidden}`}>Whoops! We detected gibberish</p>
                     {uploadMediaError && <p className={styles.reviewFormValidationError}>{uploadMediaError}</p>}           

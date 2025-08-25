@@ -3,7 +3,6 @@ import { Card, Pagination } from "@shopify/polaris"
 import styles from '../styles/ReviewForm.module.css'
 import { useCallback, useEffect, useRef, useState } from "react"
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
-import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
 
 interface Props {
     starRatingHeading: string;
@@ -13,10 +12,9 @@ interface Props {
     bodyHeading: string;
     bodyPlaceholder: string;
     mediaHeading: string;
-    rewardNames: string[]
 }
 
-const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading, customQuestionsHeading, rewardNames } : Props ) => {
+const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading, customQuestionsHeading } : Props ) => {
 
     const [currentStep, setCurrentStep] = useState<number>(1)
 
@@ -25,10 +23,6 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
         firstName: "",
         email: ""
     })
-
-    const uploadedMediaRef = useRef([])
-
-    const reviewScore = fetchRewardTiersScore(userInputState.title, userInputState.body, uploadedMediaRef)
 
     const steps = [
         {
@@ -134,10 +128,6 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
         })
     }, [])
 
-    const progressMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `writing the perfect ${steps[currentStep-1].key}` : "uploading the perfect amount of media"
-    const perfectedMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `wrote the perfect ${steps[currentStep-1].key}!` : 'uploaded the perfect amount of media!'
-    const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
-
   return (
         <Card>
             <Pagination 
@@ -154,26 +144,6 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
                     </div>
                     <div className={styles.inputContainer}>
                         {steps[currentStep-1].markup}
-                        {["title", "body"].includes(steps[currentStep-1].key) && 
-                        <div style={{width: "100%", textAlign: "left"}}>
-                            <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
-                                <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
-                            </div>
-                            <p style={{margin: "0px", padding: "0px", marginTop: "5px", fontSize: "14px", fontWeight: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? 'bolder' : 'normal', color: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score == 3 ? '#67af98' : 'black'}}>{progressMessage}</p>
-                        </div>}
-                    </div>
-                </div>
-            </div>
-            <div>
-                <div className={styles.rewardTiersContainer}>
-                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[0]}</p>
-                    </div>
-                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[1]}</p>
-                    </div>
-                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[2]}</p>
                     </div>
                 </div>
             </div>

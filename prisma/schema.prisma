@@ -87,17 +87,17 @@ model EmailDesignSettings {
 }
 
 model EligibleProduct {
-  id              String        @id @default(uuid())
-  productId       String
-  rewardSettingId String
-  reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
+  id        String @id @default(uuid())
+  productId String
+  rewardId  String
+  reward    Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
 }
 
 model EligibleCollection {
-  id              String        @id @default(uuid())
-  collectionId    String
-  rewardSettingId String
-  reward          RewardSetting @relation(fields: [rewardSettingId], references: [id], onDelete: Cascade)
+  id           String @id @default(uuid())
+  collectionId String
+  rewardId     String
+  reward       Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
 }
 
 model OnboardingDismissalState {
@@ -208,24 +208,9 @@ model RewardSettings {
 }
 
 model Reward {
-  id    String @id @default(uuid())
-  store String
-
-  type String
-
-  subparId  String @unique
-  goodId    String @unique
-  perfectId String @unique
-  soloId    String @unique
-
-  subpar  RewardSetting @relation("SubparReward", fields: [subparId], references: [id])
-  good    RewardSetting @relation("GoodReward", fields: [goodId], references: [id])
-  perfect RewardSetting @relation("PerfectReward", fields: [perfectId], references: [id])
-  solo    RewardSetting @relation("SoloReward", fields: [soloId], references: [id])
-}
-
-model RewardSetting {
   id                             String               @id @default(uuid())
+  disabled                       Boolean              @default(true)
+  store                          String
   selectedRewardType             String
   dollarAmount                   Int
   percentageAmount               Float
@@ -242,11 +227,6 @@ model RewardSetting {
   productCollectionConfiguration String               @default("all")
   eligibleProducts               EligibleProduct[]
   eligibleCollections            EligibleCollection[]
-
-  subparReward  Reward? @relation("SubparReward")
-  goodReward    Reward? @relation("GoodReward")
-  perfectReward Reward? @relation("PerfectReward")
-  soloReward    Reward? @relation("SoloReward")
 }
 
 model Subscription {

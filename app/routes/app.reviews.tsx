@@ -14,6 +14,8 @@ import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState,
 import styles from '../styles/ImportReviews.module.css'
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
 import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import s3Client from "~/utils/s3Client";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
 
@@ -44,7 +46,16 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
     if (action === 'deleteReviews') {
         return await Promise.all(data.reviewIds.map(async (id: string) => {
+            // delete media
+            const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: id}}})
+            await Promise.all(reviewMediaRecords.map(async (record) => {
+                const bucketKey = record.url.split('.com/')[1]
+                const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: bucketKey})
+                return await s3Client.send(deleteCommand)
+            }))
+            // delete review
             const productReview = await db.productReview.delete({where: { id }})
+            // update metafields
             return await updateProductRatingMetafields(productReview.productId, productReview.rating, admin, session)
         }))
     }
