@@ -200,75 +200,6 @@ export default function ReviewForm() {
         document.body.style.fontFamily = "Montserrat"
     }, [])
 
-    const uploadFile = useCallback((file: any, uploadMediaBtn: any, uploadedMediaContainer: any) => {
-        const reader = new FileReader()
-        
-        reader.readAsDataURL(file)
-
-        reader.onloadend = () => {
-            const imageContainer = document.createElement('figure')
-            imageContainer.className = styles.uploadedImage
-
-            const img = document.createElement('img') as any
-            img.src = reader.result
-            
-            imageContainer.appendChild(img)
-            imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
-
-            const removeUploadedMediaContainer = document.createElement('div')
-            removeUploadedMediaContainer.className = styles.removeUploadedMediaContainer
-            removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
-            removeUploadedMediaContainer.dataset.fileName = file.name
-
-            const trashCanIconContainer = document.createElement('div')
-            trashCanIconContainer.className = styles.removeUploadedMedia
-            trashCanIconContainer.className = styles.hidden
-            trashCanIconContainer.dataset.fileName = file.name
-
-            const trashCanIcon = document.createElement('i')
-            trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
-            trashCanIcon.id = "deleteMedia"
-            trashCanIcon.dataset.fileName = file.name
-            trashCanIcon.style.color = "#ffffff"
-
-            trashCanIconContainer.appendChild(trashCanIcon)
-
-            removeUploadedMediaContainer.appendChild(trashCanIconContainer)
-
-            removeUploadedMediaContainer.addEventListener('mouseover', () => {
-                removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
-                trashCanIconContainer.classList.remove(styles.hidden)       
-            })
-
-            removeUploadedMediaContainer.addEventListener('mouseleave', () => {                    
-                removeUploadedMediaContainer.style.backgroundColor = 'transparent'
-                trashCanIconContainer.classList.add(styles.hidden)
-            })
-
-            removeUploadedMediaContainer.addEventListener('click', (e: any) => {
-                if (e.target.id.includes('deleteMedia')) { 
-                    // remove deleted file from file list
-                    const dt = new DataTransfer()
-                    const currentFiles = Array.from(uploadMediaBtn.files)
-                    currentFiles.forEach((file: any) => {
-                        if (file.name !== e.target.dataset.fileName) {
-                            dt.items.add(file)
-                        }
-                    })
-                    uploadMediaBtn.files = dt.files
-                    // remove deleted files from saved uploaded files array
-                    uploadedMediaRef.current = uploadedMediaRef.current.filter((uploadedFile: any) => uploadedFile !== file)
-                    setUploadedMedia(uploadedMediaRef.current)
-                    imageContainer.remove()
-                    conditionallyRenderUploadMediaLabel()
-                }
-            })
-            imageContainer.appendChild(removeUploadedMediaContainer)
-            uploadedMediaContainer.appendChild(imageContainer)
-            conditionallyRenderUploadMediaLabel()
-        }
-    }, [])
-
     useEffect(() => {
         if (uploadedMediaRef.current.length > 0) {
             conditionallyRenderUploadMediaLabel()
@@ -318,8 +249,72 @@ export default function ReviewForm() {
                     uploadedMediaRef.current = [...uploadedMediaRef.current, file]
                     setUploadedMedia(uploadedMediaRef.current)
         
-                    // upload the file to the input container
-                    uploadFile(file, uploadMediaBtn, uploadedMediaContainer)
+                    const reader = new FileReader()
+        
+                    reader.readAsDataURL(file)
+        
+                    reader.onloadend = () => {
+                        const imageContainer = document.createElement('figure')
+                        imageContainer.className = styles.uploadedImage
+        
+                        const img = document.createElement('img') as any
+                        img.src = reader.result
+                        
+                        imageContainer.appendChild(img)
+                        imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+        
+                        const removeUploadedMediaContainer = document.createElement('div')
+                        removeUploadedMediaContainer.className = styles.removeUploadedMediaContainer
+                        removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
+                        removeUploadedMediaContainer.dataset.fileName = file.name
+        
+                        const trashCanIconContainer = document.createElement('div')
+                        trashCanIconContainer.className = styles.removeUploadedMedia
+                        trashCanIconContainer.className = styles.hidden
+                        trashCanIconContainer.dataset.fileName = file.name
+        
+                        const trashCanIcon = document.createElement('i')
+                        trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
+                        trashCanIcon.id = "deleteMedia"
+                        trashCanIcon.dataset.fileName = file.name
+                        trashCanIcon.style.color = "#ffffff"
+        
+                        trashCanIconContainer.appendChild(trashCanIcon)
+        
+                        removeUploadedMediaContainer.appendChild(trashCanIconContainer)
+        
+                        removeUploadedMediaContainer.addEventListener('mouseover', () => {
+                            removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
+                            trashCanIconContainer.classList.remove(styles.hidden)       
+                        })
+        
+                        removeUploadedMediaContainer.addEventListener('mouseleave', () => {                    
+                            removeUploadedMediaContainer.style.backgroundColor = 'transparent'
+                            trashCanIconContainer.classList.add(styles.hidden)
+                        })
+        
+                        removeUploadedMediaContainer.addEventListener('click', (e: any) => {
+                            if (e.target.id.includes('deleteMedia')) { 
+                                // remove deleted file from file list
+                                const dt = new DataTransfer()
+                                const currentFiles = Array.from(uploadMediaBtn.files)
+                                currentFiles.forEach((file: any) => {
+                                    if (file.name !== e.target.dataset.fileName) {
+                                        dt.items.add(file)
+                                    }
+                                })
+                                uploadMediaBtn.files = dt.files
+                                // remove deleted files from saved uploaded files array
+                                uploadedMediaRef.current = uploadedMediaRef.current.filter((uploadedFile: any) => uploadedFile !== file)
+                                setUploadedMedia(uploadedMediaRef.current)
+                                imageContainer.remove()
+                                conditionallyRenderUploadMediaLabel()
+                            }
+                        })
+                        imageContainer.appendChild(removeUploadedMediaContainer)
+                        uploadedMediaContainer.appendChild(imageContainer)
+                        conditionallyRenderUploadMediaLabel()
+                    }
                 }
             }
         
@@ -328,13 +323,6 @@ export default function ReviewForm() {
                     Array.from(uploadMediaBtn.files).forEach(verifyFileType)
                 })
             }
-
-            if (uploadedMediaRef.current.length > 0) {
-                uploadedMediaRef.current.forEach((file: any) => {
-                    uploadFile(file, uploadMediaBtn, uploadedMediaContainer)
-                })
-            }
-
         }
 
     }, [currentStep])

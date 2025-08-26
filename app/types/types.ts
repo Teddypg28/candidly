@@ -7,7 +7,7 @@ export const initialRewardState: Reward = {
     disabled: true,
     selectedRewardType: 'free-shipping', 
     dollarAmount: 10, 
-    percentageAmount: 0.1, 
+    percentageAmount: 10, 
     bxgyRewardType: "free", 
     bxgyPurchaseAmount: 1, 
     bxgyReceiveAmount: 1, 

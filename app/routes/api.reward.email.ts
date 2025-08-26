@@ -31,41 +31,91 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             rewardTitle = "Free Shipping"
             discountCode = await createFreeShippingDiscount(reward.id, reward.store) || ""
 
-        } else if (reward.selectedRewardType === "bxgy") {
-            const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, reward.bxgyPurchaseProductId)
-            const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, reward.bxgyReceiveProductId)
+                if (!rewardSetting) return new Response(JSON.stringify({status: "no reward setting found"}), {status: 400})
+                
+                if (rewardSetting.selectedRewardType === "free-shipping") {
+                    rewardTitle = "Free Shipping"
+                    discountCode = await createFreeShippingDiscount(rewardSetting.id, reward.store) || ""
+                } else if (rewardSetting.selectedRewardType === "bxgy") {
+                    const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyPurchaseProductId)
+                    const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyReceiveProductId)
 
-            rewardTitle = `Buy ${reward.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle}, Get ${reward.bxgyReceiveAmount} ${bxgyReceiveProductTitle} - ${reward.bxgyRewardType === "free" ? "Free" :
-            reward.bxgyRewardType === "dollar" ? `$${reward.bxgyDollarAmount}` : `${reward.bxgyPercentageAmount * 100}%`} Off`
-            
-            discountCode = await createBxgyDiscount(reward.id, reward.store) || ""
-        } else {
-            if (reward.selectedRewardType === "dollar") {
-                rewardTitle = `$${reward.dollarAmount} off`
+                    rewardTitle = `Buy ${rewardSetting.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle} Get ${rewardSetting.bxgyReceiveAmount} ${bxgyReceiveProductTitle} ${rewardSetting.bxgyRewardType === "free" ? "Free" :
+                    rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount}% off`}`
+                    discountCode = await createBxgyDiscount(rewardSetting.id, reward.store) || ""
+                } else {
+                    if (rewardSetting.selectedRewardType === "dollar") {
+                        rewardTitle = `$${rewardSetting.dollarAmount} off`
+                    } else if (rewardSetting.selectedRewardType === "percent") {
+                        rewardTitle = `${rewardSetting.percentageAmount * 100}% off`
+                    } 
+                    discountCode = await createBasicDiscount(rewardSetting.id, reward.store) || ""
+                }
+                const minPurchaseStatement = fetchMinPurchaseRequirementStatement(rewardSetting)
+                rewardTitle += minPurchaseStatement
+                if (rewardSetting.productCollectionConfiguration === "all") {
+                    rewardTitle += " (it is eligible for all products/collections)"
+                } else if (rewardSetting.productCollectionConfiguration === "products") {
+                    const eligibleProducts = await Promise.all(rewardSetting.eligibleProducts.map(async (product) => {
+                        return await fetchProductTitle(reward.store, product.productId)
+                    }))
+                    const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
+                    rewardTitle += ` (it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
+                } else  {
+                    const eligibleCollections = await Promise.all(rewardSetting.eligibleCollections.map(async (collection) => {
+                        return await fetchCollectionTitle(reward.store, collection.collectionId)
+                    }))
+                    const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
+                    rewardTitle += ` (it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
+                }
+            }
+        }
 
-            } else if (reward.selectedRewardType === "percent") {
-                rewardTitle = `${reward.percentageAmount * 100}% off`
+        // if there is a solo reward
+        if (reward.type === "solo") {
+            const soloReward = await db.rewardSetting.findFirst({where: {id: {equals: reward.soloId}}, include: {eligibleCollections: true, eligibleProducts: true}})
+
+            if (!soloReward) return new Response(JSON.stringify({error: "error retrieving reward settings"}), {status: 400})
+
+            if (soloReward.selectedRewardType === "free-shipping") {
+
+                rewardTitle = "Free Shipping"
+                discountCode = await createFreeShippingDiscount(soloReward.id, reward.store) || ""
+
+            } else if (soloReward.selectedRewardType === "bxgy") {
+                const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyPurchaseProductId)
+                const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyReceiveProductId)
+
+                rewardTitle = `Buy ${soloReward.bxgyPurchaseAmount}: ${bxgyPurchaseProductTitle}, Get ${soloReward.bxgyReceiveAmount}: ${bxgyReceiveProductTitle} - ${soloReward.bxgyRewardType === "free" ? "Free" :
+                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off `
+                
+                discountCode = await createBxgyDiscount(soloReward.id, reward.store) || ""
+            } else {
+                if (soloReward.selectedRewardType === "dollar") {
+                    rewardTitle = `$${soloReward.dollarAmount} off `
+
+                } else if (soloReward.selectedRewardType === "percent") {
+                    rewardTitle = `${soloReward.percentageAmount * 100}% off `
+                } 
+                discountCode = await createBasicDiscount(soloReward.id, reward.store) || ""
             } 
-            discountCode = await createBasicDiscount(reward.id, reward.store) || ""
-        } 
 
-        const minPurchaseStatement = fetchMinPurchaseRequirementStatement(reward)
-        rewardTitle += minPurchaseStatement
-        if (reward.selectedRewardType !== 'bxgy') {
-            if (reward.productCollectionConfiguration === "all") {
-                rewardTitle += " (it is eligible for all products/collections)"
-            } else if (reward.productCollectionConfiguration === "products") {
-                const eligibleProducts = await Promise.all(reward.eligibleProducts.map(async (product) => {
+            const minPurchaseStatement = fetchMinPurchaseRequirementStatement(soloReward)
+            rewardTitle += minPurchaseStatement
+            if (soloReward.productCollectionConfiguration[0] === "all") {
+                rewardTitle += "(it is eligible for all products/collections)"
+            } else if (soloReward.productCollectionConfiguration[0] === "products") {
+                const eligibleProducts = await Promise.all(soloReward.eligibleProducts.map(async (product) => {
                     return await fetchProductTitle(reward.store, product.productId)
                 }))
                 const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
-                rewardTitle += ` (it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
+                rewardTitle += `(it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
             } else  {
-                const eligibleCollections = await Promise.all(reward.eligibleCollections.map(async (collection) => {
+                const eligibleCollections = await Promise.all(soloReward.eligibleCollections.map(async (collection) => {
                     return await fetchCollectionTitle(reward.store, collection.collectionId)
                 }))
                 const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
-                rewardTitle += ` (it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
+                rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
             }
         }
 

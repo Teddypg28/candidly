@@ -92,8 +92,13 @@ export default function RewardChoice({state, setState, bxgyProductState, setBxgy
                 suffix={state.dollarAmount === 1 ? "dollar" : "dollars"}
                 disabled={isError && !errors['fixedAmount']}
                 error={errors['fixedAmount']}
+<<<<<<< HEAD
                 value={state.dollarAmount.toString()}
                 onChange={(value: string) => setState({...state, dollarAmount: parseInt(value)})}
+=======
+                value={state.rewards[type as keyof typeof state.rewards].dollarAmount.toString()}
+                onChange={(value: string) => setState({...state, rewards: {...state.rewards, [type]: {...state.rewards[type as keyof typeof state.rewards], fixedAmount: parseInt(value)}}})}
+>>>>>>> parent of 6038667 (fixed reward generation bugs)
                 min={1}
                 />
                 {errors['fixedAmount'] && <Text as="p" tone="critical">Please enter a number that is greater than or equal to 1</Text>}

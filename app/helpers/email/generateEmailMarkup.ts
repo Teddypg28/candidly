@@ -10,6 +10,8 @@ export default function generateEmailMarkup(
     type: "review-request" | "customer-question" | "customer-reward"
     ){
 
+    console.log(emailData)
+
     let updatedEmailBody = ""
     switch (type) {
         case "review-request":

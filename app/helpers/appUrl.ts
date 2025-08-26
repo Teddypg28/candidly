@@ -1,1 +1,1 @@
-export default "southwest-hearts-inventory-prefix.trycloudflare.com"
+export default "ongoing-ticket-maritime-op.trycloudflare.com"
