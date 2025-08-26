@@ -8,7 +8,7 @@ export default async function fetchRewardTierRewards(rewardSettingsId: string | 
     const settingsIds = [rewardSettings.subparId, rewardSettings.goodId, rewardSettings.perfectId]
     const rewardNames = await Promise.all(settingsIds.map(async (id) => {
         const settings = await db.rewardSetting.findFirst({where: {id: {equals: id}}}) as RewardSetting
-        if (settings.selectedRewardType === "bogo") {
+        if (settings.selectedRewardType === "bxgy") {
             const rewardValue = settings.bxgyRewardType === "dollar" ? `$${settings.bxgyDollarAmount} Off` : settings.bxgyRewardType === "percent" ? `${settings.bxgyPercentageAmount*100}% Off` : "Free"
             return `Buy ${settings.bxgyPurchaseAmount} Get ${settings.bxgyReceiveAmount} ${rewardValue}`
         } else if (settings.selectedRewardType === "dollar") {

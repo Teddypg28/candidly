@@ -44,8 +44,6 @@ export default function fetchRewardTiersScore(title: string, body: string, uploa
     if (uploadedMedia.current.length === 0) {
         tiers["uploadedMedia"].score = 1
     } else if (uploadedMedia.current.length > 0 && uploadedMedia.current.length <= 1) {
-        tiers["uploadedMedia"].score = 2
-    } else {
         tiers["uploadedMedia"].score = 3
     }
     

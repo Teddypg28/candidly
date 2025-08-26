@@ -3,6 +3,7 @@ import sendEmail from "~/helpers/email/sendEmail";
 import { defaultCustomerRewardEmailSettings } from "~/types/types";
 import db from '../db.server'
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
+import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 import createBxgyDiscount from "~/helpers/rewards/discountCodeMutations/createBxgyDiscount";
 import createBasicDiscount from "~/helpers/rewards/discountCodeMutations/createBasicDiscount";
 import createFreeShippingDiscount from "~/helpers/rewards/discountCodeMutations/createFreeShippingDiscount";
@@ -20,16 +21,23 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         if (!data.rewardSettingsId) return new Response(JSON.stringify({error: "missing reward settings id"}), {status: 400})
         if (!data.firstName) return new Response(JSON.stringify({error: "missing required firstName"}), {status: 401})
 
-        const reward = await db.reward.findFirst({where: {id: {equals: data.rewardSettingsId}}, include: {eligibleCollections: true, eligibleProducts: true}})
+        const reward = await db.reward.findFirst({where: {id: {equals: data.rewardSettingsId}}})
         if (!reward) return new Response(JSON.stringify({error: "no reward settings found"}), {status: 400})
 
         // if rewards are disabled
-        if (reward.disabled) return new Response(JSON.stringify({status: "rewards disabled"}), {status: 200})
-        
-        if (reward.selectedRewardType === "free-shipping") {
+        if (reward.type === "none") return new Response(JSON.stringify({status: "rewards disabled"}), {status: 200})
 
-            rewardTitle = "Free Shipping"
-            discountCode = await createFreeShippingDiscount(reward.id, reward.store) || ""
+        // if rewards are tiers
+        const reviewScore = data.tierReviewScore as number
+        if (reward.type === "tiers") {
+            if (!reviewScore) { 
+                return new Response(JSON.stringify({error: "missing review score"}), {status: 401}) 
+            } else {
+                const rewardTierRewardNames = await fetchRewardTierRewards(reward.id)
+                rewardTitle = rewardTierRewardNames[reviewScore-1]
+
+                const tierRewardSettingsIds = [reward.subparId, reward.goodId, reward.perfectId]
+                const rewardSetting = await db.rewardSetting.findFirst({where: {id: {equals: tierRewardSettingsIds[reviewScore-1]}}, include: {eligibleCollections: true, eligibleProducts: true}})
 
                 if (!rewardSetting) return new Response(JSON.stringify({status: "no reward setting found"}), {status: 400})
                 
@@ -102,9 +110,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
             const minPurchaseStatement = fetchMinPurchaseRequirementStatement(soloReward)
             rewardTitle += minPurchaseStatement
-            if (soloReward.productCollectionConfiguration[0] === "all") {
+            if (soloReward.productCollectionConfiguration === "all") {
                 rewardTitle += "(it is eligible for all products/collections)"
-            } else if (soloReward.productCollectionConfiguration[0] === "products") {
+            } else if (soloReward.productCollectionConfiguration === "products") {
                 const eligibleProducts = await Promise.all(soloReward.eligibleProducts.map(async (product) => {
                     return await fetchProductTitle(reward.store, product.productId)
                 }))
@@ -119,36 +127,36 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             }
         }
 
-    if (discountCode === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
+        if (discountCode === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
 
-    const emailData = {
-        reward: rewardTitle, 
-        discountCode, 
-        firstName: data.firstName
-    }
+        const emailData = {
+            reward: rewardTitle, 
+            discountCode, 
+            firstName: data.firstName
+        }
 
-    const emailSettings = await db.customerRewardEmailSettings.findFirst({where: {store: {equals: data.store}}})
-    const appSettings = await db.appSettings.findFirst({where: {store: {equals: data.store}}})
-    const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: data.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
+        const emailSettings = await db.customerRewardEmailSettings.findFirst({where: {store: {equals: data.store}}})
+        const appSettings = await db.appSettings.findFirst({where: {store: {equals: data.store}}})
+        const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: data.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
 
-    let fromEmailAddress = "rewards@trycandidly.app"
-    const currentDomain = appSettings?.domain
-    if (currentDomain) {
-        const verificationStatus = await verifyRecords(currentDomain)
-        if (verificationStatus === "Success") fromEmailAddress = `rewards@${currentDomain}`
-    }
+        let fromEmailAddress = "rewards@trycandidly.app"
+        const currentDomain = appSettings?.domain
+        if (currentDomain) {
+            const verificationStatus = await verifyRecords(currentDomain)
+            if (verificationStatus === "Success") fromEmailAddress = `rewards@${currentDomain}`
+        }
 
-    await sendEmail(
-        emailSettings?.subject || "Here is your reward!",
-        emailSettings?.body || defaultCustomerRewardEmailSettings.body, 
-        {...emailData}, 
-        emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
-        data.toAddress, 
-        fromEmailAddress,
-        "customer-reward"
-    )
+        await sendEmail(
+            emailSettings?.subject || "Here is your reward!",
+            emailSettings?.body || defaultCustomerRewardEmailSettings.body, 
+            {...emailData}, 
+            emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
+            data.toAddress, 
+            fromEmailAddress,
+            "customer-reward"
+        )
 
-    return new Response(JSON.stringify({status: "email successfully sent"}), {status: 200})
+        return new Response(JSON.stringify({status: "email successfully sent"}), {status: 200})
 
     } catch (error) {
         console.log(error)
