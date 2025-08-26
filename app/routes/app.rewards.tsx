@@ -77,7 +77,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     if (subscription.type === "free") return redirect('/app/billing')
 
     // fetch reward for store
-    const reward = await db.reward.findFirst({where: {store: {equals: session.shop}}, omit: {store: true, id: true}, include: {eligibleProducts: true, eligibleCollections: true}})
+    const reward = await db.reward.findFirst({where: {store: {equals: session.shop}}, omit: {store: true, id: true}, include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}})
 
     // if rewardSettings exist already, return them
     if (reward) {
@@ -121,10 +121,11 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     }
 }
 
+
 export default function Reward() {
-
+    
     const data = useLoaderData<typeof loader>()
-
+    
     const submit = useSubmit()
     const navigation = useNavigation()
     
@@ -147,7 +148,7 @@ export default function Reward() {
         })
 
         if (products) {
-            setSelectedProductsCollections({...selectedProductsCollections, products: {...selectedProductsCollections["products"], ...products}})
+            setSelectedProductsCollections({...selectedProductsCollections, products})
             const eligibleProductData = products.map(product => {
                 return {
                     productId: product.id
@@ -165,7 +166,7 @@ export default function Reward() {
         })
 
         if (collections) {
-            setSelectedProductsCollections({...selectedProductsCollections, collections: {...selectedProductsCollections["collections"], ...collections}})
+            setSelectedProductsCollections({...selectedProductsCollections, "collections": collections})
             const eligibleCollectionData = collections.map(collection => {
                 return {
                     collectionId: collection.id, 
@@ -204,7 +205,7 @@ export default function Reward() {
         const updatedSelectedProducts = selectedProductsCollections["products"].filter((product) => product.id !== productId)
         const updatedProducts = rewardState.eligibleProducts.filter((product) => product.productId !== productId)
 
-        setSelectedProductsCollections({...selectedProductsCollections, "products": {...selectedProductsCollections["products"], ...updatedSelectedProducts}})
+        setSelectedProductsCollections({...selectedProductsCollections, "products": updatedSelectedProducts})
         setRewardState({...rewardState, eligibleProducts: updatedProducts})
     }
 
@@ -212,7 +213,7 @@ export default function Reward() {
         const updatedSelectedCollections = selectedProductsCollections["collections"].filter((collection) => collection.id !== collectionId)
         const updatedCollections = rewardState.eligibleCollections.filter((collection) => collection.collectionId !== collectionId).sort((a, b) => a.collectionId.localeCompare(b.collectionId))
 
-        setSelectedProductsCollections({...selectedProductsCollections, "collections": {...selectedProductsCollections["collections"], ...updatedSelectedCollections}})
+        setSelectedProductsCollections({...selectedProductsCollections, "collections": updatedSelectedCollections})
         setRewardState({...rewardState, eligibleCollections: updatedCollections})
     }
 
@@ -243,12 +244,13 @@ export default function Reward() {
                     <BlockStack gap="400">
                         <ChoiceList 
                         choices={[
-                            {label: 'Reward', value: 'solo', helpText: 'Reward your customers for submitting reviews'},
-                            {label: 'No Reward', value: 'none', helpText: 'Disable all rewards'},
+                            {label: 'Enable Rewards', value: 'solo', helpText: 'Reward your customers for submitting reviews'},
+                            {label: 'Disable Rewards', value: 'none', helpText: 'Disable all rewards'},
                         ]}
                         selected={[rewardState.disabled ? 'none' : 'solo']}
                         onChange={changeRewardType}
                         title="Reward Type"
+                        titleHidden
                         />
                     </BlockStack>
                 </Layout.Section>
