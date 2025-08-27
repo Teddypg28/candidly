@@ -120,6 +120,8 @@ model ProductReview {
   reviewRequestId        String?
   radioQuestionResponses AnswerChoiceSnapshot[]
   textQuestionResponses  TextAnswer[]
+  pendingRewardId        String?                @unique
+  pendingReward          PendingReward?         @relation(fields: [pendingRewardId], references: [id])
 }
 
 model ProductReviewMedia {
@@ -250,14 +252,15 @@ model RewardSetting {
 }
 
 model PendingReward {
-  id           String   @id @default(uuid())
+  id           String         @id @default(uuid())
   store        String
   autoSendDate DateTime
   title        String
   code         String
   firstName    String
   toAddress    String
-  sent         Boolean  @default(false)
+  sent         Boolean        @default(false)
+  review       ProductReview?
 }
 
 model Subscription {

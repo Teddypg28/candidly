@@ -137,7 +137,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             autoSendDate
         }
 
-        await db.pendingReward.create({data: rewardData})
+        const pendingReward = await db.pendingReward.create({data: rewardData})
+        await db.productReview.update({where: {id: data.reviewId}, data: {pendingRewardId: pendingReward.id}})
 
         return new Response(JSON.stringify({status: "reward successfully added to the email queue"}), {status: 200})
 

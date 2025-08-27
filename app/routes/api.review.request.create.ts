@@ -94,7 +94,7 @@ export async function action({ request } : ActionFunctionArgs) {
         // mark review request as completed
         await db.reviewRequest.update({where: {id: reviewRequestId}, data: {isComplete: true}})
         
-        return json({status: 'Success'}, {status: 200})
+        return json({status: 'Success', reviewId: newReview.id}, {status: 200})
     } 
         
      catch (error) {

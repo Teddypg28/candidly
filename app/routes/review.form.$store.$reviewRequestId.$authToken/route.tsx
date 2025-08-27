@@ -102,6 +102,7 @@ export default function ReviewForm() {
     const [uploadMediaError, setUploadMediaError] = useState('')
 
     const reviewScore = fetchRewardTiersScore(userInputState.title, userInputState.body, uploadedMediaRef)
+    const reviewId = useRef()
 
     const steps = [
         {
@@ -411,6 +412,8 @@ export default function ReviewForm() {
     
         const res = await fetch('/api/review/request/create', {method: 'POST', body: reviewFormData})
         if (res.status === 200) {
+            const data = await res.json()
+            reviewId.current = data.reviewId
             return true
         } else {
             return false
@@ -428,9 +431,9 @@ export default function ReviewForm() {
             if (submissionSuccessful) {
                 // create pending reward until review is verified by store owner
                 if (data.subscriptionType !== "free" && data.rewardSettings?.type !== "none") {
-                    const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: data.customerData.email}
+                    const rewardDeliveryEmailData: any = {reviewId: reviewId.current, rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: data.customerData.email}
                     if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
-                    await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                    await fetch('/api/reward/queue', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
                 }
                 // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)

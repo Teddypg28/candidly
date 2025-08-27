@@ -206,6 +206,7 @@ export default function Reviews() {
                 <IndexTable.Cell>
                     <Badge tone={review.isPublished ? "success" : "warning"}>{review.isPublished.toString()}</Badge>
                 </IndexTable.Cell>
+                <IndexTable.Cell>{review.rating}</IndexTable.Cell>
             </IndexTable.Row>
         )
     })
@@ -547,7 +548,7 @@ export default function Reviews() {
                         />
                         <IndexTable
                         pagination={pagination}
-                        headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}]}
+                        headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}, {title: 'Reward Status'}]}
                         itemCount={filteredReviews.length}
                         onSelectionChange={handleSelectionChange}
                         selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
