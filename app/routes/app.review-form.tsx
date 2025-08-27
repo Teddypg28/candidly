@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { Banner, BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
+import { BlockStack, Card, Layout, Page, TextField } from "@shopify/polaris";
 
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { SaveBar } from "@shopify/app-bridge-react";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
+import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()
@@ -19,15 +20,18 @@ export async function loader({ request } : LoaderFunctionArgs) {
     const { session } = await authenticate.admin(request)
     const reviewFormSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewFormQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
+
+    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
+    const rewardTierNames = await fetchRewardTierRewards(rewardSettings?.id)
 
     if (reviewFormSettings) {
-        return json({settings: reviewFormSettings, questions: reviewFormQuestions})
+        return json({settings: reviewFormSettings, questions: reviewFormQuestions, rewardNames: rewardSettings?.type === "tiers" && subscription?.type !== "free" ? rewardTierNames : []})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {store: session.shop}})
 
-    return json({settings: defaultSettings, questions: reviewFormQuestions})
+    return json({settings: defaultSettings, questions: reviewFormQuestions, rewardNames: []})
 }
 
 export default function ReviewFormTemplate() {
@@ -107,6 +111,7 @@ export default function ReviewFormTemplate() {
                             starRatingHeading={settingsState.starRatingHeading}
                             titleHeading={settingsState.titleHeading}
                             titlePlaceholder={settingsState.titlePlaceholder}
+                            rewardNames={data.rewardNames}
                             />
                         </Layout.Section>
                     </Layout>

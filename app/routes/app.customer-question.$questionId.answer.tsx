@@ -75,6 +75,7 @@ export default function AnswerQuestion() {
         question: data.customerQuestion?.title,
         answer: data.customerQuestion?.answer?.body || ""
     })
+    const [emailSending, setEmailSending] = useState(false)
 
     const cleanQuestionAnswerState = {question: data.customerQuestion?.title, answer: data.customerQuestion?.answer?.body || ""}
     
@@ -84,21 +85,33 @@ export default function AnswerQuestion() {
         submit(JSON.stringify(questionAnswerState), {method: "POST", encType: "application/json"})
     }
 
-    const emailCustomer = () => {
-        const emailVariables: CustomerQuestionEmailVariables = {
-            questionId: data.customerQuestion?.id as string,
-            question: data.customerQuestion?.title,
-            answer: data.customerQuestion?.answer?.body as string, 
-            firstName: data.customerQuestion?.firstName,
+    const emailCustomer = async () => {
+        setEmailSending(true)
+        try {
+            const emailVariables: CustomerQuestionEmailVariables = {
+                questionId: data.customerQuestion?.id as string,
+                question: data.customerQuestion?.title,
+                answer: data.customerQuestion?.answer?.body as string, 
+                firstName: data.customerQuestion?.firstName,
+            }
+            const res = await fetch('/api/answer/email/send', {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({emailVariables, store: data.customerQuestion?.store, toAddress: data.customerQuestion?.email})})
+            if (res.status === 200) {
+                shopify.toast.show("Answer successfully emailed!", {duration: 2000})
+            } else {
+                shopify.toast.show("Answer email failed to send. Please try again.", {duration: 2000})
+            }
+        } catch (error) {
+            shopify.toast.show("Answer email failed to send. Please try again.", {duration: 2000})
+        } finally {
+            setEmailSending(false)
         }
-        submit(JSON.stringify({emailVariables, store: data.customerQuestion?.store, toAddress: data.customerQuestion?.email}), {action: '/api/answer/email/send', method: 'POST', encType: 'application/json', navigate: false})
     }
 
     return (
         <Page 
         title="Customer Question"
         backAction={{content: 'All Questions', url: '/app/question-answers'}}
-        primaryAction={{content: 'Email Customer Answer', disabled: data.customerQuestion?.emailSent, onAction: emailCustomer}}
+        primaryAction={{content: 'Email Customer Answer', disabled: data.customerQuestion?.emailSent, onAction: emailCustomer, loading: emailSending}}
         >
             <SaveBar open={isStateDirty}>
                 <button variant="primary" onClick={saveQuestionAnswerState}></button>

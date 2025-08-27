@@ -4,10 +4,9 @@ import { MutableRefObject } from "react"
 // variables
 
 export const initialRewardState: Reward = {
-    disabled: true,
     selectedRewardType: 'free-shipping', 
     dollarAmount: 10, 
-    percentageAmount: 10, 
+    percentageAmount: 0.1, 
     bxgyRewardType: "free", 
     bxgyPurchaseAmount: 1, 
     bxgyReceiveAmount: 1, 
@@ -280,7 +279,6 @@ export interface RadioAnswerChoice {
 }
 
 export interface Reward {
-    disabled: boolean
     selectedRewardType: string
     dollarAmount: number
     percentageAmount: number
@@ -297,6 +295,16 @@ export interface Reward {
     bxgyReceiveProductId: string
     eligibleProducts: EligibleProduct[]
     eligibleCollections: EligibleCollection[]
+}
+
+export interface RewardState {
+    rewards: {
+        subpar: Reward
+        good: Reward
+        perfect: Reward
+        solo: Reward
+    }
+    type: string
 }
 
 export interface ReviewTableState {

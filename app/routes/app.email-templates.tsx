@@ -150,9 +150,9 @@ export default function EmailTemplates() {
     const [dynamicVariableTipsModalOpen, setDynamicVariableTipsModalOpen] = useState(false)
 
     const [emailBody, setEmailBody] = useState(data.settings.reviewRequestEmailSettings.initialEmailBody)
-    
     const [errors, setErrors] = useState<any>({})
-    const fetcher = useFetcher()
+
+    const [testEmailSending, setTestEmailSending] = useState(false)
 
     const cleanSettings = data.settings
 
@@ -256,7 +256,7 @@ export default function EmailTemplates() {
     }
 
     const testCustomerRewardEmailVariables: CustomerRewardEmailVariables = {
-        discountCode: "TEST-EMAIL-DISCOUNT-CODE",
+        discountCode: undefined
     }
 
     const logTestEmailResult = (result: "success" | "fail") => {
@@ -268,34 +268,41 @@ export default function EmailTemplates() {
     }
 
     const sendTestEmail = async () => { 
-        const formData = new FormData()
-        formData.append('body', emailBody)
-        formData.append('store', data.settings.emailDesignSettings.store)
-
-        if (selectedTab === "reviewRequestEmailSettings") {
-
-            formData.append('variables', JSON.stringify(testReviewRequestEmailVariables))
-            formData.append('type', "review-request")
-            formData.append('subject', emailCopyVersion === "Initial" ? settings["reviewRequestEmailSettings"].initialEmailSubject : settings["reviewRequestEmailSettings"].followUpEmailSubject)
-        
-        } else if (selectedTab === "customerQuestionEmailSettings") {
-
-            formData.append('variables', JSON.stringify(testCustomerQuestionEmailVariables))
-            formData.append('type', "customer-question")
-            formData.append('subject', settings["customerQuestionEmailSettings"].subject)
-
-        } else if (selectedTab === "customerRewardEmailSettings") {
-
-            formData.append('variables', JSON.stringify(testCustomerRewardEmailVariables))
-            formData.append('type', "customer-reward")
-            formData.append('subject', settings["customerRewardEmailSettings"].subject)
-
-        }
-        const res = await fetch('/api/test-email/send', {method: 'POST', body: formData})
-        if (res.status === 200) {
-            logTestEmailResult("success")
-        } else {
+        setTestEmailSending(true)
+        try {
+            const formData = new FormData()
+            formData.append('body', emailBody)
+            formData.append('store', data.settings.emailDesignSettings.store)
+    
+            if (selectedTab === "reviewRequestEmailSettings") {
+    
+                formData.append('variables', JSON.stringify(testReviewRequestEmailVariables))
+                formData.append('type', "review-request")
+                formData.append('subject', emailCopyVersion === "Initial" ? settings["reviewRequestEmailSettings"].initialEmailSubject : settings["reviewRequestEmailSettings"].followUpEmailSubject)
+            
+            } else if (selectedTab === "customerQuestionEmailSettings") {
+    
+                formData.append('variables', JSON.stringify(testCustomerQuestionEmailVariables))
+                formData.append('type', "customer-question")
+                formData.append('subject', settings["customerQuestionEmailSettings"].subject)
+    
+            } else if (selectedTab === "customerRewardEmailSettings") {
+    
+                formData.append('variables', JSON.stringify(testCustomerRewardEmailVariables))
+                formData.append('type', "customer-reward")
+                formData.append('subject', settings["customerRewardEmailSettings"].subject)
+    
+            }
+            const res = await fetch('/api/test-email/send', {method: 'POST', body: formData})
+            if (res.status === 200) {
+                logTestEmailResult("success")
+            } else {
+                logTestEmailResult("fail")
+            }
+        } catch (error) {
             logTestEmailResult("fail")
+        } finally {
+            setTestEmailSending(false)
         }
     }
 
@@ -414,7 +421,7 @@ export default function EmailTemplates() {
         <Page
         title="Email Templates"
         subtitle="Customize your email templates to match your branding and messaging style"
-        primaryAction={{content: 'Send Test Email', onAction: sendTestEmail, disabled: isFormDirty}}
+        primaryAction={{content: 'Send Test Email', onAction: sendTestEmail, disabled: isFormDirty, loading: testEmailSending}}
         >
             <SaveBar open={isFormDirty}>
                 <button variant="primary" onClick={handleSave} loading={navigation.state === 'submitting' ? 'true' : false}></button>

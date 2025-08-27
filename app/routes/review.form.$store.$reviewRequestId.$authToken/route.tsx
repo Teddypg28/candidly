@@ -409,11 +409,6 @@ export default function ReviewForm() {
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
-                // send reward to customer if rewards are configured
-                if (data.subscriptionType !== "free" && !data.rewardSettings?.disabled) {
-                    const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: data.customerData.email}
-                    await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
-                }
                 // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
                 setReviewSuccessfullySubmitted(true)
@@ -604,7 +599,7 @@ export default function ReviewForm() {
     }, [])
 
   return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={!data.rewardSettings?.disabled} firstName={userInputState.firstName as string} /> :
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings?.type !== "none"} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>
