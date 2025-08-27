@@ -50,7 +50,7 @@ export async function action({ request } : ActionFunctionArgs) {
         // fetch store settings to check auto publishing rules
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
         const isPublished = storeSettings?.autoPublishReviews[0] === "true" && rating >= storeSettings.minReviewRating 
-        const newReview = await db.productReview.create({data: {...data, rating: parseInt(rating), store: `${store}.myshopify.com`, date: new Date(), isPublished, reviewRequestId}})
+        const newReview = await db.productReview.create({data: {...data, rating: parseInt(rating), store: `${store}.myshopify.com`, isPublished, reviewRequestId}})
 
         // notify store of the new review
         await sendReviewSubmittedNotificationEmail(newReview.id)

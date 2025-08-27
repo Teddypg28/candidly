@@ -27,7 +27,7 @@ export async function action({ request } : ActionFunctionArgs) {
         // fetch store settings to check auto publishing rules
         const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session?.shop}}})
         const isPublished = storeSettings?.autoPublishReviews[0] === "true" && data.rating >= storeSettings.minReviewRating 
-        const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session?.shop, date: new Date(), isPublished}})
+        const newReview = await db.productReview.create({data: {...data, rating: parseInt(data.rating), store: session?.shop, isPublished}})
        
         // notify store of the new review
         await sendReviewSubmittedNotificationEmail(newReview.id)

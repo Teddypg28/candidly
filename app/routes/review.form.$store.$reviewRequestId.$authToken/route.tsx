@@ -9,6 +9,8 @@ import { ReviewFormSettings } from "@prisma/client";
 
 import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/types/types";
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
+import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
+import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
@@ -60,7 +62,7 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
-    const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}})
+    const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, include: {subpar: true, good: true, perfect: true, solo: true}})
 
     const subscription = await db.subscription.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
 
@@ -71,6 +73,7 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
         productDataObjects, 
         questions, 
         rewardSettings,
+        rewardTierNames: await fetchRewardTierRewards(rewardSettings?.id),
         stars,
         subscriptionType: subscription?.type || "free"
     }
@@ -97,6 +100,8 @@ export default function ReviewForm() {
     const currentStarRating = useRef(data.stars)
 
     const [uploadMediaError, setUploadMediaError] = useState('')
+
+    const reviewScore = fetchRewardTiersScore(userInputState.title, userInputState.body, uploadedMediaRef)
 
     const steps = [
         {
@@ -200,6 +205,75 @@ export default function ReviewForm() {
         document.body.style.fontFamily = "Montserrat"
     }, [])
 
+    const uploadFile = useCallback((file: any, uploadMediaBtn: any, uploadedMediaContainer: any) => {
+        const reader = new FileReader()
+        
+        reader.readAsDataURL(file)
+
+        reader.onloadend = () => {
+            const imageContainer = document.createElement('figure')
+            imageContainer.className = styles.uploadedImage
+
+            const img = document.createElement('img') as any
+            img.src = reader.result
+            
+            imageContainer.appendChild(img)
+            imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+
+            const removeUploadedMediaContainer = document.createElement('div')
+            removeUploadedMediaContainer.className = styles.removeUploadedMediaContainer
+            removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
+            removeUploadedMediaContainer.dataset.fileName = file.name
+
+            const trashCanIconContainer = document.createElement('div')
+            trashCanIconContainer.className = styles.removeUploadedMedia
+            trashCanIconContainer.className = styles.hidden
+            trashCanIconContainer.dataset.fileName = file.name
+
+            const trashCanIcon = document.createElement('i')
+            trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
+            trashCanIcon.id = "deleteMedia"
+            trashCanIcon.dataset.fileName = file.name
+            trashCanIcon.style.color = "#ffffff"
+
+            trashCanIconContainer.appendChild(trashCanIcon)
+
+            removeUploadedMediaContainer.appendChild(trashCanIconContainer)
+
+            removeUploadedMediaContainer.addEventListener('mouseover', () => {
+                removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
+                trashCanIconContainer.classList.remove(styles.hidden)       
+            })
+
+            removeUploadedMediaContainer.addEventListener('mouseleave', () => {                    
+                removeUploadedMediaContainer.style.backgroundColor = 'transparent'
+                trashCanIconContainer.classList.add(styles.hidden)
+            })
+
+            removeUploadedMediaContainer.addEventListener('click', (e: any) => {
+                if (e.target.id.includes('deleteMedia')) { 
+                    // remove deleted file from file list
+                    const dt = new DataTransfer()
+                    const currentFiles = Array.from(uploadMediaBtn.files)
+                    currentFiles.forEach((file: any) => {
+                        if (file.name !== e.target.dataset.fileName) {
+                            dt.items.add(file)
+                        }
+                    })
+                    uploadMediaBtn.files = dt.files
+                    // remove deleted files from saved uploaded files array
+                    uploadedMediaRef.current = uploadedMediaRef.current.filter((uploadedFile: any) => uploadedFile !== file)
+                    setUploadedMedia(uploadedMediaRef.current)
+                    imageContainer.remove()
+                    conditionallyRenderUploadMediaLabel()
+                }
+            })
+            imageContainer.appendChild(removeUploadedMediaContainer)
+            uploadedMediaContainer.appendChild(imageContainer)
+            conditionallyRenderUploadMediaLabel()
+        }
+    }, [])
+
     useEffect(() => {
         if (uploadedMediaRef.current.length > 0) {
             conditionallyRenderUploadMediaLabel()
@@ -249,72 +323,8 @@ export default function ReviewForm() {
                     uploadedMediaRef.current = [...uploadedMediaRef.current, file]
                     setUploadedMedia(uploadedMediaRef.current)
         
-                    const reader = new FileReader()
-        
-                    reader.readAsDataURL(file)
-        
-                    reader.onloadend = () => {
-                        const imageContainer = document.createElement('figure')
-                        imageContainer.className = styles.uploadedImage
-        
-                        const img = document.createElement('img') as any
-                        img.src = reader.result
-                        
-                        imageContainer.appendChild(img)
-                        imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
-        
-                        const removeUploadedMediaContainer = document.createElement('div')
-                        removeUploadedMediaContainer.className = styles.removeUploadedMediaContainer
-                        removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
-                        removeUploadedMediaContainer.dataset.fileName = file.name
-        
-                        const trashCanIconContainer = document.createElement('div')
-                        trashCanIconContainer.className = styles.removeUploadedMedia
-                        trashCanIconContainer.className = styles.hidden
-                        trashCanIconContainer.dataset.fileName = file.name
-        
-                        const trashCanIcon = document.createElement('i')
-                        trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
-                        trashCanIcon.id = "deleteMedia"
-                        trashCanIcon.dataset.fileName = file.name
-                        trashCanIcon.style.color = "#ffffff"
-        
-                        trashCanIconContainer.appendChild(trashCanIcon)
-        
-                        removeUploadedMediaContainer.appendChild(trashCanIconContainer)
-        
-                        removeUploadedMediaContainer.addEventListener('mouseover', () => {
-                            removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
-                            trashCanIconContainer.classList.remove(styles.hidden)       
-                        })
-        
-                        removeUploadedMediaContainer.addEventListener('mouseleave', () => {                    
-                            removeUploadedMediaContainer.style.backgroundColor = 'transparent'
-                            trashCanIconContainer.classList.add(styles.hidden)
-                        })
-        
-                        removeUploadedMediaContainer.addEventListener('click', (e: any) => {
-                            if (e.target.id.includes('deleteMedia')) { 
-                                // remove deleted file from file list
-                                const dt = new DataTransfer()
-                                const currentFiles = Array.from(uploadMediaBtn.files)
-                                currentFiles.forEach((file: any) => {
-                                    if (file.name !== e.target.dataset.fileName) {
-                                        dt.items.add(file)
-                                    }
-                                })
-                                uploadMediaBtn.files = dt.files
-                                // remove deleted files from saved uploaded files array
-                                uploadedMediaRef.current = uploadedMediaRef.current.filter((uploadedFile: any) => uploadedFile !== file)
-                                setUploadedMedia(uploadedMediaRef.current)
-                                imageContainer.remove()
-                                conditionallyRenderUploadMediaLabel()
-                            }
-                        })
-                        imageContainer.appendChild(removeUploadedMediaContainer)
-                        uploadedMediaContainer.appendChild(imageContainer)
-                        conditionallyRenderUploadMediaLabel()
-                    }
+                    // upload the file to the input container
+                    uploadFile(file, uploadMediaBtn, uploadedMediaContainer)
                 }
             }
         
@@ -323,6 +333,13 @@ export default function ReviewForm() {
                     Array.from(uploadMediaBtn.files).forEach(verifyFileType)
                 })
             }
+
+            if (uploadedMediaRef.current.length > 0) {
+                uploadedMediaRef.current.forEach((file: any) => {
+                    uploadFile(file, uploadMediaBtn, uploadedMediaContainer)
+                })
+            }
+
         }
 
     }, [currentStep])
@@ -409,6 +426,12 @@ export default function ReviewForm() {
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
+                // create pending reward until review is verified by store owner
+                if (data.subscriptionType !== "free" && data.rewardSettings?.type !== "none") {
+                    const rewardDeliveryEmailData: any = {rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: data.customerData.email}
+                    if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
+                    await fetch('/api/reward/email', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                }
                 // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
                 setReviewSuccessfullySubmitted(true)
@@ -598,6 +621,10 @@ export default function ReviewForm() {
         }
     }, [])
 
+    const progressMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `writing the perfect ${steps[currentStep-1].key}` : "uploading the perfect amount of media"
+    const perfectedMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `wrote the perfect ${steps[currentStep-1].key}!` : 'uploaded the perfect amount of media!'
+    const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
+
   return (
     reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings?.type !== "none"} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
@@ -608,6 +635,22 @@ export default function ReviewForm() {
             </div>
             <img src={productsToReview.current[0].image || undefined} height={'70px'} width={'70px'} />
         </div>
+        {data.rewardSettings?.type === "tiers" && 
+            <div className={styles.rewardTiersMainContainer}>
+                <h1 style={{padding: 0, margin: 0, fontSize: '20px'}}>Reward Tiers</h1>
+                <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
+                <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
+                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
+                        <p className={styles.rewardTierName}>{data.rewardTierNames[0]}</p>
+                    </div>
+                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
+                        <p className={styles.rewardTierName}>{data.rewardTierNames[1]}</p>
+                    </div>
+                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
+                        <p className={styles.rewardTierName}>{data.rewardTierNames[2]}</p>
+                    </div>
+                </div>
+            </div>}
         <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
@@ -618,6 +661,13 @@ export default function ReviewForm() {
                 </div>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
+                    {data.rewardSettings?.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
+                        <div className={styles.progressBarContainer}>
+                            <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
+                                <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
+                            </div>
+                            <p className={styles.progressMessage} style={{fontWeight: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? 'bolder' : 'normal', color: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score == 3 ? '#67af98' : 'black'}}>{progressMessage}</p>
+                        </div>}
                     {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}   
                     <p id="gibberishDetectedMessage" className={`${styles.reviewFormValidationError} ${styles.hidden}`}>Whoops! We detected gibberish</p>
                     {uploadMediaError && <p className={styles.reviewFormValidationError}>{uploadMediaError}</p>}           

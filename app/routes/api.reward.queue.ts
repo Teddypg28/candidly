@@ -1,8 +1,5 @@
 import { ActionFunctionArgs } from "@remix-run/node";
-import sendEmail from "~/helpers/email/sendEmail";
-import { defaultCustomerRewardEmailSettings } from "~/types/types";
 import db from '../db.server'
-import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 import createBxgyDiscount from "~/helpers/rewards/discountCodeMutations/createBxgyDiscount";
 import createBasicDiscount from "~/helpers/rewards/discountCodeMutations/createBasicDiscount";
@@ -95,15 +92,15 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyReceiveProductId)
 
                 rewardTitle = `Buy ${soloReward.bxgyPurchaseAmount}: ${bxgyPurchaseProductTitle}, Get ${soloReward.bxgyReceiveAmount}: ${bxgyReceiveProductTitle} - ${soloReward.bxgyRewardType === "free" ? "Free" :
-                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off `
+                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off`
                 
                 discountCode = await createBxgyDiscount(soloReward.id, reward.store) || ""
             } else {
                 if (soloReward.selectedRewardType === "dollar") {
-                    rewardTitle = `$${soloReward.dollarAmount} off `
+                    rewardTitle = `$${soloReward.dollarAmount} off`
 
                 } else if (soloReward.selectedRewardType === "percent") {
-                    rewardTitle = `${soloReward.percentageAmount * 100}% off `
+                    rewardTitle = `${soloReward.percentageAmount * 100}% off`
                 } 
                 discountCode = await createBasicDiscount(soloReward.id, reward.store) || ""
             } 
@@ -111,52 +108,38 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             const minPurchaseStatement = fetchMinPurchaseRequirementStatement(soloReward)
             rewardTitle += minPurchaseStatement
             if (soloReward.productCollectionConfiguration === "all") {
-                rewardTitle += "(it is eligible for all products/collections)"
+                rewardTitle += " (it is eligible for all products/collections)"
             } else if (soloReward.productCollectionConfiguration === "products") {
                 const eligibleProducts = await Promise.all(soloReward.eligibleProducts.map(async (product) => {
                     return await fetchProductTitle(reward.store, product.productId)
                 }))
                 const nonNullEligibleProducts = eligibleProducts.filter(product => product !== null)
-                rewardTitle += `(it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
+                rewardTitle += ` (it is eligible for the following products: ${nonNullEligibleProducts.join(', ')})`
             } else  {
                 const eligibleCollections = await Promise.all(soloReward.eligibleCollections.map(async (collection) => {
                     return await fetchCollectionTitle(reward.store, collection.collectionId)
                 }))
                 const nonNullEligibleCollections = eligibleCollections.filter(collection => collection !== null)
-                rewardTitle += `(it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
+                rewardTitle += ` (it is eligible for the following collections: ${nonNullEligibleCollections.join(', ')})`
             }
         }
 
         if (discountCode === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
 
-        const emailData = {
-            reward: rewardTitle, 
-            discountCode, 
-            firstName: data.firstName
+        const autoSendDate = new Date()
+        autoSendDate.setDate(autoSendDate.getDate() + 3)
+        const rewardData = {
+            store: reward.store,
+            title: rewardTitle, 
+            code: discountCode, 
+            firstName: data.firstName,
+            toAddress: data.toAddress,
+            autoSendDate
         }
 
-        const emailSettings = await db.customerRewardEmailSettings.findFirst({where: {store: {equals: data.store}}})
-        const appSettings = await db.appSettings.findFirst({where: {store: {equals: data.store}}})
-        const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: data.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
+        await db.pendingReward.create({data: rewardData})
 
-        let fromEmailAddress = "rewards@trycandidly.app"
-        const currentDomain = appSettings?.domain
-        if (currentDomain) {
-            const verificationStatus = await verifyRecords(currentDomain)
-            if (verificationStatus === "Success") fromEmailAddress = `rewards@${currentDomain}`
-        }
-
-        await sendEmail(
-            emailSettings?.subject || "Here is your reward!",
-            emailSettings?.body || defaultCustomerRewardEmailSettings.body, 
-            {...emailData}, 
-            emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
-            data.toAddress, 
-            fromEmailAddress,
-            "customer-reward"
-        )
-
-        return new Response(JSON.stringify({status: "email successfully sent"}), {status: 200})
+        return new Response(JSON.stringify({status: "reward successfully added to the email queue"}), {status: 200})
 
     } catch (error) {
         console.log(error)

@@ -2,10 +2,10 @@ import { RewardSetting } from '@prisma/client'
 import db from '../../db.server'
 
 export default async function fetchRewardTierRewards(rewardSettingsId: string | undefined) {
-    const rewardSettings = await db.reward.findFirst({where: {id: {equals: rewardSettingsId}}})
-    if (!rewardSettings) return []
+    const reward = await db.reward.findFirst({where: {id: {equals: rewardSettingsId}}})
+    if (!reward) return []
 
-    const settingsIds = [rewardSettings.subparId, rewardSettings.goodId, rewardSettings.perfectId]
+    const settingsIds = [reward.subparId, reward.goodId, reward.perfectId]
     const rewardNames = await Promise.all(settingsIds.map(async (id) => {
         const settings = await db.rewardSetting.findFirst({where: {id: {equals: id}}}) as RewardSetting
         if (settings.selectedRewardType === "bxgy") {

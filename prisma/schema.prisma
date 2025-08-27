@@ -115,7 +115,7 @@ model ProductReview {
   firstName              String
   rating                 Int
   media                  ProductReviewMedia[]
-  date                   DateTime
+  date                   DateTime               @default(now())
   isPublished            Boolean
   reviewRequestId        String?
   radioQuestionResponses AnswerChoiceSnapshot[]
@@ -247,6 +247,17 @@ model RewardSetting {
   goodReward    Reward? @relation("GoodReward")
   perfectReward Reward? @relation("PerfectReward")
   soloReward    Reward? @relation("SoloReward")
+}
+
+model PendingReward {
+  id           String   @id @default(uuid())
+  store        String
+  autoSendDate DateTime
+  title        String
+  code         String
+  firstName    String
+  toAddress    String
+  sent         Boolean  @default(false)
 }
 
 model Subscription {
