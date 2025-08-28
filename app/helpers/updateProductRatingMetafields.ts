@@ -25,7 +25,8 @@ export default async function updateProductRatingMetafields(productId: string, r
                 session,
                 id: ratingMetafield.id,
             });
-            return
+
+            return true
         }
 
         let totalReviewsScore = 0

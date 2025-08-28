@@ -4,9 +4,9 @@ import { authenticate } from "~/shopify.server";
 
 export const action = async ({request} : ActionFunctionArgs) => {
     try {
-        const { session } = await authenticate.admin(request)
+        const { session, admin } = await authenticate.admin(request)
         const csvFileData = await request.formData()
-        await importCsvFile(session, csvFileData)
+        await importCsvFile(session, csvFileData, admin)
         return json({ok: true}, {status: 200})
     } catch (error) {
         console.log(error)

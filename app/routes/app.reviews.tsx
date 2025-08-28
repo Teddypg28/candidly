@@ -60,7 +60,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     }
 
     if (action === 'deleteReviews') {
-        return await Promise.all(data.reviewIds.map(async (id: string) => {
+        const productIdsToUpdate = new Set()
+        await Promise.all(data.reviewIds.map(async (id: string) => {
             // delete media
             const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: id}}})
             await Promise.all(reviewMediaRecords.map(async (record) => {
@@ -70,8 +71,10 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             }))
             // delete review
             const productReview = await db.productReview.delete({where: { id }})
-            // update metafields
-            return await updateProductRatingMetafields(productReview.productId, productReview.rating, admin, session)
+            productIdsToUpdate.add(productReview.productId)
+        }));
+        await Promise.all([...productIdsToUpdate].map(async (productId) => {
+            await updateProductRatingMetafields(productId as string, 0, admin, session)
         }))
     }
 
@@ -164,7 +167,8 @@ export default function Reviews() {
     }).filter(review => {
         return new Date(review.date).toLocaleDateString().includes(indexTableState.queryValue) ||
         review.body.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.title.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) 
-        || review.productTitle.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.firstName.toLowerCase().includes(indexTableState.queryValue.toLowerCase())
+        || review.productTitle.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) || review.firstName.toLowerCase().includes(indexTableState.queryValue.toLowerCase()) ||
+        review.email.toLowerCase().includes(indexTableState.queryValue.toLowerCase())
     }).filter(review => {
         if (indexTableState.selectedProducts.length > 0) {
             return indexTableState.selectedProducts.includes(review.productTitle)
@@ -215,6 +219,7 @@ export default function Reviews() {
         return (
             <IndexTable.Row key={index} selected={selectedResources.includes(review.id.toString())} id={review.id.toString()} position={index}>
                 <IndexTable.Cell>{new Date(review.date).toLocaleDateString()}</IndexTable.Cell>
+                <IndexTable.Cell>{review.email}</IndexTable.Cell>
                 <IndexTable.Cell><Text as="p" tone={review.productTitle === 'Product Deleted' ? "critical" : "base"}>{review.productTitle}</Text></IndexTable.Cell>
                 <IndexTable.Cell>{review.firstName}</IndexTable.Cell>
                 <IndexTable.Cell>
@@ -422,7 +427,7 @@ export default function Reviews() {
     }, [selectedResources])
 
     const exportAsCsv = () => {
-        const rows = filteredReviews.map(review => [review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.media.map(mediaObj => mediaObj.url)])
+        const rows = filteredReviews.map(review => [review.email, review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.media.map(mediaObj => mediaObj.url)])
         const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'reviewRequestId', 'store'].includes(key))
         rows.unshift(rowHeadings)
         const encodedReviewData = rows.map(row => row.join()).join('\n')
@@ -573,7 +578,7 @@ export default function Reviews() {
                         />
                         <IndexTable
                         pagination={pagination}
-                        headings={[{title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}, {title: 'Reward Status'}]}
+                        headings={[{title: 'Email'}, {title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}, {title: 'Reward Status'}]}
                         itemCount={filteredReviews.length}
                         onSelectionChange={handleSelectionChange}
                         selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}

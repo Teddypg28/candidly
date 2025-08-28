@@ -4,7 +4,7 @@ const ReviewSubmittedMessage = ({isReward, firstName}: {isReward: boolean, first
   return (
     <div className={styles.container}>
         <h1 className={styles.message}>Thank you for your review, {firstName}!</h1>
-        {isReward ? <p className={styles.mediaUploadRewardMessage}>Upon verifying your review, we will be sending you a special discount code.</p> : ""}
+        {isReward ? <p className={styles.mediaUploadRewardMessage}>Upon successfully verifying your review, we will be emailing you a special discount code!</p> : ""}
         <img 
         src="/green-checkmark.webp" 
         height={'150px'}

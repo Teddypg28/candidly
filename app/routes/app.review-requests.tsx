@@ -252,7 +252,7 @@ export default function ReviewRequests() {
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>{reviewRequest.emailsSent}</IndexTable.Cell>
-                <IndexTable.Cell>{reviewRequest.emailsSent === 2 || reviewRequest.isComplete ? null : reviewRequest.nextRequestDate}</IndexTable.Cell>
+                <IndexTable.Cell>{reviewRequest.emailsSent === 2 ? <Badge tone="info">max emails sent</Badge> : reviewRequest.isComplete ? <Badge tone="success">complete</Badge> : reviewRequest.nextRequestDate}</IndexTable.Cell>
             </IndexTable.Row>
 
         )

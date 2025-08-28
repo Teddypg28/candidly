@@ -113,6 +113,7 @@ model ProductReview {
   title                  String
   body                   String
   firstName              String
+  email                  String
   rating                 Int
   media                  ProductReviewMedia[]
   date                   DateTime               @default(now())
@@ -121,7 +122,7 @@ model ProductReview {
   radioQuestionResponses AnswerChoiceSnapshot[]
   textQuestionResponses  TextAnswer[]
   pendingRewardId        String?                @unique
-  pendingReward          PendingReward?         @relation(fields: [pendingRewardId], references: [id])
+  pendingReward          PendingReward?         @relation(fields: [pendingRewardId], references: [id], onDelete: Cascade)
 }
 
 model ProductReviewMedia {

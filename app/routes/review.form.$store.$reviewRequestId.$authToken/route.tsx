@@ -404,6 +404,7 @@ export default function ReviewForm() {
         reviewFormData.append('reviewRequestId', data.reviewData.reviewRequestId)
         reviewFormData.append('productId', productsToReview.current[0].id)
         reviewFormData.append('rating', currentStarRating.current.toString())
+        reviewFormData.append('email', data.customerData.email)
 
         uploadedMedia.forEach((file: any) => reviewFormData.append("media", file))
     

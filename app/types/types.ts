@@ -23,8 +23,9 @@ export const initialRewardState: Reward = {
 }
 
 export const sampleReviewData = [
-    ['title, body', 'firstName', 'rating', 'date', 'isPublished', 'media'],
+    ['email', 'title, body', 'firstName', 'rating', 'date', 'isPublished', 'media'],
     [
+        'sampleemail@domain.com',
         'This is a sample review title!',
         "This is a sample review body!",
         'Name',

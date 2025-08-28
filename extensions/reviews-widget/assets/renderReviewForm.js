@@ -25,10 +25,14 @@ const submitReview = async () => {
 const renderReviewForm = () => {
 
     const validateFormFields = () => {
-        if (["title", "body", "firstName"].includes(steps[currentStep-1].key)) {
+        if (["title", "body", "firstName", "email"].includes(steps[currentStep-1].key)) {
             const formInputValue = document.querySelector('.formQuestionInput').value
             if (formInputValue.trim() === "") {
                 document.querySelector('.reviewFormValidationError').textContent = "This field is required"
+                return true
+            }
+            if (steps[currentStep-1].key === "email" && (!formInputValue.includes("@") || !formInputValue.includes("."))) {
+                document.querySelector('.reviewFormValidationError').textContent = "Please enter a valid email address"
                 return true
             }
         } else if (steps[currentStep-1].key === "customQuestions") {
@@ -101,6 +105,7 @@ const renderReviewForm = () => {
         </div>
         <p class='uploadError'></p>`, key: 'media'}, 
         {title: 'What is Your First Name?', markup: `<input name="firstName" class="formQuestionInput" placeholder="Enter your first name" />`, key: 'firstName'}, 
+        {title: 'What is Your Email?', markup: `<input name="email" class="formQuestionInput" placeholder="Enter your email" />`, key: 'email'}
     ]
 
     if (customQuestions.length > 0) {
@@ -184,7 +189,7 @@ const renderReviewForm = () => {
                     const closeFormBtn = document.querySelector('.closeModalBtnContainer')
                     closeFormBtn.addEventListener('click', closeReviewForm)
                     userRating = '5'
-                    userInputState = { title: '', body: '', firstName: '', rating: userRating, customQuestionAnswers: {} }
+                    userInputState = { title: '', body: '', firstName: '', rating: userRating, customQuestionAnswers: {}, email: '' }
                     addedFiles = []
                 } else {
                     document.querySelector('.askQuestionFormError').textContent = 'There was an error submitting this review'

@@ -1,6 +1,6 @@
 // initialize global variables
 let userRating = '5'
-let userInputState = { title: '', body: '', firstName: '', rating: userRating, customQuestionAnswers: {} }
+let userInputState = { title: '', body: '', firstName: '', rating: userRating, customQuestionAnswers: {}, email: '' }
 let addedFiles = []
 
 const handleUserInput = (event) => {
