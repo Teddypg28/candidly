@@ -8,16 +8,6 @@ export default function generateReviewRequestEmailBody(emailBody: string, data: 
         queryString += `productId${index+1}=${lineItem.productId.split('Product/')[1]}&productTitle${index+1}=${lineItem ? lineItem.title : ""}&productImage${index+1}=${lineItem.image || ''}&`
     })
 
-    let questionQueryString = ''
-
-    data.configuredQuestions.forEach((productQuestionSet, productIndex) => {
-        questionQueryString += `numProduct${productIndex+1}Questions=${productQuestionSet.length}`
-        productQuestionSet.forEach((questionId, questionIndex) => {
-            questionQueryString += `&product${productIndex+1}Question${questionIndex+1}Id=${questionId}${questionIndex !== productQuestionSet.length - 1 || productIndex !== data.configuredQuestions.length - 1 ? '&' : ''}`
-        }) 
-    })
-    queryString += questionQueryString
-
     // replace temporary app url
     const href = data.reviewRequestId ? `https://${appUrl}/review/form/${data.store?.split('.')[0]}/${data.reviewRequestId}/${data.authToken}${`?${queryString}`}` : '#'
     

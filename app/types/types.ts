@@ -355,7 +355,6 @@ export interface ReviewRequestEmailVariables {
         title: string
         image: string
     }[]
-    configuredQuestions: string[][]
 }
 
 export interface ReviewRequestEmailSettings {

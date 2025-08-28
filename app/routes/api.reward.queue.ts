@@ -14,6 +14,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
         let rewardTitle = ""
         let discountCode = ""
+        let discountId = ""
 
         if (!data.rewardSettingsId) return new Response(JSON.stringify({error: "missing reward settings id"}), {status: 400})
         if (!data.firstName) return new Response(JSON.stringify({error: "missing required firstName"}), {status: 401})
@@ -40,21 +41,27 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 
                 if (rewardSetting.selectedRewardType === "free-shipping") {
                     rewardTitle = "Free Shipping"
-                    discountCode = await createFreeShippingDiscount(rewardSetting.id, reward.store) || ""
+                    const discountData = await createFreeShippingDiscount(rewardSetting.id, reward.store)
+                    discountCode = discountData?.discountCode || ""
+                    discountId = discountData?.discountId || ""
                 } else if (rewardSetting.selectedRewardType === "bxgy") {
                     const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyPurchaseProductId)
                     const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyReceiveProductId)
 
                     rewardTitle = `Buy ${rewardSetting.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle} Get ${rewardSetting.bxgyReceiveAmount} ${bxgyReceiveProductTitle} ${rewardSetting.bxgyRewardType === "free" ? "Free" :
                     rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount}% off`}`
-                    discountCode = await createBxgyDiscount(rewardSetting.id, reward.store) || ""
+                    const discountData = await createBxgyDiscount(rewardSetting.id, reward.store)
+                    discountCode = discountData?.discountCode || ""
+                    discountId = discountData?.discountId || ""
                 } else {
                     if (rewardSetting.selectedRewardType === "dollar") {
                         rewardTitle = `$${rewardSetting.dollarAmount} off`
                     } else if (rewardSetting.selectedRewardType === "percent") {
                         rewardTitle = `${rewardSetting.percentageAmount * 100}% off`
                     } 
-                    discountCode = await createBasicDiscount(rewardSetting.id, reward.store) || ""
+                    const discountData = await createBasicDiscount(rewardSetting.id, reward.store)
+                    discountCode = discountData?.discountCode || ""
+                    discountId = discountData?.discountId || ""
                 }
                 const minPurchaseStatement = fetchMinPurchaseRequirementStatement(rewardSetting)
                 rewardTitle += minPurchaseStatement
@@ -85,7 +92,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             if (soloReward.selectedRewardType === "free-shipping") {
 
                 rewardTitle = "Free Shipping"
-                discountCode = await createFreeShippingDiscount(soloReward.id, reward.store) || ""
+                const discountData = await createFreeShippingDiscount(soloReward.id, reward.store)
+                discountCode = discountData?.discountCode || ""
+                discountId = discountData?.discountId || ""
 
             } else if (soloReward.selectedRewardType === "bxgy") {
                 const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyPurchaseProductId)
@@ -94,7 +103,10 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 rewardTitle = `Buy ${soloReward.bxgyPurchaseAmount}: ${bxgyPurchaseProductTitle}, Get ${soloReward.bxgyReceiveAmount}: ${bxgyReceiveProductTitle} - ${soloReward.bxgyRewardType === "free" ? "Free" :
                 soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off`
                 
-                discountCode = await createBxgyDiscount(soloReward.id, reward.store) || ""
+                const discountData = await createBxgyDiscount(soloReward.id, reward.store)
+                discountCode = discountData?.discountCode || ""
+                discountId = discountData?.discountId || ""
+
             } else {
                 if (soloReward.selectedRewardType === "dollar") {
                     rewardTitle = `$${soloReward.dollarAmount} off`
@@ -102,7 +114,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 } else if (soloReward.selectedRewardType === "percent") {
                     rewardTitle = `${soloReward.percentageAmount * 100}% off`
                 } 
-                discountCode = await createBasicDiscount(soloReward.id, reward.store) || ""
+                const discountData = await createBasicDiscount(soloReward.id, reward.store)
+                discountCode = discountData?.discountCode || ""
+                discountId = discountData?.discountId || ""
             } 
 
             const minPurchaseStatement = fetchMinPurchaseRequirementStatement(soloReward)
@@ -128,16 +142,17 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
         const autoSendDate = new Date()
         autoSendDate.setDate(autoSendDate.getDate() + 2)
-        const rewardData = {
+        const pendingRewardData = {
             store: reward.store,
             title: rewardTitle, 
             code: discountCode, 
             firstName: data.firstName,
             toAddress: data.toAddress,
+            discountId,
             autoSendDate
         }
 
-        const pendingReward = await db.pendingReward.create({data: rewardData})
+        const pendingReward = await db.pendingReward.create({data: pendingRewardData})
         await db.productReview.update({where: {id: data.reviewId}, data: {pendingRewardId: pendingReward.id}})
 
         return new Response(JSON.stringify({status: "reward successfully added to the email queue"}), {status: 200})

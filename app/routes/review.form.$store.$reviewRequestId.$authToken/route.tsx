@@ -11,12 +11,17 @@ import { initialUserReviewFormInputState, UserReviewFormInputState } from "~/typ
 import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
 import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
 import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
+import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
     const store = params.store as string
     const reviewRequestId = params.reviewRequestId as string
     const authToken = params.authToken as string
+    const session = await db.session.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
+    const accessToken = session?.accessToken
+
+    if (!accessToken) return redirect(`/404`)
 
     // extract search params from the url
     const url = new URL(request.url)
@@ -48,16 +53,8 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     const productIds = productDataObjects.map(product => product.id)
 
     const questions = await Promise.all(productIds.map(async (id, index) => {
-        const numConfigProductQuestions = parseInt(searchParams.get(`numProduct${index+1}Questions`) as string)
-        if (numConfigProductQuestions > 0) {
-            const questions = []
-            for (let i=0; i<numConfigProductQuestions; i++) {
-                const questionId = searchParams.get(`product${index+1}Question${i+1}Id`) as string
-                const question = await db.reviewFormQuestion.findFirst({where: {id: {equals: questionId}}, include: {radioAnswerChoices: true}}) || null
-                questions.push(question)
-            }
-            return questions
-        }
+        const questions = await fetchConfiguredQuestions(parseInt(id.split('Product/')[1]), `${store}.myshopify.com`, accessToken)
+        if (questions.length > 0) return questions
         return null
     })).then(res => res.flatMap(q => q ? [q] : []))
 

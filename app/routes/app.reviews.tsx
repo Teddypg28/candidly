@@ -29,6 +29,17 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     }
 
     if (action === "disapprove") {
+        const deleteMutation = `
+        mutation {
+            discountCodeDelete(id: "${data.discountId}") {
+              userErrors {
+                field
+                message
+              }
+            }
+          }
+        `
+        await admin.graphql(deleteMutation)
         return await db.pendingReward.delete({where: {id: data.pendingRewardId}})
     }
 
@@ -116,8 +127,8 @@ export default function Reviews() {
     const navigate = useNavigate()
     const {mode, setMode} = useSetIndexFiltersMode()
 
-    const disapproveReward = (pendingRewardId: string) => {
-        submit(JSON.stringify({action: 'disapprove', pendingRewardId}), {encType: 'application/json', action: 'POST'})
+    const disapproveReward = (pendingRewardId: string, discountId: string) => {
+        submit(JSON.stringify({action: 'disapprove', pendingRewardId, discountId}), {encType: 'application/json', method: 'POST'})
     }
 
     useEffect(() => {
@@ -215,7 +226,7 @@ export default function Reviews() {
                     <Badge tone={review.isPublished ? "success" : "warning"}>{review.isPublished.toString()}</Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>{!review.pendingReward ? 'No Reward' : review.pendingReward.sent ? <Badge tone="success">Auto-Approved</Badge> : 
-                    <Button tone="critical" variant="primary" onClick={() => disapproveReward(review.pendingRewardId || "")}>Disapprove</Button>}
+                    <Button tone="critical" variant="primary" onClick={() => disapproveReward(review.pendingRewardId || "", review.pendingReward?.discountId || "")}>Disapprove</Button>}
                 </IndexTable.Cell>
             </IndexTable.Row>
         )

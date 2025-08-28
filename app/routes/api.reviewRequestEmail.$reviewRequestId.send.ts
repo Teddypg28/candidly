@@ -4,7 +4,6 @@ import db from '../db.server'
 import sendEmail from "~/helpers/email/sendEmail";
 import { ReviewRequest, ReviewRequestEmailSettings, Subscription } from "@prisma/client";
 import { ReviewRequestEmailVariables } from "~/types/types";
-import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
 export async function action( { request, params } : ActionFunctionArgs) {
@@ -80,20 +79,12 @@ export async function action( { request, params } : ActionFunctionArgs) {
         if (productObj.currentQuantity > 0) return productObj
     })
   
-    const productIds: string[] = lineItems.map((item: {currentQuantity: number, productId: string, title: string, image: string}) => item.productId)
-    const configuredQuestions = await Promise.all(productIds.map(async (id) => {
-      const configuredQuestions = await fetchConfiguredQuestions(parseInt(id.split('Product/')[1]), store, accessToken)
-      const questionIds = configuredQuestions.map(question => question.id)
-      return questionIds
-    }))
-  
     const emailVariables: ReviewRequestEmailVariables = {
       authToken: reviewRequest.authToken,
       reviewRequestId: reviewRequest.id,
       store: reviewRequest.store,
       firstName,
-      lineItems,
-      configuredQuestions
+      lineItems
     }
 
     const emailSubject = reviewRequest.emailsSent === 0 ? storeEmailSettings.initialEmailSubject : storeEmailSettings.followUpEmailSubject

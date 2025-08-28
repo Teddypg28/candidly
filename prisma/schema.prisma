@@ -255,6 +255,7 @@ model PendingReward {
   id           String         @id @default(uuid())
   store        String
   autoSendDate DateTime
+  discountId   String
   title        String
   code         String
   firstName    String

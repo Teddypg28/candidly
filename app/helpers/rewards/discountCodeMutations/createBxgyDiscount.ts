@@ -145,7 +145,7 @@ export default async function createBxgyDiscount(rewardSettingsId: string, store
         
         if (errors.length > 0) return null
 
-        return randomDiscountCode
+        return {discountCode: randomDiscountCode, discountId: data.data.discountCodeBxgyCreate.codeDiscountNode.id}
     }
 
     return null

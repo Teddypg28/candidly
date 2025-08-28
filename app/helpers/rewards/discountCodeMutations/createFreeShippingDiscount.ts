@@ -96,7 +96,7 @@ export default async function createFreeShippingDiscount(rewardSettingsId: strin
 
         if (errors.length > 0) return null
 
-        return randomDiscountCode
+        return {discountCode: randomDiscountCode, discountId: data.data.discountCodeFreeShippingCreate.codeDiscountNode.id}
     }
 
     return null

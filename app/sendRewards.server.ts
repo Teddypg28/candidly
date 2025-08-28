@@ -3,7 +3,7 @@ import db from './db.server'
 import sendRewardEmail from './helpers/rewards/sendRewardEmail.server';
 
 new CronJob(
-  '27 14 * * *', 
+  '21 15 * * *', 
   async function () {
     try {     
         const pendingRewards = await db.pendingReward.findMany({where: {autoSendDate: {lte: new Date()}, sent: {equals: false}}})

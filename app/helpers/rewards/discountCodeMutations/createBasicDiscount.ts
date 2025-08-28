@@ -108,7 +108,8 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
 
         if (errors.length > 0) return null
         
-        return randomDiscountCode
+        return {discountCode: randomDiscountCode, discountId: data.data.discountCodeBasicCreate.codeDiscountNode.id}
+
     }
 
     return null

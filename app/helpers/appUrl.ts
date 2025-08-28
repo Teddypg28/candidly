@@ -1,1 +1,1 @@
-export default "deluxe-lloyd-fundamentals-noon.trycloudflare.com"
+export default "passage-your-alto-testament.trycloudflare.com"
