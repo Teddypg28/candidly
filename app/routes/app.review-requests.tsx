@@ -252,6 +252,7 @@ export default function ReviewRequests() {
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>{reviewRequest.emailsSent}</IndexTable.Cell>
+                <IndexTable.Cell>{reviewRequest.emailsSent === 2 || reviewRequest.isComplete ? null : reviewRequest.nextRequestDate}</IndexTable.Cell>
             </IndexTable.Row>
 
         )
@@ -430,7 +431,7 @@ export default function ReviewRequests() {
                         <IndexTable 
                         pagination={pagination}
                         selectable={false}
-                        headings={[{title: 'Order Date'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}]}
+                        headings={[{title: 'Order Date'}, {title: 'Customer Email'}, {title: 'Order Number'}, {title: 'Fulfillment Status'}, {title: 'Review Status'}, {title: 'Emails Sent'}, {title: 'Next Request Date'}]}
                         itemCount={filteredReviewRequests.length}
                         >
                             {IndexTableMarkup}

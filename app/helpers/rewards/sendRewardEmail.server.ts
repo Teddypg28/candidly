@@ -26,6 +26,9 @@ export default async function sendRewardEmail(pendingReward: PendingReward) {
         fromEmailAddress,
         "customer-reward"
     )
+
+    await db.pendingReward.update({where: {id: pendingReward.id}, data: {sent: true}})
+
     } catch (error) {
         console.error(error)
     }

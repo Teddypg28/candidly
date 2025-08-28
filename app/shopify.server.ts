@@ -12,6 +12,7 @@ import prisma from "./db.server";
 import './reviewRequestEmailScheduler'
 import './subscriptionUpdater'
 import './reviewPublisher'
+import './sendRewards.server'
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,

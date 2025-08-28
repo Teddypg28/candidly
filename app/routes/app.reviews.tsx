@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge, DropZone, IndexTableProps } from "@shopify/polaris";
+import { Card, ChoiceList, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, useSetIndexFiltersMode, Modal, Button, BlockStack, InlineStack, Thumbnail, useIndexResourceState, PageActions, EmptyState, Text, Badge, DropZone, IndexTableProps, Banner } from "@shopify/polaris";
 import { ImageIcon} from '@shopify/polaris-icons';
 
 import { useCallback, useEffect, useState } from "react";
@@ -26,6 +26,10 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
      if (state) {
         delete state['selectedTab']
+    }
+
+    if (action === "disapprove") {
+        return await db.pendingReward.delete({where: {id: data.pendingRewardId}})
     }
 
     if (action === 'create') {
@@ -86,7 +90,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
   try {
       const { session } = await authenticate.admin(request)
 
-      const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, include: {media: true}})
+      const reviews = await db.productReview.findMany({where: {store: {equals: session.shop}}, include: {media: true, pendingReward: true}})
       const updatedReviews = await Promise.all(reviews.map(async (review) => {
           const productTitle: string = await fetchProductTitle(session.shop, review.productId) || 'Product Deleted'
           return {...review, productTitle}
@@ -111,6 +115,10 @@ export default function Reviews() {
     const submit = useSubmit()
     const navigate = useNavigate()
     const {mode, setMode} = useSetIndexFiltersMode()
+
+    const disapproveReward = (pendingRewardId: string) => {
+        submit(JSON.stringify({action: 'disapprove', pendingRewardId}), {encType: 'application/json', action: 'POST'})
+    }
 
     useEffect(() => {
         let exportCsvAnchor: HTMLAnchorElement
@@ -206,7 +214,9 @@ export default function Reviews() {
                 <IndexTable.Cell>
                     <Badge tone={review.isPublished ? "success" : "warning"}>{review.isPublished.toString()}</Badge>
                 </IndexTable.Cell>
-                <IndexTable.Cell>{review.rating}</IndexTable.Cell>
+                <IndexTable.Cell>{!review.pendingReward ? 'No Reward' : review.pendingReward.sent ? <Badge tone="success">Auto-Approved</Badge> : 
+                    <Button tone="critical" variant="primary" onClick={() => disapproveReward(review.pendingRewardId || "")}>Disapprove</Button>}
+                </IndexTable.Cell>
             </IndexTable.Row>
         )
     })
@@ -457,6 +467,10 @@ export default function Reviews() {
         ]}
         >
             <BlockStack gap='100'>
+                <Banner title="Important Reward Approval Message">
+                    If you have rewards configured, after each review is submitted, you will have two days to disapprove the reward being sent (in the case of the review being gibberish or a clear attempt to game the system just to receive the reward), otherwise
+                    the reward will be automatically emailed to the customer after that 2 day review period
+                </Banner>
                 <Modal 
                 open={importCsvFileState.importInitiated} 
                 title='Import CSV File' 

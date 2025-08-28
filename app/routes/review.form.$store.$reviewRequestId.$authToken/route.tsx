@@ -444,7 +444,7 @@ export default function ReviewForm() {
                         setReviewSuccessfullySubmitted(false)
                         setCurrentStep(1)
                         setUserInputState({...initialUserReviewFormInputState, firstName: data.customerData.firstName})
-                    }, 2000)
+                    }, 3000)
                 }
             } 
         }
@@ -629,7 +629,7 @@ export default function ReviewForm() {
     const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
 
   return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings?.type !== "none"} firstName={userInputState.firstName as string} /> :
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings && data.rewardSettings.type !== "none" ? true : false} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>
@@ -660,7 +660,7 @@ export default function ReviewForm() {
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 <div>
                     <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
-                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px'}}>(Add at least 1 to perfect your review)</p>}
+                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px'}}>{data.rewardTierNames.length > 0 && "(Add at least 1 to perfect your review)"}</p>}
                 </div>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}

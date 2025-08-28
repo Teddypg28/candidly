@@ -127,7 +127,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         if (discountCode === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
 
         const autoSendDate = new Date()
-        autoSendDate.setDate(autoSendDate.getDate() + 3)
+        autoSendDate.setDate(autoSendDate.getDate() + 2)
         const rewardData = {
             store: reward.store,
             title: rewardTitle, 
