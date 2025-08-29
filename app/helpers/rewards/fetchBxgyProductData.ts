@@ -3,8 +3,8 @@ import { RewardState, SelectedProduct_Bxgy } from "~/types/types";
 
 // fetch product image and title for bogo purchase & receive products
 export default async function fetchBxgyProductData(rewardSettings: RewardState, admin: AdminApiContext) {
-    const selectedProducts: {subpar: SelectedProduct_Bxgy[], good: SelectedProduct_Bxgy[], perfect: SelectedProduct_Bxgy[], solo: SelectedProduct_Bxgy[]} = {subpar: [], good: [], perfect: [], solo: []}
-    await Promise.all(['subpar', 'good', 'perfect', 'solo'].map(async (reviewType) => {
+    const selectedProducts: {subpar: SelectedProduct_Bxgy[], good: SelectedProduct_Bxgy[], perfect: SelectedProduct_Bxgy[], media: SelectedProduct_Bxgy[]} = {subpar: [], good: [], perfect: [], media: []}
+    await Promise.all(['subpar', 'good', 'perfect', 'media'].map(async (reviewType) => {
         const productIds: string[] = []
         if (rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bxgyPurchaseProductId) {
             productIds.push(rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].bxgyPurchaseProductId)

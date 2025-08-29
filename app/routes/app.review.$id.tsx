@@ -1,6 +1,6 @@
-import { ActionFunctionArgs, json, LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import { BlockStack, Card, DropZone, InlineStack, Layout, Page, PageActions, Text, TextField, Thumbnail } from "@shopify/polaris";
+import { BlockStack, Card, DropZone, InlineStack, Layout, Page, Text, TextField, Thumbnail } from "@shopify/polaris";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
@@ -12,11 +12,6 @@ import { authenticate } from "~/shopify.server";
 import { useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
-
-import s3Client from "~/utils/s3Client";
-import { ListObjectsV2Command, DeleteObjectCommand } from '@aws-sdk/client-s3'
-import uploadMedia from "~/helpers/uploadMedia";
-import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
 
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     try {
@@ -44,68 +39,6 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     } catch (error) {
         console.log(error)
         return redirect('/app/reviews')
-    }
-}
-
-export const action = async ({ request, params } : ActionFunctionArgs) => {
-    try {
-        const { session, admin } = await authenticate.admin(request)
-        
-        const allFormData = await request.formData()
-        const action = allFormData.get('action')
-        if (action === 'delete') {
-            // get media s3 bucket keys from db record urls and then remove them from s3 bucket
-            const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: params.id}}})
-            await Promise.all(reviewMediaRecords.map(async (record) => {
-                const bucketKey = record.url.split('.com/')[1]
-                const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: bucketKey})
-                return await s3Client.send(deleteCommand)
-            }))
-            // delete the review
-            await db.productReview.delete({where: {id: params.id}})
-            // update metafields
-            await updateProductRatingMetafields(params.id as string, 0, admin, session)
-            return redirect('/app/reviews')
-        } 
-
-        const newFileData = allFormData.getAll('newFiles')
-        const currentFileData = allFormData.getAll('currentFileKeys')
-        allFormData.delete('currentFileKeys')
-        allFormData.delete('newFiles')
-        allFormData.delete('id')
-    
-        // update product review data first, then media
-        const updatedData = Object.fromEntries(allFormData)
-        const updatedProductReview = await db.productReview.update({where: {id: params.id}, data: {...updatedData, rating: parseInt(allFormData.get('rating') as string)}})
-
-        const updateCurrentFiles = async () => {
-            const command = new ListObjectsV2Command({Bucket: process.env.S3_BUCKET_NAME})
-            const data = await s3Client.send(command)
-            const storedFiles = data.Contents || []
-            const filesToRemove = storedFiles.filter(file => !currentFileData.includes(file.Key as string))
-            if (filesToRemove.length > 0) {
-                // remove objects from s3 bucket
-                // remove media records from db table
-                await Promise.all(filesToRemove.map(async (file) => {
-                    const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: file.Key as string})
-                    await s3Client.send(deleteCommand)
-                    const productReviewMedia = await db.productReviewMedia.findMany({where: {url: {contains: file.Key as string}}})
-                    await db.productReviewMedia.delete({where: {id: productReviewMedia[0].id}})
-                }))
-            }
-        }
-
-        await updateCurrentFiles()
-
-        if (newFileData.length > 0) {
-            uploadMedia(newFileData as File[], updatedProductReview.id)
-        }
-
-        return json('success', {status: 200})
-        
-    } catch (error) {
-        console.log(error)
-        return json({error}, {status: 400}) 
     }
 }
 
@@ -183,12 +116,6 @@ export default function Review() {
         setCleanState(state)
     }
 
-    const deleteReview = () => {
-        submit({action: 'delete'}, {method: 'POST'})
-    }
-
-    const fileUploadBtn = !state.media.length && <DropZone.FileUpload actionTitle="Upload Images/Videos" />
-
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         const currentUploadedFileNames = state.media.map(file => file.name)
         const newUploadedFiles = acceptedFiles.filter(file => !currentUploadedFileNames.includes(file.name))
@@ -226,36 +153,44 @@ export default function Review() {
         <Layout>
             <Layout.Section variant="oneHalf">
                 <Card>
-                    <BlockStack gap='200'>
-                        <TextField 
-                        value={state.firstName} 
-                        onChange={value => setState(prevState => {return {...prevState, name: value}})}
-                        placeholder="Reviewer Name" 
-                        autoComplete="off" 
-                        label="Reviewer Name" />
-                        <TextField 
-                        value={state.rating} 
-                        type="integer"
-                        onChange={value => setState(prevState => {return {...prevState, rating: value}})}
-                        placeholder="Star Rating" 
-                        label="Star Rating" 
-                        autoComplete="off"
-                        disabled
-                        />
-                        <Text as="p" variant="bodyXs">Due to consumer transparency policies, the star rating is uneditable</Text>
-                        <TextField 
-                        value={state.title} 
-                        onChange={value => setState(prevState => {return {...prevState, title: value}})}
-                        placeholder="Review Title" 
-                        autoComplete="off" 
-                        label="Review Title" />
-                        <TextField
-                        multiline 
-                        value={state.body} 
-                        onChange={value => setState(prevState => {return {...prevState, body: value}})}
-                        placeholder="Review Body" 
-                        autoComplete="off" 
-                        label="Review Body" />
+                    <BlockStack gap={'200'}>
+                        <BlockStack gap='200'>
+                            <TextField 
+                            value={state.firstName} 
+                            onChange={value => setState(prevState => {return {...prevState, name: value}})}
+                            placeholder="Reviewer Name" 
+                            autoComplete="off" 
+                            label="Reviewer Name" 
+                            disabled
+                            />
+                            <TextField 
+                            value={state.rating} 
+                            type="integer"
+                            onChange={value => setState(prevState => {return {...prevState, rating: value}})}
+                            placeholder="Star Rating" 
+                            label="Star Rating" 
+                            autoComplete="off"
+                            disabled
+                            />
+                            <TextField 
+                            value={state.title} 
+                            onChange={value => setState(prevState => {return {...prevState, title: value}})}
+                            placeholder="Review Title" 
+                            autoComplete="off" 
+                            label="Review Title" 
+                            disabled
+                            />
+                            <TextField
+                            multiline 
+                            value={state.body} 
+                            onChange={value => setState(prevState => {return {...prevState, body: value}})}
+                            placeholder="Review Body" 
+                            autoComplete="off" 
+                            label="Review Body" 
+                            disabled
+                            />
+                        </BlockStack>
+                        <Text as="p" variant="bodyXs">Due to consumer transparency policies, customer reviews are uneditable</Text>
                     </BlockStack>
                 </Card>
             </Layout.Section>
@@ -269,7 +204,7 @@ export default function Review() {
                         id='fileInput'
                         accept="image/*,video/*"
                         onDrop={handleDrop}
-                        disabled={state.media.length === 5}
+                        disabled={true}
                         >
                             <div style={{padding: '10px 5px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                                 <InlineStack 
@@ -278,20 +213,12 @@ export default function Review() {
                                 >
                                 {uploadedFileMarkup}
                                 </InlineStack>
-                                {fileUploadBtn}
                             </div>
                         </DropZone>
                     </BlockStack>
                 </Card>
             </Layout.Section>
-            <Layout.Section>
-                <PageActions 
-                primaryAction={{content: 'Save', disabled: isStateClean, onAction: handleSave}}
-                secondaryActions={[{content: 'Delete', destructive: true, onAction: deleteReview}]}
-                />
-            </Layout.Section>
         </Layout>
-        
     </Page>
   )
 }

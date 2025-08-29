@@ -14,8 +14,6 @@ import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState,
 import styles from '../styles/ImportReviews.module.css'
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
 import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import s3Client from "~/utils/s3Client";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
 
@@ -59,25 +57,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         return await db.savedReviewsTableViews.deleteMany({ where: {store: {equals: session.shop}, AND: {name: {equals: data.nameToDelete}}}})
     }
 
-    if (action === 'deleteReviews') {
-        const productIdsToUpdate = new Set()
-        await Promise.all(data.reviewIds.map(async (id: string) => {
-            // delete media
-            const reviewMediaRecords = await db.productReviewMedia.findMany({where: {reviewId: {equals: id}}})
-            await Promise.all(reviewMediaRecords.map(async (record) => {
-                const bucketKey = record.url.split('.com/')[1]
-                const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: bucketKey})
-                return await s3Client.send(deleteCommand)
-            }))
-            // delete review
-            const productReview = await db.productReview.delete({where: { id }})
-            productIdsToUpdate.add(productReview.productId)
-        }));
-        await Promise.all([...productIdsToUpdate].map(async (productId) => {
-            await updateProductRatingMetafields(productId as string, 0, admin, session)
-        }))
-    }
-
     if (action === 'publishReviews') {
         const publishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
             return await db.productReview.update({where: { id }, data: {isPublished: true}})
@@ -86,15 +65,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         return await Promise.all(publishedReviews.map(async (review) => {
             return await updateProductRatingMetafields(review.productId, review.rating, admin, session)
         }))
-    }
-
-    if (action === 'unpublishReviews') {
-        const unpublishedReviews = await Promise.all(data.reviewIds.map(async (id: string) => {
-            return await db.productReview.update({where: { id }, data: {isPublished: false}})
-        }))
-        return await Promise.all(unpublishedReviews.map(async (review) => {
-            return await updateProductRatingMetafields(review.productId, 0, admin, session)
-        })) 
     }
 
     return true
@@ -593,10 +563,6 @@ export default function Reviews() {
                 reviews.length > 0 &&
                 <PageActions 
                 primaryAction={{content: 'Publish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === true), onAction: publishSelectedReviews}}
-                secondaryActions={[
-                    {content: 'Delete', onAction: deleteSelectedReviews, disabled: selectedResources.length === 0, destructive: true},
-                    {content: 'Unpublish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === false), onAction: unpublishSelectedReviews}
-                ]}
                 />
             }
         </Page>

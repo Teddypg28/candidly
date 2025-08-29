@@ -3,7 +3,7 @@ import db from '../../db.server'
 
 export default async function fetchRewardTierRewards(rewardSettingsId: string | undefined) {
     const reward = await db.reward.findFirst({where: {id: {equals: rewardSettingsId}}})
-    if (!reward || reward.type === "solo") return []
+    if (!reward || reward.type === "media") return []
 
     const settingsIds = [reward.subparId, reward.goodId, reward.perfectId]
     const rewardNames = await Promise.all(settingsIds.map(async (id) => {

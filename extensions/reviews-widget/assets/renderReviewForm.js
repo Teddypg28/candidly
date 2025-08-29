@@ -152,7 +152,7 @@ const renderReviewForm = () => {
             activateUploadMediaContainer()
         } else if (steps[currentStep-1].key === "customQuestions") {
             renderCustomQuestions()
-        } else if (["title", "body", "firstName"].includes(steps[currentStep-1].key)) {
+        } else if (["title", "body", "firstName", "email"].includes(steps[currentStep-1].key)) {
             const inputEl = document.querySelector('.formQuestionInput')
             inputEl.value = userInputState[inputEl.getAttribute("name")]
             document.querySelector('.formQuestionInput').addEventListener('input', handleUserInput)

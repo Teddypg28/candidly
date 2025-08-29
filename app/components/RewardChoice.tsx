@@ -12,7 +12,7 @@ interface Props {
         subpar: SelectedProduct_Bxgy[];
         good: SelectedProduct_Bxgy[];
         perfect: SelectedProduct_Bxgy[];
-        solo: SelectedProduct_Bxgy[]
+        media: SelectedProduct_Bxgy[]
     }
     setBxgyProductState: (state: any) => void
 }

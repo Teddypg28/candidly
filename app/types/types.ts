@@ -303,7 +303,7 @@ export interface RewardState {
         subpar: Reward
         good: Reward
         perfect: Reward
-        solo: Reward
+        media: Reward
     }
     type: string
 }

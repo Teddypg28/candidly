@@ -3,8 +3,8 @@ import { RewardState, SelectedProduct_Reward } from "~/types/types"
 
 // fetches product data to display which product the reward is configured for
 export default async function fetchSelectedProductData(rewardSettings: RewardState, admin: AdminApiContext) {
-    const selectedProducts: {subpar: SelectedProduct_Reward[], good: SelectedProduct_Reward[], perfect: SelectedProduct_Reward[], solo: SelectedProduct_Reward[]} = {subpar: [], good: [], perfect: [], solo: []}
-    await Promise.all(['subpar', 'good', 'perfect', 'solo'].map(async (reviewType) => {
+    const selectedProducts: {subpar: SelectedProduct_Reward[], good: SelectedProduct_Reward[], perfect: SelectedProduct_Reward[], media: SelectedProduct_Reward[]} = {subpar: [], good: [], perfect: [], media: []}
+    await Promise.all(['subpar', 'good', 'perfect', 'media'].map(async (reviewType) => {
         await Promise.all(rewardSettings.rewards[reviewType as keyof typeof rewardSettings.rewards].eligibleProducts.map(async (product) => {
             const query = `{
                 product(id: "${product.productId}") {

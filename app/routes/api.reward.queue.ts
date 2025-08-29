@@ -49,7 +49,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                     const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyReceiveProductId)
 
                     rewardTitle = `Buy ${rewardSetting.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle} Get ${rewardSetting.bxgyReceiveAmount} ${bxgyReceiveProductTitle} ${rewardSetting.bxgyRewardType === "free" ? "Free" :
-                    rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount}% off`}`
+                    rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount * 100}% off`}`
                     const discountData = await createBxgyDiscount(rewardSetting.id, reward.store)
                     discountCode = discountData?.discountCode || ""
                     discountId = discountData?.discountId || ""
@@ -83,9 +83,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             }
         }
 
-        // if there is a solo reward
-        if (reward.type === "solo") {
-            const soloReward = await db.rewardSetting.findFirst({where: {id: {equals: reward.soloId}}, include: {eligibleCollections: true, eligibleProducts: true}})
+        // if there is a media reward
+        if (reward.type === "media") {
+            const soloReward = await db.rewardSetting.findFirst({where: {id: {equals: reward.mediaId}}, include: {eligibleCollections: true, eligibleProducts: true}})
 
             if (!soloReward) return new Response(JSON.stringify({error: "error retrieving reward settings"}), {status: 400})
 
@@ -100,8 +100,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyPurchaseProductId)
                 const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, soloReward.bxgyReceiveProductId)
 
-                rewardTitle = `Buy ${soloReward.bxgyPurchaseAmount}: ${bxgyPurchaseProductTitle}, Get ${soloReward.bxgyReceiveAmount}: ${bxgyReceiveProductTitle} - ${soloReward.bxgyRewardType === "free" ? "Free" :
-                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount}%`} Off`
+                rewardTitle = `Buy ${soloReward.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle}, Get ${soloReward.bxgyReceiveAmount} ${bxgyReceiveProductTitle} - ${soloReward.bxgyRewardType === "free" ? "Free" :
+                soloReward.bxgyRewardType === "dollar" ? `$${soloReward.bxgyDollarAmount}` : `${soloReward.bxgyPercentageAmount * 100}%`} Off`
                 
                 const discountData = await createBxgyDiscount(soloReward.id, reward.store)
                 discountCode = discountData?.discountCode || ""

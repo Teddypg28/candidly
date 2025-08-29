@@ -9,6 +9,7 @@ import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import ReviewFormPreview from "~/components/ReviewFormPreview";
 import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
+import { fetchMediaReward } from "~/helpers/rewards/fetchMediaReward";
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.json()
@@ -20,18 +21,26 @@ export async function loader({ request } : LoaderFunctionArgs) {
     const { session } = await authenticate.admin(request)
     const reviewFormSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewFormQuestions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true}})
-
-    const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     
-    const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}})
-    const rewardTierNames = await fetchRewardTierRewards(rewardSettings?.id)
+    const reward = await db.reward.findFirst({where: {store: {equals: session.shop}}})
+    let rewardData: {type: 'none' | 'tiers' | 'media', names: string[] | []} = {type: 'none', names: []}
+
+    if (reward?.type === "tiers") {
+        const qualityRewardTiers = await fetchRewardTierRewards(reward.id)
+        rewardData.names = qualityRewardTiers
+        rewardData.type = "tiers"
+    } else if (reward?.type === "media") {
+        const mediaReward = await fetchMediaReward(reward)
+        rewardData.names = [mediaReward]
+        rewardData.type = "media"
+    }
 
     if (reviewFormSettings) {
-        return json({settings: reviewFormSettings, questions: reviewFormQuestions, rewardNames: rewardSettings?.type === "tiers" && subscription?.type !== "free" ? rewardTierNames : []})
+        return json({settings: reviewFormSettings, questions: reviewFormQuestions, reward: rewardData})
     }
     const defaultSettings = await db.reviewFormSettings.create({data: {store: session.shop}})
 
-    return json({settings: defaultSettings, questions: reviewFormQuestions, rewardNames: []})
+    return json({settings: defaultSettings, questions: reviewFormQuestions, reward: rewardData})
 }
 
 export default function ReviewFormTemplate() {
@@ -111,7 +120,7 @@ export default function ReviewFormTemplate() {
                             starRatingHeading={settingsState.starRatingHeading}
                             titleHeading={settingsState.titleHeading}
                             titlePlaceholder={settingsState.titlePlaceholder}
-                            rewardNames={data.rewardNames}
+                            reward={data.reward}
                             />
                         </Layout.Section>
                     </Layout>

@@ -30,7 +30,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         // update reward type
         await db.reward.update({where: {id: currentReward.id}, data: {type: payload["type"]}})
     
-        await Promise.all(['subpar', 'good', 'perfect', 'solo'].map(async (reviewType) => {
+        await Promise.all(['subpar', 'good', 'perfect', 'media'].map(async (reviewType) => {
             // grab the eligible products & eligible collections (if any) from request data
             const eligibleProducts = payload['rewards'][reviewType].eligibleProducts as EligibleProduct[]
             const eligibleCollections = payload['rewards'][reviewType].eligibleCollections as EligibleCollection[]
@@ -88,13 +88,13 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
                 subpar: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
                 good: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
                 perfect: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
-                solo: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}}
+                media: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}}
             },
         omit: {
                 subparId: true,
                 goodId: true, 
                 perfectId: true, 
-                soloId: true,
+                mediaId: true,
                 store: true,
                 id: true
             }
@@ -110,7 +110,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
                 good: rewardSettings.good, 
                 subpar: rewardSettings.subpar, 
                 perfect: rewardSettings.perfect, 
-                solo: rewardSettings.solo
+                media: rewardSettings.media
             },  
             selectedProductsCollections: { 
                 products: selectedProducts, 
@@ -129,19 +129,19 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             subpar: {create: {...initialRewardState, eligibleProducts: {create: initialRewardState.eligibleProducts}, eligibleCollections: {create: initialRewardState.eligibleCollections}}}, 
             good: {create: {...initialRewardState, eligibleProducts: {create: initialRewardState.eligibleProducts}, eligibleCollections: {create: initialRewardState.eligibleCollections}}}, 
             perfect: {create: {...initialRewardState, eligibleProducts: {create: initialRewardState.eligibleProducts}, eligibleCollections: {create: initialRewardState.eligibleCollections}}},
-            solo: {create: {...initialRewardState, eligibleProducts: {create: initialRewardState.eligibleProducts}, eligibleCollections: {create: initialRewardState.eligibleCollections}}},
+            media: {create: {...initialRewardState, eligibleProducts: {create: initialRewardState.eligibleProducts}, eligibleCollections: {create: initialRewardState.eligibleCollections}}},
         },
         include: {
             subpar: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
             good: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
             perfect: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
-            solo: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}}
+            media: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}}
         },
         omit: {
             subparId: true,
             goodId: true, 
             perfectId: true, 
-            soloId: true,
+            mediaId: true,
             store: true,
             id: true
         }   
@@ -151,13 +151,13 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
             good: initializedRewardSettings.good, 
             subpar: initializedRewardSettings.subpar, 
             perfect: initializedRewardSettings.perfect, 
-            solo: initializedRewardSettings.solo
+            media: initializedRewardSettings.media
         }, 
         selectedProductsCollections: {
-            products: {subpar: [], good: [], perfect: [], solo: []}, 
-            collections: {subpar: [], good: [], perfect: [], solo: []}
+            products: {subpar: [], good: [], perfect: [], media: []}, 
+            collections: {subpar: [], good: [], perfect: [], media: []}
         },
-        selectedBxgyProducts: {subpar: [], good: [], perfect: [], solo: []},
+        selectedBxgyProducts: {subpar: [], good: [], perfect: [], media: []},
         type: initializedRewardSettings.type,
     }
 }
@@ -169,7 +169,7 @@ export default function Reward() {
     const submit = useSubmit()
     const navigation = useNavigation()
 
-    const [currentTab, setCurrentTab] = useState(data.type === "solo" ? 'solo' : 'subpar')
+    const [currentTab, setCurrentTab] = useState(data.type === "media" ? 'media' : 'subpar')
     
     const [rewardState, setRewardState] = useState<RewardState>({rewards: data.rewardSettings, type: data.type})
     const cleanRewardState = {rewards: data.rewardSettings, type: data.type}
@@ -182,13 +182,13 @@ export default function Reward() {
             subpar: SelectedProduct_Reward[];
             good: SelectedProduct_Reward[];
             perfect: SelectedProduct_Reward[];
-            solo: SelectedProduct_Reward[]
+            media: SelectedProduct_Reward[]
         },
         collections: {
             subpar: SelectedCollection_Reward[];
             good: SelectedCollection_Reward[];
             perfect: SelectedCollection_Reward[];
-            solo: SelectedCollection_Reward[]
+            media: SelectedCollection_Reward[]
         }
     }>(data.selectedProductsCollections)
 
@@ -242,14 +242,14 @@ export default function Reward() {
         if (rewardState.rewards[currentTab as keyof typeof rewardState.rewards].productCollectionConfiguration === "products" && 
         rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleProducts.length === 0) return true
         
-        if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && (
-        rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bxgyPurchaseProductId === "" || 
-        rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bxgyReceiveProductId === "")) return true
+        if (rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && (
+        rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].bxgyPurchaseProductId === "" || 
+        rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].bxgyReceiveProductId === "")) return true
 
-        if (rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && 
-        isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].bxgyPercentageAmount)) return true
+        if (rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && 
+        isNaN(rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].bxgyPercentageAmount)) return true
 
-        if (isNaN(rewardState.rewards[rewardState.type === "solo" ? 'solo' : currentTab as keyof typeof rewardState.rewards].minPurchaseQuantityValue)) return true
+        if (isNaN(rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].minPurchaseQuantityValue)) return true
 
         return false
     }
@@ -280,14 +280,14 @@ export default function Reward() {
         setRewardState(cleanRewardState); 
         setSelectedProductsCollections(data.selectedProductsCollections);
         setBxgyProductState(data.selectedBxgyProducts)
-        if (cleanRewardState.type === "solo") setCurrentTab("solo")
+        if (cleanRewardState.type === "media") setCurrentTab("media")
         if (cleanRewardState.type === "tiers") setCurrentTab("subpar")
     }
 
     const changeRewardType = (selected: string[], name: string) => {
         setRewardState(prevRewardsState => {return {...prevRewardsState, rewards: {...prevRewardsState.rewards}, type: selected[0]}}) 
         if (selected[0] === "tiers") setCurrentTab("subpar")
-        if (selected[0] === "solo") setCurrentTab("solo")
+        if (selected[0] === "media") setCurrentTab("media")
     }
 
     return (
@@ -307,8 +307,8 @@ export default function Reward() {
                     <BlockStack gap="400">
                         <ChoiceList 
                         choices={[
-                            {label: 'Single Reward', value: 'solo', helpText: 'Same reward for each review'},
-                            {label: 'Reward Tiers', value: 'tiers', helpText: 'Different rewards based on the quality of the review'},
+                            {label: 'Photo/Image Upload Reward', value: 'media', helpText: 'Reward customers for uploading an image/video with their review'},
+                            {label: 'Quality/In-Depth Reward', value: 'tiers', helpText: 'Reward customers based on how in-depth (word count) their review is using different reward tiers'},
                             {label: 'No Rewards', value: 'none', helpText: 'Disable all rewards'},
                         ]}
                         selected={[rewardState.type]}
@@ -346,7 +346,7 @@ export default function Reward() {
                                 </button>
                             </div>)}
                             <RewardChoice 
-                            type={rewardState.type === "solo" ? "solo" : currentTab} 
+                            type={rewardState.type === "media" ? "media" : currentTab} 
                             state={rewardState} setState={setRewardState} 
                             bxgyProductState={bxgyProductState} 
                             setBxgyProductState={setBxgyProductState} 
@@ -354,7 +354,7 @@ export default function Reward() {
                         </BlockStack>
                     </Card>}
                 </Layout.Section>
-                {rewardState.type !== 'none' &&
+                {rewardState.type !== 'none' && rewardState.rewards[currentTab as keyof typeof rewardState.rewards].selectedRewardType !== "bxgy" &&
                 <Layout.Section variant="oneThird">
                     <Card>
                         <BlockStack gap={'300'}>
@@ -409,7 +409,7 @@ export default function Reward() {
                             
                             {rewardState.rewards[currentTab as keyof typeof rewardState.rewards].productCollectionConfiguration === "collections" && selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].length > 0 && 
                             <BlockStack gap={'200'}>
-                                {selectedProductsCollections["collections"][rewardState.type === "solo" ? "solo" : currentTab as keyof typeof selectedProductsCollections["collections"]].map((collection: any, index: number) => {
+                                {selectedProductsCollections["collections"][rewardState.type === "media" ? "media" : currentTab as keyof typeof selectedProductsCollections["collections"]].map((collection: any, index: number) => {
                                     return (
                                         <>
                                             <InlineStack key={index} gap={'200'} blockAlign="center">

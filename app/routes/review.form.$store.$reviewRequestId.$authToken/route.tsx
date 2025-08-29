@@ -12,6 +12,7 @@ import ReviewSubmittedMessage from "~/components/ReviewSubmittedMessage";
 import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
 import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
+import { fetchMediaReward } from "~/helpers/rewards/fetchMediaReward";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
@@ -59,7 +60,18 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
     })).then(res => res.flatMap(q => q ? [q] : []))
 
     const formSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, omit: {id: true}}) as ReviewFormSettings
-    const rewardSettings = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, include: {subpar: true, good: true, perfect: true, solo: true}})
+    const reward = await db.reward.findFirst({where: {store: {equals: `${store}.myshopify.com`}}, include: {subpar: true, good: true, perfect: true, media: true}})
+
+    let rewardData: {type: 'none' | 'tiers' | 'media', names: string[] | [], rewardId?: string} = {rewardId: reward?.id, type: 'none', names: []}
+    if (reward?.type === "tiers") {
+        const qualityRewardTiers = await fetchRewardTierRewards(reward.id)
+        rewardData.names = qualityRewardTiers
+        rewardData.type = "tiers"
+    } else if (reward?.type === "media") {
+        const mediaReward = await fetchMediaReward(reward)
+        rewardData.names = [mediaReward]
+        rewardData.type = "media"
+    }
 
     const subscription = await db.subscription.findFirst({where: {shop: {equals: `${store}.myshopify.com`}}})
 
@@ -69,8 +81,7 @@ export const loader = async ({ params, request } : LoaderFunctionArgs) => {
         reviewData: {reviewRequestId, authToken, store},
         productDataObjects, 
         questions, 
-        rewardSettings,
-        rewardTierNames: await fetchRewardTierRewards(rewardSettings?.id),
+        rewardData,
         stars,
         subscriptionType: subscription?.type || "free"
     }
@@ -428,9 +439,9 @@ export default function ReviewForm() {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
                 // create pending reward until review is verified by store owner
-                if (data.subscriptionType !== "free" && data.rewardSettings?.type !== "none") {
-                    const rewardDeliveryEmailData: any = {reviewId: reviewId.current, rewardSettingsId: data.rewardSettings?.id, firstName: data.customerData.firstName, toAddress: data.customerData.email}
-                    if (data.rewardSettings?.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
+                if (data.subscriptionType !== "free" && data.rewardData.type !== "none") {
+                    const rewardDeliveryEmailData: any = {reviewId: reviewId.current, rewardSettingsId: data.rewardData?.rewardId, firstName: data.customerData.firstName, toAddress: data.customerData.email}
+                    if (data.rewardData.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
                     await fetch('/api/reward/queue', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
                 }
                 // update products to review
@@ -627,7 +638,7 @@ export default function ReviewForm() {
     const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
 
   return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardSettings && data.rewardSettings.type !== "none" ? true : false} firstName={userInputState.firstName as string} /> :
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardData.rewardId && data.rewardData.type !== "none" ? true : false} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>
@@ -636,19 +647,19 @@ export default function ReviewForm() {
             </div>
             <img src={productsToReview.current[0].image || undefined} height={'70px'} width={'70px'} />
         </div>
-        {data.rewardSettings?.type === "tiers" && 
+        {data.rewardData.type === "tiers" && 
             <div className={styles.rewardTiersMainContainer}>
                 <h1 style={{padding: 0, margin: 0, fontSize: '20px'}}>Reward Tiers</h1>
                 <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
                 <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
                     <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{data.rewardTierNames[0]}</p>
+                        <p className={styles.rewardTierName}>{data.rewardData.names[0]}</p>
                     </div>
                     <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p className={styles.rewardTierName}>{data.rewardTierNames[1]}</p>
+                        <p className={styles.rewardTierName}>{data.rewardData.names[1]}</p>
                     </div>
                     <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{data.rewardTierNames[2]}</p>
+                        <p className={styles.rewardTierName}>{data.rewardData.names[2]}</p>
                     </div>
                 </div>
             </div>}
@@ -658,11 +669,11 @@ export default function ReviewForm() {
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 <div>
                     <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
-                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px'}}>{data.rewardTierNames.length > 0 && "(Add at least 1 to perfect your review)"}</p>}
+                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px'}}>{data.rewardData.type === "tiers" ? "(Add at least 1 to be eligible for the max reward)" : data.rewardData.type === "media" ? `(Earn a ${data.rewardData.names[0]} coupon code by uploading at least 1)` : ''}</p>}
                 </div>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}
-                    {data.rewardSettings?.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
+                    {data.rewardData.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
                         <div className={styles.progressBarContainer}>
                             <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
                                 <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>

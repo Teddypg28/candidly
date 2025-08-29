@@ -13,10 +13,10 @@ interface Props {
     bodyHeading: string;
     bodyPlaceholder: string;
     mediaHeading: string;
-    rewardNames: string[]
+    reward: {type: 'none' | 'tiers' | 'media', names: string[] | []}
 }
 
-const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading, customQuestionsHeading, rewardNames } : Props ) => {
+const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder, bodyHeading, bodyPlaceholder, mediaHeading, customQuestionsHeading, reward } : Props ) => {
 
     const [currentStep, setCurrentStep] = useState<number>(1)
 
@@ -150,11 +150,15 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
                 <div id="writeReviewForm" className={styles.writeReviewForm} style={{width: '100%'}}>
                     <div>
                         <h1 className={styles.reviewFormStepTitle} style={{fontSize: '30px', lineHeight: '25px'}}>{steps[currentStep-1].title}</h1>
-                        {steps[currentStep-1].key === "uploadedMedia" && <p style={{marginTop: '10px'}}>{rewardNames.length > 0 && "(Add at least 1 to be eligible for the max reward)"}</p>}
+                        {steps[currentStep-1].key === "uploadedMedia" && 
+                        <p style={{marginTop: '10px'}}>
+                            {reward.type === "tiers" ? "(Add at least 1 to be eligible for the max reward)" : reward.type === "media" ? `(Earn a ${reward.names[0]} coupon code by uploading at least 1)` : ''}
+                        </p>
+                        }
                     </div>
                     <div className={styles.inputContainer}>
                         {steps[currentStep-1].markup}
-                        {rewardNames.length > 0 && ["title", "body"].includes(steps[currentStep-1].key) && 
+                        {reward.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
                         <div style={{width: "100%", textAlign: "left"}}>
                             <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
                                 <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
@@ -164,17 +168,17 @@ const ReviewFormPreview = ( { starRatingHeading, titleHeading, titlePlaceholder,
                     </div>
                 </div>
             </div>
-            {rewardNames.length > 0 &&
+            {reward.type === "tiers" &&
             <div>
                 <div className={styles.rewardTiersContainer}>
                     <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[0]}</p>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{reward.names[0]}</p>
                     </div>
                     <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[1]}</p>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{reward.names[1]}</p>
                     </div>
                     <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{rewardNames[2]}</p>
+                        <p style={{fontSize: '13px', fontWeight: 'bold'}}>{reward.names[2]}</p>
                     </div>
                 </div>
             </div>}
