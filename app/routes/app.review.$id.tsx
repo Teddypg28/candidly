@@ -1,6 +1,6 @@
-import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { ActionFunctionArgs, json, LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import { BlockStack, Card, DropZone, InlineStack, Layout, Page, Text, TextField, Thumbnail } from "@shopify/polaris";
+import { Banner, BlockStack, Card, DropZone, InlineStack, Layout, Page, Text, TextField, Thumbnail } from "@shopify/polaris";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome' 
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
@@ -13,6 +13,23 @@ import { useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
 
+
+export const action = async ({ request, params } : ActionFunctionArgs) => {
+    try {
+        
+        const formData = await request.formData()
+        const data = Object.fromEntries(formData)
+
+        await db.productReview.update({where: {id: params.id}, data: {...data, rating: parseInt(data.rating as string), characterEditsLeft: parseInt(data.characterEditsLeft as string)}})
+
+        return json('success', {status: 200})
+        
+    } catch (error) {
+        console.log(error)
+        return json({error}, {status: 400}) 
+    }
+}
+
 export const loader = async ({ request, params } : LoaderFunctionArgs) => {
     try {
         const { session } = await authenticate.admin(request)
@@ -23,12 +40,16 @@ export const loader = async ({ request, params } : LoaderFunctionArgs) => {
             if (review) {
                 return json(
                     {
-                        title: review.title, 
-                        body: review.body, 
-                        firstName: review.firstName, 
-                        rating: review.rating.toString(), 
-                        media: review.media
-                    })
+                        originalState: {
+                            title: review.title, 
+                            body: review.body, 
+                            firstName: review.firstName, 
+                            rating: review.rating, 
+                            media: review.media,
+                            characterEditsLeft: review.characterEditsLeft
+                        },
+                        date: review.date
+                })
             }
 
             return redirect('/app/reviews')
@@ -48,8 +69,8 @@ export default function Review() {
 
     const submit = useSubmit()
 
-    const [state, setState] = useState<ProductReview>(review)
-    const [cleanState, setCleanState] = useState(review)
+    const [state, setState] = useState<ProductReview>(review.originalState)
+    const [cleanState, setCleanState] = useState(review.originalState)
 
     const uploadedMediaContainerRefs = useRef<HTMLDivElement[]>([])
     const trashCanIconContainerRefs = useRef<HTMLDivElement[]>([])
@@ -101,14 +122,6 @@ export default function Review() {
         Object.keys(state).forEach((key) => {
             if (key !== "media") {
                 formData.append(key, state[key as keyof ProductReview].toString())
-            } else {
-                state.media.forEach((media) => {
-                    if (media.file && !media.url) {
-                        formData.append('newFiles', media.file)
-                    } else {
-                        formData.append('currentFileKeys', media.url.split('.com/')[1])
-                    }
-                })
             }
         })
         
@@ -140,6 +153,34 @@ export default function Review() {
         )
     })
 
+    const handleReviewEdit = (value: string, property: string) => {
+        if (state.characterEditsLeft > 0) {
+            const currentValue = state[property as keyof typeof state] as string;
+            
+            const changeSize = Math.abs(currentValue.length - value.length);
+
+            if (changeSize > state.characterEditsLeft) return;
+
+            setState(prevState => {
+                const prevValue = prevState[property as keyof typeof prevState] as string;
+        
+                const updatedCharacterEditsLeft = prevState.characterEditsLeft - Math.abs(prevValue.length - value.length);
+        
+                return {
+                    ...prevState,
+                    [property]: value,
+                    characterEditsLeft: updatedCharacterEditsLeft
+                };
+            });
+        }
+    }
+
+    useEffect(() => {
+        if (state.body === cleanState.body && state.title === cleanState.title) {
+            setState(prevState => {return {...prevState, characterEditsLeft: cleanState.characterEditsLeft}})
+        }
+    })
+
   return (
     <Page
     title="Review"
@@ -149,75 +190,80 @@ export default function Review() {
             <button variant='primary' onClick={handleSave}></button>
             <button onClick={() => setState(cleanState)}></button>
         </SaveBar>
-        <Layout>
-            <Layout.Section variant="oneHalf">
-                <Card>
-                    <BlockStack gap={'200'}>
-                        <BlockStack gap='200'>
-                            <TextField 
-                            value={state.firstName} 
-                            onChange={value => setState(prevState => {return {...prevState, name: value}})}
-                            placeholder="Reviewer Name" 
-                            autoComplete="off" 
-                            label="Reviewer Name" 
-                            disabled
-                            />
-                            <TextField 
-                            value={state.rating} 
-                            type="integer"
-                            onChange={value => setState(prevState => {return {...prevState, rating: value}})}
-                            placeholder="Star Rating" 
-                            label="Star Rating" 
-                            autoComplete="off"
-                            disabled
-                            />
-                            <TextField 
-                            value={state.title} 
-                            onChange={value => setState(prevState => {return {...prevState, title: value}})}
-                            placeholder="Review Title" 
-                            autoComplete="off" 
-                            label="Review Title" 
-                            disabled
-                            />
-                            <TextField
-                            multiline 
-                            value={state.body} 
-                            onChange={value => setState(prevState => {return {...prevState, body: value}})}
-                            placeholder="Review Body" 
-                            autoComplete="off" 
-                            label="Review Body" 
-                            disabled
-                            />
+        <BlockStack gap='200'>
+            <Banner title="Editing Reviews">To comply with consumer transparency policies, you are able to edit reviews with a few restrictions. When a review is edited, an email will be sent to the original reviewer and you can only change 30 characters total, including spaces and deletions.</Banner>
+            <Layout>
+                <Layout.Section variant="oneHalf">
+                    <Card>
+                        <BlockStack gap={'200'}>
+                            <BlockStack gap='200'>
+                                <TextField 
+                                value={new Date(review.date).toLocaleDateString()} 
+                                autoComplete="off" 
+                                label="Date Submitted" 
+                                disabled
+                                />
+                                <TextField 
+                                value={state.firstName} 
+                                placeholder="Reviewer Name" 
+                                autoComplete="off" 
+                                label="Reviewer Name" 
+                                disabled
+                                />
+                                <TextField 
+                                value={state.rating.toString()} 
+                                type="integer"
+                                placeholder="Star Rating" 
+                                label="Star Rating" 
+                                autoComplete="off"
+                                disabled
+                                />
+                                <TextField 
+                                value={state.title} 
+                                placeholder="Review Title" 
+                                onChange={value => handleReviewEdit(value, "title")}
+                                autoComplete="off" 
+                                label="Review Title" 
+                                />
+                                <TextField
+                                multiline 
+                                value={state.body} 
+                                onChange={value => handleReviewEdit(value, "body")}
+                                placeholder="Review Body" 
+                                autoComplete="off" 
+                                label="Review Body" 
+                                />
+                            </BlockStack>
+                            <Text tone="caution" as="p" variant="bodySm">You currently have {state.characterEditsLeft} character edits left</Text>
                         </BlockStack>
-                        <Text as="p" variant="bodyXs">Due to consumer transparency policies, customer reviews are uneditable</Text>
-                    </BlockStack>
-                </Card>
-            </Layout.Section>
-            <Layout.Section variant="oneThird">
-                <Card>
-                    <Text as="h2" variant="headingMd">
-                        {state.media.length}/5 Files Uploaded
-                    </Text>
-                    <BlockStack gap={'200'}>
-                        <DropZone 
-                        id='fileInput'
-                        accept="image/*,video/*"
-                        onDrop={handleDrop}
-                        disabled={true}
-                        >
-                            <div style={{padding: '10px 5px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                                <InlineStack 
-                                align="center"   
-                                gap={'500'}
-                                >
-                                {uploadedFileMarkup}
-                                </InlineStack>
-                            </div>
-                        </DropZone>
-                    </BlockStack>
-                </Card>
-            </Layout.Section>
-        </Layout>
+                    </Card>
+                </Layout.Section>
+                <Layout.Section variant="oneThird">
+                    <Card>
+                        <Text as="h2" variant="headingMd">
+                            {state.media.length}/5 Files Uploaded
+                        </Text>
+                        <BlockStack gap={'200'}>
+                            <DropZone 
+                            id='fileInput'
+                            accept="image/*,video/*"
+                            onDrop={handleDrop}
+                            disabled={true}
+                            >
+                                <div style={{padding: '10px 5px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                    <InlineStack 
+                                    align="center"   
+                                    gap={'500'}
+                                    >
+                                    {uploadedFileMarkup}
+                                    </InlineStack>
+                                </div>
+                            </DropZone>
+                        </BlockStack>
+                    </Card>
+                </Layout.Section>
+            </Layout>
+        </BlockStack>
     </Page>
   )
 }

@@ -115,6 +115,7 @@ model ProductReview {
   firstName              String
   email                  String
   rating                 Int
+  characterEditsLeft     Int                    @default(30)
   media                  ProductReviewMedia[]
   date                   DateTime               @default(now())
   isPublished            Boolean

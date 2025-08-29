@@ -255,8 +255,9 @@ export interface ImportCsvFileState {
 export interface ProductReview {
     title: string
     body: string
+    characterEditsLeft: number,
     firstName: string
-    rating: string
+    rating: number
     media: {
         name: string
         url: string

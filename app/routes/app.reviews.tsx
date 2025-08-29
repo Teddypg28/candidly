@@ -562,7 +562,7 @@ export default function Reviews() {
             {
                 reviews.length > 0 &&
                 <PageActions 
-                primaryAction={{content: 'Publish', disabled: selectedResources.length === 0 || reviews.every(review => review.isPublished === true), onAction: publishSelectedReviews}}
+                primaryAction={{content: 'Publish', disabled: selectedResources.length === 0 || selectedResources.some(resourceId => reviews.find(review => review.isPublished === true && review.id === resourceId)), onAction: publishSelectedReviews}}
                 />
             }
         </Page>
