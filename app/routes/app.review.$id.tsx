@@ -55,44 +55,44 @@ export default function Review() {
     const trashCanIconContainerRefs = useRef<HTMLDivElement[]>([])
     const eventListenerFunctions = useRef<any[]>([])
 
-    useEffect(() => {
-        uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
-            // Check if uploaded media container exists (not null)
-            if (uploadedMediaContainer) {
-                const showTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'flex' 
-                const hideTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'none' 
-                const removeMedia = (el: MouseEvent) => {
-                    el.stopPropagation()
-                    const filteredMedia = state.media.filter(media => media.name !== uploadedMediaContainer.id)
-                    console.log(filteredMedia)
-                    setState(prevState => {return {...prevState, media: filteredMedia}})
-                }
+    // useEffect(() => {
+    //     uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
+    //         // Check if uploaded media container exists (not null)
+    //         if (uploadedMediaContainer) {
+    //             const showTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'flex' 
+    //             const hideTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'none' 
+    //             const removeMedia = (el: MouseEvent) => {
+    //                 el.stopPropagation()
+    //                 const filteredMedia = state.media.filter(media => media.name !== uploadedMediaContainer.id)
+    //                 console.log(filteredMedia)
+    //                 setState(prevState => {return {...prevState, media: filteredMedia}})
+    //             }
 
-                const showTrashCanIconHandler = () => showTrashCanIcon(index)
-                const hideTrashCanIconHandler = () => hideTrashCanIcon(index)
+    //             const showTrashCanIconHandler = () => showTrashCanIcon(index)
+    //             const hideTrashCanIconHandler = () => hideTrashCanIcon(index)
 
-                uploadedMediaContainer.addEventListener('mouseover', showTrashCanIconHandler)
-                uploadedMediaContainer.addEventListener('mouseleave', hideTrashCanIconHandler)
-                trashCanIconContainerRefs.current[index].addEventListener('click', removeMedia)
+    //             uploadedMediaContainer.addEventListener('mouseover', showTrashCanIconHandler)
+    //             uploadedMediaContainer.addEventListener('mouseleave', hideTrashCanIconHandler)
+    //             trashCanIconContainerRefs.current[index].addEventListener('click', removeMedia)
 
-                eventListenerFunctions.current[index] = [showTrashCanIconHandler, hideTrashCanIconHandler, removeMedia]
-                uploadedMediaContainer.dataset.listeners = "true"
-            } 
-        })
+    //             eventListenerFunctions.current[index] = [showTrashCanIconHandler, hideTrashCanIconHandler, removeMedia]
+    //             uploadedMediaContainer.dataset.listeners = "true"
+    //         } 
+    //     })
 
-        return () => {
-            uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
-                // If container exists and there are already listeners attached, remove them
-                if (uploadedMediaContainer && uploadedMediaContainer.dataset.listeners === "true") {
-                    uploadedMediaContainer.removeEventListener('mouseover', eventListenerFunctions.current[index][0])
-                    uploadedMediaContainer.removeEventListener('mouseleave', eventListenerFunctions.current[index][1])
-                    trashCanIconContainerRefs.current[index].removeEventListener('click', eventListenerFunctions.current[index][2])
-                    uploadedMediaContainer.dataset.listeners = "false"
-                }
-            }
-        )}
+    //     return () => {
+    //         uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
+    //             // If container exists and there are already listeners attached, remove them
+    //             if (uploadedMediaContainer && uploadedMediaContainer.dataset.listeners === "true") {
+    //                 uploadedMediaContainer.removeEventListener('mouseover', eventListenerFunctions.current[index][0])
+    //                 uploadedMediaContainer.removeEventListener('mouseleave', eventListenerFunctions.current[index][1])
+    //                 trashCanIconContainerRefs.current[index].removeEventListener('click', eventListenerFunctions.current[index][2])
+    //                 uploadedMediaContainer.dataset.listeners = "false"
+    //             }
+    //         }
+    //     )}
 
-    }, [state.media])
+    // }, [state.media])
 
     const isStateClean = JSON.stringify(state) === JSON.stringify(cleanState)
 
@@ -143,7 +143,6 @@ export default function Review() {
   return (
     <Page
     title="Review"
-    subtitle="Edit or delete review details"
     backAction={{url: '/app/reviews'}}
     >
         <SaveBar open={!isStateClean}>

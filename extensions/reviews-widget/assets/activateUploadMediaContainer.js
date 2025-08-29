@@ -5,11 +5,85 @@ const activateUploadMediaContainer = () => {
     const uploadError = document.querySelector('.uploadError')
 
     const conditionallyRenderUploadMediaLabel = () => {
-        if (Array.from(uploadMediaBtn.files).length > 0) {
+        if (addedFiles.length > 0) {
             document.querySelector('.uploadMediaLabel').classList.add("hidden")
         } else {
             document.querySelector('.uploadMediaLabel').classList.remove("hidden")
         }
+    }
+
+    const uploadFile = (file) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onloadend = () => {
+            const imageContainer = document.createElement('figure')
+            imageContainer.className = 'uploadedImage'
+
+            const img = document.createElement('img')
+            img.src = reader.result
+
+            imageContainer.appendChild(img)
+            imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
+
+            const removeUploadedMediaContainer = document.createElement('div')
+            removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
+            removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
+            removeUploadedMediaContainer.dataset.fileName = file.name
+
+            const trashCanIconContainer = document.createElement('div')
+            trashCanIconContainer.className = "removeUploadedMedia hidden"
+            trashCanIconContainer.dataset.fileName = file.name
+
+            const trashCanIcon = document.createElement('i')
+            trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
+            trashCanIcon.id = "deleteMedia"
+            trashCanIcon.dataset.fileName = file.name
+            trashCanIcon.style.color = "#ffffff"
+
+            trashCanIconContainer.appendChild(trashCanIcon)
+
+            removeUploadedMediaContainer.appendChild(trashCanIconContainer)
+
+            removeUploadedMediaContainer.addEventListener('mouseover', () => {                      
+                removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
+                trashCanIconContainer.classList.remove('hidden')
+            })
+
+            removeUploadedMediaContainer.addEventListener('mouseleave', () => {
+                removeUploadedMediaContainer.style.backgroundColor = 'transparent'
+                trashCanIconContainer.classList.add('hidden')
+            })
+
+            removeUploadedMediaContainer.addEventListener('click', (e) => {                     
+                if (e.target.id.includes('deleteMedia')) {
+                    // remove deleted file from file list  
+                    const dt = new DataTransfer()
+                    const currentFiles = Array.from(uploadMediaBtn.files)
+                    currentFiles.forEach(file => {
+                        if (file.name !== e.target.dataset.fileName) {
+                            dt.items.add(file)
+                        }
+                    })
+                    uploadMediaBtn.files = dt.files
+                    // remove deleted files from saved uploaded files array
+                    addedFiles = addedFiles.filter(uploadedFile => uploadedFile !== file)
+                    imageContainer.remove()
+                }
+
+                conditionallyRenderUploadMediaLabel()
+            })
+
+            imageContainer.appendChild(removeUploadedMediaContainer)
+            uploadedMediaContainer.appendChild(imageContainer)
+
+            conditionallyRenderUploadMediaLabel()
+        }
+    }
+
+    if (addedFiles.length > 0) {
+        addedFiles.forEach(file => {
+            uploadFile(file)
+        })
     }
 
     const verifyFileType = (file) => {
@@ -29,71 +103,7 @@ const activateUploadMediaContainer = () => {
                 dt.items.add(file)
             })
             uploadMediaBtn.files = dt.files
-            const reader = new FileReader()
-            reader.readAsDataURL(file)
-            reader.onloadend = () => {
-                const imageContainer = document.createElement('figure')
-                imageContainer.className = 'uploadedImage'
-
-                const img = document.createElement('img')
-                img.src = reader.result
-
-                imageContainer.appendChild(img)
-                imageContainer.innerHTML += `<figcaption>${file.name}</figcaption>`
-
-                const removeUploadedMediaContainer = document.createElement('div')
-                removeUploadedMediaContainer.className = 'removeUploadedMediaContainer'
-                removeUploadedMediaContainer.id = 'removeUploadedMediaContainer deleteMedia'
-                removeUploadedMediaContainer.dataset.fileName = file.name
-
-                const trashCanIconContainer = document.createElement('div')
-                trashCanIconContainer.className = "removeUploadedMedia hidden"
-                trashCanIconContainer.dataset.fileName = file.name
-
-                const trashCanIcon = document.createElement('i')
-                trashCanIcon.className = "fa-solid fa-trash-can fa-2xl"
-                trashCanIcon.id = "deleteMedia"
-                trashCanIcon.dataset.fileName = file.name
-                trashCanIcon.style.color = "#ffffff"
-
-                trashCanIconContainer.appendChild(trashCanIcon)
-
-                removeUploadedMediaContainer.appendChild(trashCanIconContainer)
-
-                removeUploadedMediaContainer.addEventListener('mouseover', () => {                      
-                    removeUploadedMediaContainer.style.backgroundColor = 'rgb(0, 0, 0, 0.6)'
-                    trashCanIconContainer.classList.remove('hidden')
-                })
-
-                removeUploadedMediaContainer.addEventListener('mouseleave', () => {
-                    removeUploadedMediaContainer.style.backgroundColor = 'transparent'
-                    trashCanIconContainer.classList.add('hidden')
-                })
-
-                removeUploadedMediaContainer.addEventListener('click', (e) => {                     
-                    if (e.target.id.includes('deleteMedia')) {
-                        // remove deleted file from file list  
-                        const dt = new DataTransfer()
-                        const currentFiles = Array.from(uploadMediaBtn.files)
-                        currentFiles.forEach(file => {
-                            if (file.name !== e.target.dataset.fileName) {
-                                dt.items.add(file)
-                            }
-                        })
-                        uploadMediaBtn.files = dt.files
-                        // remove deleted files from saved uploaded files array
-                        addedFiles = addedFiles.filter(uploadedFile => uploadedFile !== file)
-                        imageContainer.remove()
-                    }
-
-                    conditionallyRenderUploadMediaLabel()
-                })
-
-                imageContainer.appendChild(removeUploadedMediaContainer)
-                uploadedMediaContainer.appendChild(imageContainer)
-
-                conditionallyRenderUploadMediaLabel()
-            }
+            uploadFile(file)
         }
     }
 
