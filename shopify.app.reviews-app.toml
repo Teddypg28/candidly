@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://buy-garmin-diving-limitations.trycloudflare.com"
+application_url = "https://fi-qatar-become-modeling.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_orders,read_products,read_themes,write_products,wr
 
 [auth]
 redirect_urls = [
-  "https://buy-garmin-diving-limitations.trycloudflare.com/auth/callback",
-  "https://buy-garmin-diving-limitations.trycloudflare.com/auth/shopify/callback",
-  "https://buy-garmin-diving-limitations.trycloudflare.com/api/auth/callback"
+  "https://fi-qatar-become-modeling.trycloudflare.com/auth/callback",
+  "https://fi-qatar-become-modeling.trycloudflare.com/auth/shopify/callback",
+  "https://fi-qatar-become-modeling.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://buy-garmin-diving-limitations.trycloudflare.com/api"
+url = "https://fi-qatar-become-modeling.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

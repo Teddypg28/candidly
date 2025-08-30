@@ -12,15 +12,78 @@ import { authenticate } from "~/shopify.server";
 import { useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
+import notifyCustomerReviewEdits from "~/helpers/email/notifyCustomerReviewEdits";
+import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
+import s3Client from "~/utils/s3Client";
+import { DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import uploadMedia from "~/helpers/uploadMedia";
 
 
 export const action = async ({ request, params } : ActionFunctionArgs) => {
     try {
         
-        const formData = await request.formData()
-        const data = Object.fromEntries(formData)
+        const allFormData = await request.formData()        
+        const data = Object.fromEntries(allFormData)
 
-        await db.productReview.update({where: {id: params.id}, data: {...data, rating: parseInt(data.rating as string), characterEditsLeft: parseInt(data.characterEditsLeft as string)}})
+        const productReview = await db.productReview.findFirst({where: {id: {equals: params.id}}})
+
+        if (!productReview) return json('product review not found', {status: 400})
+
+        const charactersUsed = Math.abs(productReview.body.length - (data.body as string).length) + Math.abs(productReview.title.length - (data.title as string).length)
+
+        if (charactersUsed > productReview.characterEditsLeft) {
+            return json('not enough character edits left', {status: 400})
+        }
+
+        const newFileData = allFormData.getAll('newFiles')
+        const currentFileData = allFormData.getAll('currentFileKeys')
+        allFormData.delete('currentFileKeys')
+        allFormData.delete('newFiles')
+        allFormData.delete('id')
+
+        const updatedProductReview = await db.productReview.update({where: {id: params.id}, data: {title: data.title as string, body: data.body as string, characterEditsLeft: productReview.characterEditsLeft - charactersUsed}})
+        
+        // update current file records
+        const updateCurrentFiles = async () => {
+            const storedFiles = await db.productReviewMedia.findMany({where: {reviewId: {equals: params.id}}})
+            const storedFileKeys = storedFiles.map(file => file.url.split('.com/')[1])
+            const fileKeysToRemove = storedFileKeys.filter(key => !currentFileData.includes(key as string))
+            if (fileKeysToRemove.length > 0) {
+                // remove objects from s3 bucket
+                // remove media records from db table
+                await Promise.all(fileKeysToRemove.map(async (key) => {
+                    const deleteCommand = new DeleteObjectCommand({Bucket: process.env.S3_BUCKET_NAME, Key: key as string})
+                    await s3Client.send(deleteCommand)
+                    await db.productReviewMedia.deleteMany({where: {url: {endsWith: key as string}}})
+                }))
+            }
+        }
+        await updateCurrentFiles()
+
+        // create new file records
+        if (newFileData.length > 0) {
+            uploadMedia(newFileData as File[], updatedProductReview.id)
+        }
+        
+        // send customer a review edit notification email
+        const appSettings = await db.appSettings.findFirst({where: {store: {equals: updatedProductReview.store}}})
+        let fromAddress = "reviews@trycandidly.app"
+        const currentDomain = appSettings?.domain
+        if (currentDomain) {
+          const verificationStatus = await verifyRecords(currentDomain)
+          if (verificationStatus === "Success") fromAddress = `reviews@${currentDomain}`
+        }
+
+        const emailData = {
+            title: updatedProductReview.title,
+            body: updatedProductReview.body,
+            customerName: updatedProductReview.firstName,
+            customerEmail: updatedProductReview.email,
+            storeName: appSettings?.companyName,
+            fromAddress
+        }
+        
+        // await notifyCustomerReviewEdits(emailData)
 
         return json('success', {status: 200})
         
@@ -76,58 +139,67 @@ export default function Review() {
     const trashCanIconContainerRefs = useRef<HTMLDivElement[]>([])
     const eventListenerFunctions = useRef<any[]>([])
 
-    // useEffect(() => {
-    //     uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
-    //         // Check if uploaded media container exists (not null)
-    //         if (uploadedMediaContainer) {
-    //             const showTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'flex' 
-    //             const hideTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'none' 
-    //             const removeMedia = (el: MouseEvent) => {
-    //                 el.stopPropagation()
-    //                 const filteredMedia = state.media.filter(media => media.name !== uploadedMediaContainer.id)
-    //                 console.log(filteredMedia)
-    //                 setState(prevState => {return {...prevState, media: filteredMedia}})
-    //             }
+    useEffect(() => {
+        uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
+            // Check if uploaded media container exists (not null)
+            if (uploadedMediaContainer) {
+                const showTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'flex' 
+                const hideTrashCanIcon = (index: number) => trashCanIconContainerRefs.current[index].style.display = 'none' 
+                const removeMedia = (el: MouseEvent) => {
+                    el.stopPropagation()
+                    const filteredMedia = state.media.filter(media => media.name !== uploadedMediaContainer.id)
+                    setState(prevState => {return {...prevState, media: filteredMedia}})
+                }
 
-    //             const showTrashCanIconHandler = () => showTrashCanIcon(index)
-    //             const hideTrashCanIconHandler = () => hideTrashCanIcon(index)
+                const showTrashCanIconHandler = () => showTrashCanIcon(index)
+                const hideTrashCanIconHandler = () => hideTrashCanIcon(index)
 
-    //             uploadedMediaContainer.addEventListener('mouseover', showTrashCanIconHandler)
-    //             uploadedMediaContainer.addEventListener('mouseleave', hideTrashCanIconHandler)
-    //             trashCanIconContainerRefs.current[index].addEventListener('click', removeMedia)
+                uploadedMediaContainer.addEventListener('mouseover', showTrashCanIconHandler)
+                uploadedMediaContainer.addEventListener('mouseleave', hideTrashCanIconHandler)
+                trashCanIconContainerRefs.current[index].addEventListener('click', removeMedia)
 
-    //             eventListenerFunctions.current[index] = [showTrashCanIconHandler, hideTrashCanIconHandler, removeMedia]
-    //             uploadedMediaContainer.dataset.listeners = "true"
-    //         } 
-    //     })
+                eventListenerFunctions.current[index] = [showTrashCanIconHandler, hideTrashCanIconHandler, removeMedia]
+                uploadedMediaContainer.dataset.listeners = "true"
+            } 
+        })
 
-    //     return () => {
-    //         uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
-    //             // If container exists and there are already listeners attached, remove them
-    //             if (uploadedMediaContainer && uploadedMediaContainer.dataset.listeners === "true") {
-    //                 uploadedMediaContainer.removeEventListener('mouseover', eventListenerFunctions.current[index][0])
-    //                 uploadedMediaContainer.removeEventListener('mouseleave', eventListenerFunctions.current[index][1])
-    //                 trashCanIconContainerRefs.current[index].removeEventListener('click', eventListenerFunctions.current[index][2])
-    //                 uploadedMediaContainer.dataset.listeners = "false"
-    //             }
-    //         }
-    //     )}
+        return () => {
+            uploadedMediaContainerRefs.current.forEach((uploadedMediaContainer, index) => {
+                // If container exists and there are already listeners attached, remove them
+                if (uploadedMediaContainer && uploadedMediaContainer.dataset.listeners === "true") {
+                    uploadedMediaContainer.removeEventListener('mouseover', eventListenerFunctions.current[index][0])
+                    uploadedMediaContainer.removeEventListener('mouseleave', eventListenerFunctions.current[index][1])
+                    trashCanIconContainerRefs.current[index].removeEventListener('click', eventListenerFunctions.current[index][2])
+                    uploadedMediaContainer.dataset.listeners = "false"
+                }
+            }
+        )}
 
-    // }, [state.media])
+    }, [state.media])
 
     const isStateClean = JSON.stringify(state) === JSON.stringify(cleanState)
 
     const handleSave = () => {
         const formData = new FormData()
         Object.keys(state).forEach((key) => {
-            if (key !== "media") {
+            if (key.includes("title") || key.includes("body")) {
                 formData.append(key, state[key as keyof ProductReview].toString())
+            } else if (key.includes("media")) {
+                state.media.forEach((media) => {
+                    if (media.file && !media.url) {
+                        formData.append('newFiles', media.file)
+                    } else {
+                        formData.append('currentFileKeys', media.url.split('.com/')[1])
+                    }
+                })
             }
         })
         
         submit(formData, {method: 'POST', encType: 'multipart/form-data'})
         setCleanState(state)
     }
+
+    const fileUploadBtn = !state.media.length && <DropZone.FileUpload actionTitle="Upload Images/Videos" />
 
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         const currentUploadedFileNames = state.media.map(file => file.name)
@@ -248,7 +320,6 @@ export default function Review() {
                             id='fileInput'
                             accept="image/*,video/*"
                             onDrop={handleDrop}
-                            disabled={true}
                             >
                                 <div style={{padding: '10px 5px', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                                     <InlineStack 
@@ -257,6 +328,7 @@ export default function Review() {
                                     >
                                     {uploadedFileMarkup}
                                     </InlineStack>
+                                    {fileUploadBtn}
                                 </div>
                             </DropZone>
                         </BlockStack>

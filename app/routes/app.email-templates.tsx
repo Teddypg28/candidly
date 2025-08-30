@@ -245,8 +245,7 @@ export default function EmailTemplates() {
     const fileUploadBtn = !settings.emailDesignSettings.logo && <DropZone.FileUpload actionTitle="Upload Your Logo" />
 
     const testReviewRequestEmailVariables: ReviewRequestEmailVariables = {
-        lineItems: [],
-        configuredQuestions: []
+        lineItems: []
     }
 
     const testCustomerQuestionEmailVariables: CustomerQuestionEmailVariables = {

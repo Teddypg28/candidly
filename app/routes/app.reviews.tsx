@@ -454,8 +454,8 @@ export default function Reviews() {
         >
             <BlockStack gap='100'>
                 <Banner title="Important Reward Approval Message">
-                    If you have rewards configured, after each review is submitted, you will have two days to disapprove the reward being sent (in the case of the review being gibberish or a clear attempt to game the system just to receive the reward), otherwise
-                    the reward will be automatically emailed to the customer after that 2 day review period
+                    If you have rewards configured, you will have two days to disapprove the reward (in the case of the review being gibberish or a clear attempt to game the system just to receive the reward), otherwise
+                    it will be automatically emailed to the customer after that 2 day review period is over
                 </Banner>
                 <Modal 
                 open={importCsvFileState.importInitiated} 
@@ -548,7 +548,7 @@ export default function Reviews() {
                         />
                         <IndexTable
                         pagination={pagination}
-                        headings={[{title: 'Email'}, {title: 'Date'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}, {title: 'Reward Status'}]}
+                        headings={[{title: 'Date'}, {title: 'Email'}, {title: 'Product'}, {title: 'Name'}, {title: 'Title'}, {title: 'Body'}, {title: 'Rating'}, {title: 'Published'}, {title: 'Reward Status'}]}
                         itemCount={filteredReviews.length}
                         onSelectionChange={handleSelectionChange}
                         selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length}
