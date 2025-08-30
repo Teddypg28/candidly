@@ -7,7 +7,8 @@ export default async function notifyCustomerReviewEdits({
     storeName, 
     title, 
     body,
-    fromAddress
+    fromAddress,
+    mediaEdited
     }: 
     {
         customerName: string, 
@@ -15,15 +16,20 @@ export default async function notifyCustomerReviewEdits({
         storeName?: string, 
         title: string, 
         body: string,
-        fromAddress: string
+        fromAddress: string,
+        mediaEdited: null | "both" | "added" | "removed"
     }) {
+
+      const mediaEditMessage = mediaEdited === null ? "" : mediaEdited === "both" ? " and added/removed some of the media attachments." : mediaEdited === "added" ?
+      " and added some more media attachments." : " and removed some media attachments."
+
     const emailMarkup = `
     <div style="padding: 15px 0px;">
         <div style="text-align: left">
             Hey ${customerName},
             <br />
             <br />
-            We are just reaching out to let you know that we made  a small tweak to your review:
+            We are just reaching out to let you know that we made  a small tweak to your review${mediaEdited !== null ? mediaEditMessage : '.'}
             <br />
             <br />
             Here is what the updated review looks like:

@@ -43,12 +43,14 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
         const updatedProductReview = await db.productReview.update({where: {id: params.id}, data: {title: data.title as string, body: data.body as string, characterEditsLeft: productReview.characterEditsLeft - charactersUsed}})
         
+        let mediaEdited: null | "both" | "added" | "removed" = null
         // update current file records
         const updateCurrentFiles = async () => {
             const storedFiles = await db.productReviewMedia.findMany({where: {reviewId: {equals: params.id}}})
             const storedFileKeys = storedFiles.map(file => file.url.split('.com/')[1])
             const fileKeysToRemove = storedFileKeys.filter(key => !currentFileData.includes(key as string))
             if (fileKeysToRemove.length > 0) {
+                mediaEdited = "removed"
                 // remove objects from s3 bucket
                 // remove media records from db table
                 await Promise.all(fileKeysToRemove.map(async (key) => {
@@ -62,6 +64,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
 
         // create new file records
         if (newFileData.length > 0) {
+            mediaEdited = mediaEdited === "removed" ? "both" : "added"
             uploadMedia(newFileData as File[], updatedProductReview.id)
         }
         
@@ -80,10 +83,11 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             customerName: updatedProductReview.firstName,
             customerEmail: updatedProductReview.email,
             storeName: appSettings?.companyName,
-            fromAddress
+            fromAddress,
+            mediaEdited
         }
         
-        // await notifyCustomerReviewEdits(emailData)
+        await notifyCustomerReviewEdits(emailData)
 
         return json('success', {status: 200})
         
