@@ -395,6 +395,14 @@ body {
         width: 100%;
     }
 
+    .customQuestionDropdown {
+        width: 100%;
+    }
+
+    .customQuestionTitle {
+        width: 100%;
+    }
+
     .formQuestionInput {
         width: 100%;
     }

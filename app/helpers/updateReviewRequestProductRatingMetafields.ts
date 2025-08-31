@@ -35,11 +35,11 @@ export default async function updateReviewRequestProductRatingMetafields(product
         const metafields = data.metafields;
        
         // see if rating metafield exists
-        const ratingMetafield = metafields.data.find((metafield: any) => metafield.owner_id === productIdNumber && metafield.key === 'rating')
+        const ratingMetafield = metafields.find((metafield: any) => metafield.owner_id === productIdNumber && metafield.key === 'rating')
     
         if (ratingMetafield) {
             // if it exists, that means rating count metafield also exists
-            const ratingCountMetafield = metafields.data.find((metafield: any) => metafield.owner_id === productIdNumber && metafield.key === 'rating_count')
+            const ratingCountMetafield = metafields.find((metafield: any) => metafield.owner_id === productIdNumber && metafield.key === 'rating_count')
     
             if (totalReviews.length === 0) {
                 await deleteMetafield(ratingCountMetafield.id, session.shop, session.accessToken)
