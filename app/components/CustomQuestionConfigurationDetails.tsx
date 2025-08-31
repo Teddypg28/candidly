@@ -1,4 +1,4 @@
-import { Button, Text } from "@shopify/polaris";
+import { Text } from "@shopify/polaris";
 import { ReviewFormQuestion } from "~/types/types";
 
 export default function CustomQuestionConfigurationDetails({question} : {question: ReviewFormQuestion}) {

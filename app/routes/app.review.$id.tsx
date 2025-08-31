@@ -15,7 +15,7 @@ import { ProductReview } from "~/types/types";
 import notifyCustomerReviewEdits from "~/helpers/email/notifyCustomerReviewEdits";
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 import s3Client from "~/utils/s3Client";
-import { DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import uploadMedia from "~/helpers/uploadMedia";
 
 

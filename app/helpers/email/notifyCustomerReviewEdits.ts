@@ -35,10 +35,10 @@ export default async function notifyCustomerReviewEdits({
             Here is what the updated review looks like:
             <br />
             <br />
-            <strong>Title: ${title}</strong>
+            <strong>Title:</strong> ${title}
             <br />
             <br />
-            <strong>Body: ${body}</strong>
+            <strong>Body:</strong> ${body}
             <br />
             <br />
             - ${storeName}
