@@ -1,1 +1,1 @@
-export default "passage-your-alto-testament.trycloudflare.com"
+export default "institution-difference-executive-translator.trycloudflare.com"

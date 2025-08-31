@@ -3,11 +3,14 @@ import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
 import { authenticate } from "~/shopify.server"
 import sendReviewSubmittedNotificationEmail from "~/helpers/email/sendReviewSubmittedNotificationEmail"
+import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields"
 
 export async function action({ request } : ActionFunctionArgs) {
     try {            
 
-        const { session } = await authenticate.public.appProxy(request)
+        const { admin, session } = await authenticate.public.appProxy(request)
+
+        if (!session) return new Response(JSON.stringify({status: 'Invalid session'}), {status: 401})
 
         const formData = await request.formData()
 
@@ -67,6 +70,11 @@ export async function action({ request } : ActionFunctionArgs) {
                 return await db.answerChoiceSnapshot.create({data})
             }
         }))
+
+
+        // update product rating metafields
+        await updateProductRatingMetafields(newReview.productId, newReview.rating, admin, session)
+
         return json({status: 'success'}, {status: 200})
     } 
         

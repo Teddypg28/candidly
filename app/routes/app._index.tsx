@@ -15,7 +15,7 @@ import { free } from "~/emailQuotaVariables";
 export const loader = async ({ request } : LoaderFunctionArgs) => {
 
     const { session, admin } = await authenticate.admin(request)
-    
+
     const storeSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     if (!storeSubscription) {
         const currentDate = new Date()

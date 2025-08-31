@@ -2,9 +2,10 @@ import { ActionFunctionArgs, json } from "@remix-run/node"
 import db from '../db.server'
 import uploadMedia from "~/helpers/uploadMedia"
 import sendReviewSubmittedNotificationEmail from "../helpers/email/sendReviewSubmittedNotificationEmail"
+import updateReviewRequestProductRatingMetafields from "~/helpers/updateReviewRequestProductRatingMetafields"
 
 export async function action({ request } : ActionFunctionArgs) {
-    try {            
+    try {           
 
         const formData = await request.formData()
 
@@ -93,6 +94,9 @@ export async function action({ request } : ActionFunctionArgs) {
 
         // mark review request as completed
         await db.reviewRequest.update({where: {id: reviewRequestId}, data: {isComplete: true}})
+
+        // update product rating metafields
+        await updateReviewRequestProductRatingMetafields(productId, rating, newReview.store)
         
         return json({status: 'Success', reviewId: newReview.id}, {status: 200})
     } 
