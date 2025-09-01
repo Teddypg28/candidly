@@ -12,10 +12,8 @@ export default async function updateRatingCountMetafield(ratingMetafieldId: stri
     const payload = {
       metafield: {
         id: ratingMetafieldId,
-        namespace: "reviews",
-        key: "rating_count",
         type: "number_integer",
-        value: totalReviews.toString(),
+        value: totalReviews,
         owner_resource: "product",
         owner_id: productIdNumber
       }
@@ -29,7 +27,7 @@ export default async function updateRatingCountMetafield(ratingMetafieldId: stri
       },
       body: JSON.stringify(payload)
     });
-  
+
     if (!response.ok) {
       throw new Error(`Failed to update rating count metafield: ${response.statusText}`);
     }

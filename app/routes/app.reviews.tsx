@@ -28,6 +28,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
     }
 
     if (action === "disapprove") {
+        const pendingReward = await db.pendingReward.findFirst({where: {id: data.pendingRewardId}})
+        if (!pendingReward || pendingReward.sent) return new Response('Error disapproving reward. It may have already been sent.', {status: 400})
+
         const deleteMutation = `
         mutation {
             discountCodeDelete(id: "${data.discountId}") {
@@ -38,6 +41,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             }
           }
         `
+
         await admin.graphql(deleteMutation)
         const productReview = await db.productReview.findFirst({where: {pendingRewardId: {equals: data.pendingRewardId}}, include: {media: true}})
         const mediaUploads = productReview?.media
@@ -46,6 +50,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 await deleteS3Upload(upload)
             }))
         }
+        // update product rating metafields
+        await updateProductRatingMetafields(productReview?.productId as string, 0, admin, session)
         await db.pendingReward.delete({where: {id: data.pendingRewardId}})
     }
 
@@ -394,16 +400,6 @@ export default function Reviews() {
         removeSelectedResources(selectedResources)
     }, [selectedResources])
 
-    const unpublishSelectedReviews = useCallback(async () => {
-        submit(JSON.stringify({reviewIds: selectedResources, action: 'unpublishReviews'}), {method: 'POST', encType: 'application/json'})
-        removeSelectedResources(selectedResources)
-    }, [selectedResources])
-
-    const deleteSelectedReviews = useCallback(async () => {
-        submit(JSON.stringify({reviewIds: selectedResources, action: 'deleteReviews'}), {method: 'POST', encType: 'application/json'})
-        removeSelectedResources(selectedResources)
-    }, [selectedResources])
-
     const exportAsCsv = () => {
         const rows = filteredReviews.map(review => [review.email, review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.media.map(mediaObj => mediaObj.url)])
         const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'reviewRequestId', 'store'].includes(key))
@@ -462,8 +458,8 @@ export default function Reviews() {
         >
             <BlockStack gap='100'>
                 <Banner title="Important Reward Approval Message">
-                    If you have rewards configured, you will have two days to disapprove the reward (in the case of the review being gibberish or a clear attempt to game the system just to receive the reward), otherwise
-                    it will be automatically emailed to the customer after that 2 day review period is over
+                    If you have rewards configured, you will have <strong>two days</strong> to disapprove the reward (in the case of the review being gibberish or a clear attempt to game the system just to receive the reward), otherwise
+                    it will be automatically emailed to the customer after that 2 day review period is over. <strong>Disapproving the reward will delete the entire review.</strong>
                 </Banner>
                 <Modal 
                 open={importCsvFileState.importInitiated} 

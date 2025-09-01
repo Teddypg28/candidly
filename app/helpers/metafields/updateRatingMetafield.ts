@@ -12,8 +12,6 @@ export default async function updateRatingMetafield(ratingMetafieldId: string, r
     const payload = {
       metafield: {
         id: ratingMetafieldId,
-        namespace: "reviews",
-        key: "rating",
         type: "rating",
         value: JSON.stringify({
           value: parseFloat(rating),

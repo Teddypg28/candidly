@@ -676,7 +676,7 @@ export default function ReviewForm() {
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 <div>
                     <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
-                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px'}}>{data.rewardData.type === "tiers" ? "(Add at least 1 to be eligible for the max reward)" : data.rewardData.type === "media" ? `(Earn a ${data.rewardData.names[0]} coupon code by uploading at least 1)` : ''}</p>}
+                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px', width: '80%', margin: 'auto'}}>{data.rewardData.type === "tiers" ? "(Add at least 1 to be eligible for the max reward)" : data.rewardData.type === "media" ? `(Earn a ${data.rewardData.names[0]} coupon code by uploading at least 1)` : ''}</p>}
                 </div>
                 <div className={styles.inputContainer}>
                     {steps[currentStep-1].markup}

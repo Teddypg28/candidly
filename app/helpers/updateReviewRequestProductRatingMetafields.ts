@@ -55,7 +55,7 @@ export default async function updateReviewRequestProductRatingMetafields(product
             const updatedAvgProductRating = (totalReviewsScore / totalReviews.length).toFixed(1)
 
             await updateRatingMetafield(ratingMetafield.id, updatedAvgProductRating, productIdNumber, session)
-            await updateRatingCountMetafield(ratingMetafield.id, productIdNumber, totalReviews.length, session)
+            await updateRatingCountMetafield(ratingCountMetafield.id, productIdNumber, totalReviews.length, session)
     
             return true
     
