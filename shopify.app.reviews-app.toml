@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://spirits-to-battle-bunny.trycloudflare.com"
+application_url = "https://distance-vcr-confusion-targets.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,17 +16,13 @@ include_config_on_deploy = true
 scopes = "read_customers,read_orders,read_products,read_themes,write_products,write_discounts"
 
 [auth]
-redirect_urls = [
-  "https://spirits-to-battle-bunny.trycloudflare.com/auth/callback",
-  "https://spirits-to-battle-bunny.trycloudflare.com/auth/shopify/callback",
-  "https://spirits-to-battle-bunny.trycloudflare.com/api/auth/callback"
-]
+redirect_urls = ["https://distance-vcr-confusion-targets.trycloudflare.com/auth/callback", "https://distance-vcr-confusion-targets.trycloudflare.com/auth/shopify/callback", "https://distance-vcr-confusion-targets.trycloudflare.com/api/auth/callback"]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://spirits-to-battle-bunny.trycloudflare.com/api"
+url = "https://distance-vcr-confusion-targets.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

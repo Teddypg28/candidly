@@ -438,11 +438,15 @@ export default function ReviewForm() {
         } else {
             const submissionSuccessful = await submitReview()
             if (submissionSuccessful) {
+                let shouldCreateReward = true
                 // create pending reward until review is verified by store owner
                 if (data.subscriptionType !== "free" && data.rewardData.type !== "none") {
-                    const rewardDeliveryEmailData: any = {reviewId: reviewId.current, rewardSettingsId: data.rewardData?.rewardId, firstName: data.customerData.firstName, toAddress: data.customerData.email}
-                    if (data.rewardData.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
-                    await fetch('/api/reward/queue', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                    if (data.rewardData.type === "media" && uploadedMediaRef.current.length === 0) shouldCreateReward = false
+                    if (shouldCreateReward) {
+                        const rewardDeliveryEmailData: any = {reviewId: reviewId.current, rewardSettingsId: data.rewardData?.rewardId, firstName: data.customerData.firstName, toAddress: data.customerData.email}
+                        if (data.rewardData.type === "tiers") rewardDeliveryEmailData["tierReviewScore"] = reviewScore.totalScore
+                        await fetch('/api/reward/queue', {method: "POST", body: JSON.stringify(rewardDeliveryEmailData), headers: {"Content-Type": "application/json"}})
+                    }
                 }
                 // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
@@ -451,6 +455,7 @@ export default function ReviewForm() {
                     setTimeout(() => {
                         setCurrentProductIndex(prevCurrentProductIndex => {return prevCurrentProductIndex+1})
                         setReviewSuccessfullySubmitted(false)
+                        uploadedMediaRef.current = []
                         setCurrentStep(1)
                         setUserInputState({...initialUserReviewFormInputState, firstName: data.customerData.firstName})
                     }, 3000)
@@ -637,8 +642,10 @@ export default function ReviewForm() {
     const perfectedMessageType = ["title", "body"].includes(steps[currentStep-1].key) ? `wrote the perfect ${steps[currentStep-1].key}!` : 'uploaded the perfect amount of media!'
     const progressMessage = ["title", "body", "uploadedMedia"].includes(steps[currentStep-1].key) && reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score !== 3 ? `You are ${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}% of the way to ${progressMessageType}` : `You ${perfectedMessageType}`
 
+    const isMediaRewardSatisfied = data.rewardData.type === "media" && uploadedMediaRef.current.length > 0
+
   return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={data.rewardData.rewardId && data.rewardData.type !== "none" ? true : false} firstName={userInputState.firstName as string} /> :
+    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={!["none", "media"].includes(data.rewardData.type) || isMediaRewardSatisfied ? true : false} firstName={userInputState.firstName as string} /> :
     <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>

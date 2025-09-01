@@ -310,7 +310,7 @@ export default function Review() {
                                 label="Review Body" 
                                 />
                             </BlockStack>
-                            <Text tone="caution" as="p" variant="bodySm">You currently have {state.characterEditsLeft} character edits left</Text>
+                            <Text tone="critical" as="p" variant="bodySm">You currently have {state.characterEditsLeft} character edits left</Text>
                         </BlockStack>
                     </Card>
                 </Layout.Section>

@@ -9,6 +9,10 @@ export async function action({ request } : ActionFunctionArgs) {
 
         const formData = await request.formData()
 
+        // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
+        const uploadedMedia = formData.getAll('media') as File[] | String
+        formData.delete('media')
+
         // convert form data to regular javascript object
         const data: any = Object.fromEntries(formData)
 
@@ -33,10 +37,6 @@ export async function action({ request } : ActionFunctionArgs) {
         if (reviewExists) {
             return new Response(JSON.stringify({status: 'Review has already been submitted'}), {status: 401})
         }
-
-        // grab all uploaded media and remove from formData object so that it won't interfere with product review creation
-        const uploadedMedia = formData.getAll('media') as File[] | String
-        formData.delete('media')
 
         // remove authToken
         delete data['authToken']

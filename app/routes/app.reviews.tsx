@@ -14,6 +14,7 @@ import { ImportCsvFileState, initialImportCsvFileState, initialReviewTableState,
 import styles from '../styles/ImportReviews.module.css'
 import updateProductRatingMetafields from "~/helpers/updateProductRatingMetafields";
 import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
+import deleteS3Upload from "~/utils/deleteS3Upload";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
 
@@ -38,7 +39,14 @@ export const action = async ({ request } : ActionFunctionArgs) => {
           }
         `
         await admin.graphql(deleteMutation)
-        return await db.pendingReward.delete({where: {id: data.pendingRewardId}})
+        const productReview = await db.productReview.findFirst({where: {pendingRewardId: {equals: data.pendingRewardId}}, include: {media: true}})
+        const mediaUploads = productReview?.media
+        if (mediaUploads) {
+            await Promise.all(mediaUploads.map(async (upload) => {
+                await deleteS3Upload(upload)
+            }))
+        }
+        await db.pendingReward.delete({where: {id: data.pendingRewardId}})
     }
 
     if (action === 'create') {

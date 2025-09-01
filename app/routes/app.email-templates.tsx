@@ -15,7 +15,7 @@ import { useFetcher, useLoaderData, useNavigation, useSubmit } from "@remix-run/
 import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings, ReviewRequestEmailVariables } from "~/types/types";
 import { SaveBar } from "@shopify/app-bridge-react";
 
-import deleteLogo from "~/utils/deleteLogo";
+import deleteS3Upload from "~/utils/deleteS3Upload"
 import uploadLogo from "~/utils/uploadLogo";
 
 import standardizeLineBreaks from "~/helpers/email/standardizeLineBreaks";
@@ -65,13 +65,15 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         if (newLogo) {
             if (currentlyStoredLogo) {
                 // first...remove current file from bucket and db
-                await deleteLogo(currentlyStoredLogo)
+                await deleteS3Upload(currentlyStoredLogo)
+                return await db.reviewRequestEmailLogo.delete({where: {id: currentlyStoredLogo.id}}) 
             }
             // now...add new file to bucket and db
             await uploadLogo(newLogo, emailDesignSettings?.id as string)
         } else if (currentlyStoredLogo && logoDeleted) {
             // if there is a current logo stored in db, yet there is no logo in the form data, delete the current logo
-            await deleteLogo(currentlyStoredLogo)
+            await deleteS3Upload(currentlyStoredLogo)
+            return await db.reviewRequestEmailLogo.delete({where: {id: currentlyStoredLogo.id}}) 
         }
         return json({status: 'success'}, {status: 200})
     } catch (error) {
