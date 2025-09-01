@@ -658,6 +658,7 @@ export default function ReviewForm() {
             <div className={styles.rewardTiersMainContainer}>
                 <h1 style={{padding: 0, margin: 0, fontSize: '20px'}}>Reward Tiers</h1>
                 <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
+                <p style={{padding: 0, margin: '5px 0px', fontSize: '11px'}}>*Minimum purchase requirements may apply</p>
                 <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
                     <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
                         <p className={styles.rewardTierName}>{data.rewardData.names[0]}</p>
@@ -669,7 +670,8 @@ export default function ReviewForm() {
                         <p className={styles.rewardTierName}>{data.rewardData.names[2]}</p>
                     </div>
                 </div>
-            </div>}
+            </div>
+            }
         <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}

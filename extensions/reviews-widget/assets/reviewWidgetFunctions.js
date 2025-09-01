@@ -181,7 +181,7 @@ const renderCurrentPageReviews = (currentPage, currentSortBy) => {
                 <div class='reviewBody'>${review.body}</div>
             </div>
 
-            ${review.radioQuestionResponses.length > 0 ? `<div class='reviewAnswerDisplayContainer'>${generateCustomQuestionAnswerMarkup(review)}</div>` : ''}
+            ${review.radioQuestionResponses.filter(res => res.display === true).length > 0 ? `<div class='reviewAnswerDisplayContainer'>${generateCustomQuestionAnswerMarkup(review)}</div>` : ''}
 
             ${review.media.length > 0 ?
             `<div class="reviewMediaContainer">

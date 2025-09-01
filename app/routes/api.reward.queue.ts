@@ -18,6 +18,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
         if (!data.rewardSettingsId) return new Response(JSON.stringify({error: "missing reward settings id"}), {status: 400})
         if (!data.firstName) return new Response(JSON.stringify({error: "missing required firstName"}), {status: 401})
+        if (!data.toAddress) return new Response(JSON.stringify({error: "missing required toAddress (email)"}), {status: 401})
 
         const reward = await db.reward.findFirst({where: {id: {equals: data.rewardSettingsId}}})
         if (!reward) return new Response(JSON.stringify({error: "no reward settings found"}), {status: 400})
@@ -142,7 +143,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             }
         }
 
-        if (discountCode === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
+        if (discountCode === "" || discountId === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
 
         const autoSendDate = new Date()
         autoSendDate.setDate(autoSendDate.getDate() + 2)

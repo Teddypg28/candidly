@@ -510,6 +510,11 @@
     margin-top: 5px;
 }
 
+.reviewContainer {
+    margin: 0;
+    padding: 0;
+}
+
 .reviewContainer > p {
     margin: 0;
     padding: 0;

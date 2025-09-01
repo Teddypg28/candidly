@@ -103,6 +103,6 @@ export async function action({ request } : ActionFunctionArgs) {
         
      catch (error) {
         console.log(error)
-        return new Response(JSON.stringify({status: 'Review verification failed'}), {status: 400})
+        return new Response(JSON.stringify({status: `review creation failed: ${error}`}), {status: 400})
     }
 }

@@ -118,7 +118,7 @@ export default async function createBxgyDiscount(rewardSettingsId: string, store
                         effect: reward.bxgyRewardType === "dollar" ? {
                             amount: reward.bxgyDollarAmount
                         } : {
-                            percentage: reward.bxgyRewardType === "free" ? 100 : reward.bxgyPercentageAmount
+                            percentage: reward.bxgyRewardType === "free" ? 1 : reward.bxgyPercentageAmount
                         },
                         quantity: reward.bxgyReceiveAmount.toString()
                     },
