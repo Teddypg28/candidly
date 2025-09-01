@@ -11,7 +11,7 @@ import styles from '../styles/EmailTemplates.module.css'
 
 import { authenticate } from "~/shopify.server";
 import { ActionFunctionArgs, json, LoaderFunctionArgs } from "@remix-run/node";
-import { useFetcher, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, defaultCustomerQuestionEmailSettings, defaultCustomerRewardEmailSettings, defaultReviewRequestEmailSettings, ReviewRequestEmailVariables } from "~/types/types";
 import { SaveBar } from "@shopify/app-bridge-react";
 
@@ -66,7 +66,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             if (currentlyStoredLogo) {
                 // first...remove current file from bucket and db
                 await deleteS3Upload(currentlyStoredLogo)
-                return await db.reviewRequestEmailLogo.delete({where: {id: currentlyStoredLogo.id}}) 
+                await db.reviewRequestEmailLogo.delete({where: {id: currentlyStoredLogo.id}}) 
             }
             // now...add new file to bucket and db
             await uploadLogo(newLogo, emailDesignSettings?.id as string)

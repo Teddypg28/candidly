@@ -62,7 +62,7 @@ model CustomerQuestionAnswer {
   body       String
   store      String
   questionId String           @unique
-  question   CustomerQuestion @relation(fields: [questionId], references: [id])
+  question   CustomerQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model CustomerQuestionEmailSettings {

@@ -2,7 +2,7 @@ import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { BlockStack, Card, Layout, Page, TextField, Thumbnail } from "@shopify/polaris";
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit, useRevalidator } from "@remix-run/react";
 import { useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { CustomerQuestionEmailVariables } from "~/types/types";
@@ -70,6 +70,7 @@ export default function AnswerQuestion() {
     const data = useLoaderData<typeof loader>()
 
     const submit = useSubmit()
+    const revalidator = useRevalidator()
 
     const [questionAnswerState, setQuestionAnswerState] = useState({
         question: data.customerQuestion?.title,
@@ -104,6 +105,7 @@ export default function AnswerQuestion() {
             shopify.toast.show("Answer email failed to send. Please try again.", {duration: 2000})
         } finally {
             setEmailSending(false)
+            revalidator.revalidate()
         }
     }
 
