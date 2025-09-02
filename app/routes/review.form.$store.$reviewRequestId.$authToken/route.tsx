@@ -92,6 +92,8 @@ export default function ReviewForm() {
     const data = useLoaderData<typeof loader>()
 
     const [reviewSuccessfullySubmited, setReviewSuccessfullySubmitted] = useState(false)
+    const [isReviewSubmitting, setIsReviewSubmitting] = useState(false)
+
     const productsToReview = useRef(data.productDataObjects)
 
     const [userInputState, setUserInputState] = useState<UserReviewFormInputState>({
@@ -401,6 +403,8 @@ export default function ReviewForm() {
     }, [])
 
     const submitReview = async () => {
+        setIsReviewSubmitting(true)
+
         const reviewFormData = new FormData()
         Object.entries(userInputState).forEach(([key, value]) => {
             if (key === "customQuestionAnswers") {
@@ -420,6 +424,7 @@ export default function ReviewForm() {
         uploadedMedia.forEach((file: any) => reviewFormData.append("media", file))
     
         const res = await fetch('/api/review/request/create', {method: 'POST', body: reviewFormData})
+        setIsReviewSubmitting(false)
         if (res.status === 200) {
             const data = await res.json()
             reviewId.current = data.reviewId
@@ -450,7 +455,9 @@ export default function ReviewForm() {
                 }
                 // update products to review
                 productsToReview.current = productsToReview.current.filter(product => product.id !== productsToReview.current[0].id)
+                
                 setReviewSuccessfullySubmitted(true)
+                
                 if (productsToReview.current.length > 0) {
                     setTimeout(() => {
                         setCurrentProductIndex(prevCurrentProductIndex => {return prevCurrentProductIndex+1})
@@ -646,7 +653,7 @@ export default function ReviewForm() {
 
   return (
     reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={!["none", "media"].includes(data.rewardData.type) || isMediaRewardSatisfied ? true : false} firstName={userInputState.firstName as string} /> :
-    <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '20px', overflow: 'hidden'}}>
+    <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '0px', overflow: 'hidden'}}>
         <div className={styles.productDetailsContainer}>
             <div>
                 <h4 style={{margin: 0, padding: 0, marginBottom: 5}}>Product:</h4>
@@ -672,7 +679,7 @@ export default function ReviewForm() {
                 </div>
             </div>
             }
-        <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px'}}>
             <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
                 {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
                 {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
