@@ -13,6 +13,7 @@ import fetchRewardTiersScore from "~/helpers/rewards/fetchRewardTiersScore";
 import fetchRewardTierRewards from "~/helpers/rewards/fetchRewardTierRewards";
 import fetchConfiguredQuestions from "~/helpers/questions/fetchConfiguredQuestions";
 import { fetchMediaReward } from "~/helpers/rewards/fetchMediaReward";
+import ReviewSubmitting from "~/components/ReviewSubmitting";
 
 export const loader = async ({ params, request } : LoaderFunctionArgs) => {
 
@@ -436,12 +437,14 @@ export default function ReviewForm() {
 
     const nextQuestion = useCallback(async () => {
         const errors = validateFormFields()
-        if (errors) return
+        if (errors || isReviewSubmitting) return
 
         if (currentStep !== steps.length) {
             setCurrentStep(currentStep => {return currentStep + 1})
         } else {
+            setIsReviewSubmitting(true)
             const submissionSuccessful = await submitReview()
+            setIsReviewSubmitting(false)
             if (submissionSuccessful) {
                 let shouldCreateReward = true
                 // create pending reward until review is verified by store owner
@@ -472,6 +475,8 @@ export default function ReviewForm() {
     }, [currentStep, userInputState])
 
     const lastQuestion = useCallback(() => {
+        if (isReviewSubmitting) return
+
         (document.querySelector(`.${styles.reviewFormValidationError}`) as any).classList.add(styles.hidden)
         setCurrentStep(currentStep => {return currentStep - 1})
     }, [currentStep])
@@ -651,58 +656,65 @@ export default function ReviewForm() {
 
     const isMediaRewardSatisfied = data.rewardData.type === "media" && uploadedMediaRef.current.length > 0
 
-  return (
-    reviewSuccessfullySubmited ? <ReviewSubmittedMessage isReward={!["none", "media"].includes(data.rewardData.type) || isMediaRewardSatisfied ? true : false} firstName={userInputState.firstName as string} /> :
-    <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '0px', overflow: 'hidden'}}>
-        <div className={styles.productDetailsContainer}>
-            <div>
-                <h4 style={{margin: 0, padding: 0, marginBottom: 5}}>Product:</h4>
-                <p style={{marginTop: 0, padding: 0}}>{productsToReview.current[0].title}</p>
-            </div>
-            <img src={productsToReview.current[0].image || undefined} height={'70px'} width={'70px'} />
-        </div>
-        {data.rewardData.type === "tiers" && 
-            <div className={styles.rewardTiersMainContainer}>
-                <h1 style={{padding: 0, margin: 0, fontSize: '20px'}}>Reward Tiers</h1>
-                <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
-                <p style={{padding: 0, margin: '5px 0px', fontSize: '11px'}}>*Minimum purchase requirements may apply</p>
-                <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
-                    <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{data.rewardData.names[0]}</p>
-                    </div>
-                    <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
-                        <p className={styles.rewardTierName}>{data.rewardData.names[1]}</p>
-                    </div>
-                    <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
-                        <p className={styles.rewardTierName}>{data.rewardData.names[2]}</p>
-                    </div>
-                </div>
-            </div>
-            }
-        <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px'}}>
-            <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
-                {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
-                {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
+    if (isReviewSubmitting) {
+        return <ReviewSubmitting />
+    }
+
+    if (reviewSuccessfullySubmited) {
+        return <ReviewSubmittedMessage isReward={!["none", "media"].includes(data.rewardData.type) || isMediaRewardSatisfied} firstName={userInputState.firstName as string} />
+    }
+
+    return (
+        <div style={{height: '100%', backgroundColor: 'rgb(244, 244, 244)', display: 'flex', flexDirection: 'column', gap: '0px', overflow: 'hidden'}}>
+            <div className={styles.productDetailsContainer}>
                 <div>
-                    <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
-                    {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px', width: '80%', margin: 'auto'}}>{data.rewardData.type === "tiers" ? "(Add at least 1 to be eligible for the max reward)" : data.rewardData.type === "media" ? `(Earn a ${data.rewardData.names[0]} coupon code by uploading at least 1)` : ''}</p>}
+                    <h4 style={{margin: 0, padding: 0, marginBottom: 5}}>Product:</h4>
+                    <p style={{marginTop: 0, padding: 0}}>{productsToReview.current[0].title}</p>
                 </div>
-                <div className={styles.inputContainer}>
-                    {steps[currentStep-1].markup}
-                    {data.rewardData.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
-                        <div className={styles.progressBarContainer}>
-                            <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
-                                <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
-                            </div>
-                            <p className={styles.progressMessage} style={{fontWeight: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? 'bolder' : 'normal', color: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score == 3 ? '#67af98' : 'black'}}>{progressMessage}</p>
-                        </div>}
-                    {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}   
-                    <p id="gibberishDetectedMessage" className={`${styles.reviewFormValidationError} ${styles.hidden}`}>Whoops! We detected gibberish</p>
-                    {uploadMediaError && <p className={styles.reviewFormValidationError}>{uploadMediaError}</p>}           
+                <img src={productsToReview.current[0].image || undefined} height={'70px'} width={'70px'} />
+            </div>
+            {data.rewardData.type === "tiers" && 
+                <div className={styles.rewardTiersMainContainer}>
+                    <h1 style={{padding: 0, margin: 0, fontSize: '20px'}}>Reward Tiers</h1>
+                    <p style={{padding: 0, margin: '5px 0px', fontSize: '14px'}}>The better your review, the better your reward</p>
+                    <p style={{padding: 0, margin: '5px 0px', fontSize: '11px'}}>*Minimum purchase requirements may apply</p>
+                    <div className={styles.rewardTiersContainer} style={{marginTop: '10px'}}>
+                        <div className={styles.rewardTierOne} style={{backgroundColor: reviewScore.totalScore === 1 ? "black" : 'lightgray', filter: reviewScore.totalScore === 1 ? 'none' : "blur(1px)"}}>
+                            <p className={styles.rewardTierName}>{data.rewardData.names[0]}</p>
+                        </div>
+                        <div className={styles.rewardTierTwo} style={{backgroundColor: reviewScore.totalScore === 2 ? "black" : 'lightgray', filter: reviewScore.totalScore === 2 ? 'none' : "blur(1px)"}}> 
+                            <p className={styles.rewardTierName}>{data.rewardData.names[1]}</p>
+                        </div>
+                        <div className={styles.rewardTierThree} style={{backgroundColor: reviewScore.totalScore === 3 ? "black" : 'lightgray', filter: reviewScore.totalScore === 3 ? 'none' : "blur(1px)"}}>
+                            <p className={styles.rewardTierName}>{data.rewardData.names[2]}</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="stepsContainer" className={styles.stepsContainer}></div>
+                }
+            <div style={{height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px'}}>
+                <div className={styles.writeReviewForm} style={{height: '90%', marginBottom: '50px', padding: '20px 40px'}}>
+                    {currentStep === 1 ? '' : <svg onClick={nextQuestion} className={styles.writeReviewForwardBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M18 12L13 7M18 12L13 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
+                    {currentStep === 1 ? '' : <svg onClick={lastQuestion} className={styles.writeReviewBackBtn} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M6 12H18M6 12L11 7M6 12L11 17" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path> </g></svg>}
+                    <div>
+                        <h1 className={styles.reviewFormStepTitle}>{steps[currentStep-1].title}</h1>
+                        {steps[currentStep-1].key === "media" && <p style={{marginTop: '10px', width: '80%', margin: 'auto'}}>{data.rewardData.type === "tiers" ? "(Add at least 1 to be eligible for the max reward)" : data.rewardData.type === "media" ? `(Earn a ${data.rewardData.names[0]} coupon code by uploading at least 1)` : ''}</p>}
+                    </div>
+                    <div className={styles.inputContainer}>
+                        {steps[currentStep-1].markup}
+                        {data.rewardData.type === "tiers" && ["title", "body"].includes(steps[currentStep-1].key) && 
+                            <div className={styles.progressBarContainer}>
+                                <div style={{borderRadius: "5px", width: "100%", height: "17px", backgroundColor: "#e2e2e2", overflow: "hidden"}}>
+                                    <div className={styles.progressBar} style={{backgroundColor: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? '#67af98' : 'black', height: "100%", width: `${Math.round(reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].length / reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].perfectLength * 100)}%`}}> </div>
+                                </div>
+                                <p className={styles.progressMessage} style={{fontWeight: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score === 3 ? 'bolder' : 'normal', color: reviewScore.tiers[steps[currentStep-1].key as keyof typeof reviewScore.tiers].score == 3 ? '#67af98' : 'black'}}>{progressMessage}</p>
+                            </div>}
+                        {currentStep !== 1 && <p className={`${styles.reviewFormValidationError} ${styles.hidden}`}>This field is required</p>}   
+                        <p id="gibberishDetectedMessage" className={`${styles.reviewFormValidationError} ${styles.hidden}`}>Whoops! We detected gibberish</p>
+                        {uploadMediaError && <p className={styles.reviewFormValidationError}>{uploadMediaError}</p>}           
+                    </div>
+                    <div id="stepsContainer" className={styles.stepsContainer}></div>
+                </div>
             </div>
         </div>
-    </div>
-  )
+    )
 }

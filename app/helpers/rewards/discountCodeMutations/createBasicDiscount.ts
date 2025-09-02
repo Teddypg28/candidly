@@ -3,12 +3,12 @@ import db from '../../../db.server'
 
 // generates a percent off or dollar off discount depending on reward setting
 export default async function createBasicDiscount(rewardSettingsId: string, store: string) {
-
+    
     const reward = await db.rewardSetting.findFirst({where: {id: {equals: rewardSettingsId}}, include: {eligibleCollections: true, eligibleProducts: true}})
     const storeSession = await db.session.findFirst({where: {shop: {equals: store}}})
     
     if (reward && storeSession) {
-
+  
         const accessToken = storeSession.accessToken
     
         let rewardTitle = ""
@@ -87,7 +87,7 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
                   greaterThanOrEqualToSubtotal: reward.minPurchaseDollarValue
                 }
               } : reward?.minPurchaseType === "quantity" ? {
-                quantity: {greaterThanOrEqualToQuantity: reward.minPurchaseQuantityValue}
+                quantity: {greaterThanOrEqualToQuantity: reward.minPurchaseQuantityValue.toString()}
               } : 
               {},
               usageLimit: 1,
@@ -103,14 +103,16 @@ export default async function createBasicDiscount(rewardSettingsId: string, stor
             },
             body: JSON.stringify({query: mutation, variables})
         })
-        const data = await res.json()
-        const errors = data.data.discountCodeBasicCreate.userErrors
 
+        const data = await res.json()
+
+        const errors = data.data.discountCodeBasicCreate.userErrors
+  
         if (errors.length > 0) return null
         
         return {discountCode: randomDiscountCode, discountId: data.data.discountCodeBasicCreate.codeDiscountNode.id}
-
+  
     }
-
+  
     return null
 }

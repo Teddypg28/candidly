@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://stock-warren-atom-sticks.trycloudflare.com"
+application_url = "https://behaviour-specs-outcomes-sa.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,13 +16,13 @@ include_config_on_deploy = true
 scopes = "read_customers,read_orders,read_products,read_themes,write_products,write_discounts"
 
 [auth]
-redirect_urls = ["https://stock-warren-atom-sticks.trycloudflare.com/auth/callback", "https://stock-warren-atom-sticks.trycloudflare.com/auth/shopify/callback", "https://stock-warren-atom-sticks.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://behaviour-specs-outcomes-sa.trycloudflare.com/auth/callback", "https://behaviour-specs-outcomes-sa.trycloudflare.com/auth/shopify/callback", "https://behaviour-specs-outcomes-sa.trycloudflare.com/api/auth/callback"]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://stock-warren-atom-sticks.trycloudflare.com/api"
+url = "https://behaviour-specs-outcomes-sa.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 
