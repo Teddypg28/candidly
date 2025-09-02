@@ -41,7 +41,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 if (!rewardSetting) return new Response(JSON.stringify({status: "no reward setting found"}), {status: 400})
                 
                 if (rewardSetting.selectedRewardType === "free-shipping") {
-                    rewardTitle = "Free Shipping"
+                    rewardTitle = "free shipping"
                     const discountData = await createFreeShippingDiscount(rewardSetting.id, reward.store)
                     discountCode = discountData?.discountCode || ""
                     discountId = discountData?.discountId || ""
@@ -49,7 +49,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                     const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyPurchaseProductId)
                     const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, rewardSetting.bxgyReceiveProductId)
 
-                    rewardTitle = `Buy ${rewardSetting.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle}, Get ${rewardSetting.bxgyReceiveAmount} ${bxgyReceiveProductTitle} - ${rewardSetting.bxgyRewardType === "free" ? "Free" :
+                    rewardTitle = `buy ${rewardSetting.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle}, get ${rewardSetting.bxgyReceiveAmount} ${bxgyReceiveProductTitle} - ${rewardSetting.bxgyRewardType === "free" ? "free" :
                     rewardSetting.bxgyRewardType === "dollar" ? `$${rewardSetting.bxgyDollarAmount}` : `${rewardSetting.bxgyPercentageAmount * 100}% off`}`
                     const discountData = await createBxgyDiscount(rewardSetting.id, reward.store)
                     discountCode = discountData?.discountCode || ""
@@ -103,7 +103,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 const bxgyPurchaseProductTitle = await fetchProductTitle(reward.store, mediaReward.bxgyPurchaseProductId)
                 const bxgyReceiveProductTitle = await fetchProductTitle(reward.store, mediaReward.bxgyReceiveProductId)
 
-                rewardTitle = `Buy ${mediaReward.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle}, Get ${mediaReward.bxgyReceiveAmount} ${bxgyReceiveProductTitle} - ${mediaReward.bxgyRewardType === "free" ? "Free" :
+                rewardTitle = `buy ${mediaReward.bxgyPurchaseAmount} ${bxgyPurchaseProductTitle}, get ${mediaReward.bxgyReceiveAmount} ${bxgyReceiveProductTitle} - ${mediaReward.bxgyRewardType === "free" ? "free" :
                 mediaReward.bxgyRewardType === "dollar" ? `$${mediaReward.bxgyDollarAmount}` : `${mediaReward.bxgyPercentageAmount * 100}%`} off`
                 
                 const discountData = await createBxgyDiscount(mediaReward.id, reward.store)

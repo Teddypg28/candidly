@@ -85,10 +85,10 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const rewardSettings = await db.reward.findFirst({where: {store: {equals: session.shop}}, 
         include: 
             {
-                subpar: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
-                good: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
-                perfect: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
-                media: {include: {eligibleProducts: {select: {productId: true}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}}
+                subpar: {include: {eligibleProducts: {select: {productId: true}, orderBy: {productId: 'asc'}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
+                good: {include: {eligibleProducts: {select: {productId: true}, orderBy: {productId: 'asc'}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
+                perfect: {include: {eligibleProducts: {select: {productId: true}, orderBy: {productId: 'asc'}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}},
+                media: {include: {eligibleProducts: {select: {productId: true}, orderBy: {productId: 'asc'}}, eligibleCollections: {select: {collectionId: true}, orderBy: {collectionId: 'asc'}}}}
             },
         omit: {
                 subparId: true,
@@ -213,7 +213,12 @@ export default function Reward() {
                     productId: product.id
                 }
             })
-            setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleProducts: eligibleProductData}}})
+            const sortedProducts = eligibleProductData.sort((a, b) => {
+                const idA = parseInt(a.productId.split("Product/")[1]);
+                const idB = parseInt(b.productId.split("Product/")[1]);
+                return idA - idB;
+              });
+            setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleProducts: sortedProducts}}})
         }
     }
 
@@ -231,7 +236,12 @@ export default function Reward() {
                     collectionId: collection.id, 
                 }
             })
-            setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleCollections: eligibleCollectionData.sort((a, b) => a.collectionId.localeCompare(b.collectionId))}}})
+            const sortedCollections = eligibleCollectionData.sort((a, b) => {
+                const idA = parseInt(a.collectionId.split("Collection/")[1]);
+                const idB = parseInt(b.collectionId.split("Collection/")[1]);
+                return idA - idB;
+              });
+            setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleCollections: sortedCollections}}})
         }
     }
 
@@ -264,16 +274,28 @@ export default function Reward() {
         const updatedSelectedProducts = selectedProductsCollections["products"][currentTab as keyof typeof selectedProductsCollections["products"]].filter((product) => product.id !== productId)
         const updatedProducts = rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleProducts.filter((product) => product.productId !== productId)
 
+        const sortedProducts = updatedProducts.sort((a, b) => {
+            const idA = parseInt(a.productId.split("Product/")[1]);
+            const idB = parseInt(b.productId.split("Product/")[1]);
+            return idA - idB;
+          });
+
         setSelectedProductsCollections({...selectedProductsCollections, "products": {...selectedProductsCollections["products"], [currentTab as keyof typeof rewardState]: updatedSelectedProducts}})
-        setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab as keyof typeof rewardState.rewards]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleProducts: updatedProducts}}})
+        setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab as keyof typeof rewardState.rewards]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleProducts: sortedProducts}}})
     }
 
     const removeEligibleCollection = (collectionId: string) => {
         const updatedSelectedCollections = selectedProductsCollections["collections"][currentTab as keyof typeof selectedProductsCollections["collections"]].filter((collection) => collection.id !== collectionId)
-        const updatedCollections = rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleCollections.filter((collection) => collection.collectionId !== collectionId).sort((a, b) => a.collectionId.localeCompare(b.collectionId))
+        const updatedCollections = rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleCollections.filter((collection) => collection.collectionId !== collectionId)
+
+        const sortedCollections = updatedCollections.sort((a, b) => {
+            const idA = parseInt(a.collectionId.split("Collection/")[1]);
+            const idB = parseInt(b.collectionId.split("Collection/")[1]);
+            return idA - idB;
+          });        
 
         setSelectedProductsCollections({...selectedProductsCollections, "collections": {...selectedProductsCollections["collections"], [currentTab as keyof typeof rewardState]: updatedSelectedCollections}})
-        setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab as keyof typeof rewardState]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleCollections: updatedCollections}}})
+        setRewardState({...rewardState, rewards: {...rewardState.rewards, [currentTab as keyof typeof rewardState]: {...rewardState.rewards[currentTab as keyof typeof rewardState.rewards], eligibleCollections: sortedCollections}}})
     }
 
     const resetState = () => {

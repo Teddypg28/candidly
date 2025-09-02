@@ -10,7 +10,7 @@ export default async function createBxgyDiscount(rewardSettingsId: string, store
         const accessToken = storeSession.accessToken
 
         const discountTitle = `Buy ${reward.bxgyPurchaseAmount} Get ${reward.bxgyReceiveAmount} ${reward.bxgyRewardType === "free" ? "Free" :
-        reward.bxgyRewardType === "dollar" ? `$${reward.bxgyDollarAmount}` : `${reward.bxgyPercentageAmount*100}%`} Off Discount`
+        reward.bxgyRewardType === "dollar" ? `$${reward.bxgyDollarAmount} Off` : `${reward.bxgyPercentageAmount*100}% Off`}`
         
         const mutation = `
         mutation discountCodeBxgyCreate($bxgyCodeDiscount: DiscountCodeBxgyInput!) {

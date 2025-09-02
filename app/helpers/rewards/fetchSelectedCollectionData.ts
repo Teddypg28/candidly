@@ -25,6 +25,7 @@ export default async function fetchSelectedCollectionData(rewardSettings: Reward
                 })
             }
         }))
-    }))    
+    }))     
+
     return selectedCollections
 }

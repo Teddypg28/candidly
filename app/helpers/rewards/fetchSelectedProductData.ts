@@ -44,5 +44,6 @@ export default async function fetchSelectedProductData(rewardSettings: RewardSta
             }
         }))
     }))    
+    
     return selectedProducts
 }
