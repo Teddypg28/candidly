@@ -246,11 +246,31 @@ export default function Reward() {
     }
 
     const isErrors = () => {
-        if (rewardState.rewards[currentTab as keyof typeof rewardState.rewards].productCollectionConfiguration === "collections" && 
-        rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleCollections.length === 0) return true
 
-        if (rewardState.rewards[currentTab as keyof typeof rewardState.rewards].productCollectionConfiguration === "products" && 
-        rewardState.rewards[currentTab as keyof typeof rewardState.rewards].eligibleProducts.length === 0) return true
+        const tabs = ["subpar", "good", "perfect", "media"]
+        for (let i = 0; i<tabs.length; i++) {
+            if (rewardState.rewards[tabs[i] as keyof typeof rewardState.rewards].productCollectionConfiguration === "collections" && 
+            rewardState.rewards[tabs[i] as keyof typeof rewardState.rewards].eligibleCollections.length === 0) {
+                if (tabs[i] === "media") {
+                    shopify.toast.show(`You must select at least 1 collection`, {duration: 2000})
+                } else {
+                    shopify.toast.show(`You must select at least 1 collection in the ${tabs[i]} review tab`, {duration: 2000})
+                }
+                return true
+            }
+        }
+
+        for (let i = 0; i<tabs.length; i++) {
+            if (rewardState.rewards[tabs[i] as keyof typeof rewardState.rewards].productCollectionConfiguration === "products" && 
+            rewardState.rewards[tabs[i] as keyof typeof rewardState.rewards].eligibleProducts.length === 0) {
+                if (tabs[i] === "media") {
+                    shopify.toast.show(`You must select at least 1 product`, {duration: 2000})
+                } else {
+                    shopify.toast.show(`You must select at least 1 product in the ${tabs[i]} review tab`, {duration: 2000})
+                }
+                return true
+            }
+        }
         
         if (rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].selectedRewardType === "bxgy" && (
         rewardState.rewards[rewardState.type === "media" ? 'media' : currentTab as keyof typeof rewardState.rewards].bxgyPurchaseProductId === "" || 

@@ -35,7 +35,7 @@ export default function CustomerAnswers() {
         data.individualAnswerCountData[currentValue] > data.individualAnswerCountData[prevValue] ? currentValue : prevValue
     ) : null
 
-    const leastPopularAnswer = data.totalNumAnswers > 1 ? Object.keys(data.individualAnswerCountData).reduce((prevValue, currentValue) => 
+    const leastPopularAnswer = data.totalNumAnswers > 1 && Object.keys(data.individualAnswerCountData).length !== 1 ? Object.keys(data.individualAnswerCountData).reduce((prevValue, currentValue) => 
         data.individualAnswerCountData[currentValue] < data.individualAnswerCountData[prevValue] ? currentValue : prevValue
     ) : null
 
