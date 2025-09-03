@@ -124,6 +124,7 @@ model ProductReview {
   textQuestionResponses  TextAnswer[]
   pendingRewardId        String?                @unique
   pendingReward          PendingReward?         @relation(fields: [pendingRewardId], references: [id], onDelete: Cascade)
+  timezone               String
 }
 
 model ProductReviewMedia {

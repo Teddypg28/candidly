@@ -13,6 +13,7 @@ const submitReview = async () => {
     })
 
     formData.append("productId", `gid://shopify/Product/${reviewProductId}`)
+    formData.append("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone)
 
     const res = await fetch(`https://${window.Shopify.shop}/apps/api/review/storefront/create`, {method: 'POST', body: formData})
     if (res.status === 200) {

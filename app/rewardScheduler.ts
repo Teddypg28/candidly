@@ -16,5 +16,5 @@ new CronJob(
   },
   null, // optional onComplete callback if needed
   true, // start immediately
-  'America/Chicago' // timezone
+  'UTC' // timezone
 )

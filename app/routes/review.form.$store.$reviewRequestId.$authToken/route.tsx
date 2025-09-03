@@ -421,6 +421,7 @@ export default function ReviewForm() {
         reviewFormData.append('productId', productsToReview.current[0].id)
         reviewFormData.append('rating', currentStarRating.current.toString())
         reviewFormData.append('email', data.customerData.email)
+        reviewFormData.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone)
 
         uploadedMedia.forEach((file: any) => reviewFormData.append("media", file))
     
