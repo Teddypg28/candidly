@@ -147,10 +147,6 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
         const autoSendDate = new Date()
         autoSendDate.setDate(autoSendDate.getDate() + 2)
-        autoSendDate.setUTCHours(0)
-        autoSendDate.setUTCMinutes(0)
-        autoSendDate.setUTCSeconds(0)
-        autoSendDate.setUTCMilliseconds(0)
         const pendingRewardData = {
             store: reward.store,
             title: rewardTitle, 

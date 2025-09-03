@@ -1,6 +1,6 @@
-import db from './db.server'
-import appUrl from './helpers/appUrl'
-import { AppSettings } from './types/types'
+import db from '../db.server'
+import appUrl from './appUrl'
+import { AppSettings } from '../types/types'
 
 export default async function sendReviewRequestEmails() {
     const requestsToSendToday = await db.reviewRequest.findMany({where: {nextRequestDate: {equals: new Date().toLocaleDateString()}, AND: {isComplete: {equals: false}}}})

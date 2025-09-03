@@ -2,13 +2,16 @@ import { CronJob } from 'cron';
 import db from './db.server'
 
 new CronJob(
-  '00 05 * * *', 
+  '00 * * * *', 
   async function () {
     try {
       const currentDate = new Date()
-      const nextBillingCycleStartDate = new Date(currentDate.setDate(currentDate.getDate() + 30)).toLocaleDateString()
-      const currentDateString = currentDate.toLocaleDateString()
-      const subscriptions = await db.subscription.findMany({where: {type: {equals: "free"}, AND: {renewalDate: {equals: currentDateString}}}})
+
+      const nextBillingCycleDate = new Date(currentDate)
+      nextBillingCycleDate.setDate(nextBillingCycleDate.getDate() + 30)
+      const nextBillingCycleStartDate = nextBillingCycleDate
+
+      const subscriptions = await db.subscription.findMany({where: {type: {equals: "free"}, AND: {renewalDate: {lte: currentDate}}}})
       await Promise.allSettled(subscriptions.map(async (subscription) => {
           await db.subscription.update({where: {id: subscription.id}, data: {emailQuota: 50, emailsSent: 0, renewalDate: nextBillingCycleStartDate}})
       }))
@@ -18,5 +21,5 @@ new CronJob(
   },
   null, // optional onComplete callback if needed
   true, // start immediately
-  'America/Chicago' // timezone
+  'UTC' // timezone
 )

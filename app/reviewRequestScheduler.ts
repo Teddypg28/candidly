@@ -1,5 +1,5 @@
 import { CronJob } from 'cron';
-import sendReviewRequestEmails from './sendReviewRequestEmails.server';
+import sendReviewRequestEmails from './helpers/sendReviewRequestEmails.server';
 
 new CronJob(
   '31 20 * * *', 

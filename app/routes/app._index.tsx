@@ -5,7 +5,7 @@ import { authenticate } from "~/shopify.server";
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
 
 import db from '../db.server'
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useLoaderData, useRevalidator, useSubmit } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
 import { AnalyticsData } from "~/types/types";
@@ -19,8 +19,12 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const storeSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     if (!storeSubscription) {
         const currentDate = new Date()
-        const nextBillingCycleStartDate = new Date(currentDate.setDate(currentDate.getDate() + 30)).toLocaleDateString()
-        await db.subscription.create({data: {shop: session.shop, renewalDate: nextBillingCycleStartDate, planStarted: new Date().toLocaleDateString(), emailQuota: free}})
+        currentDate.setUTCHours(0, 0, 0, 0)
+
+        const nextBillingCycleStartDate = new Date(currentDate)
+        nextBillingCycleStartDate.setDate(nextBillingCycleStartDate.getDate() + 30)
+        
+        await db.subscription.create({data: {shop: session.shop, renewalDate: nextBillingCycleStartDate, planStarted: currentDate, emailQuota: free}})
     }
 
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
@@ -40,6 +44,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
     return json(
         {
+            timezone: storeSubscription?.timezone,
             appSettings, 
             reviewRequestEmailSettings, 
             reviewFormDesignSettings, 
@@ -64,6 +69,13 @@ export default function Index() {
 
     const [dateRange, setDateRange] = useState('all')
     const [analyticsData, setAnalyticsData] = useState(data.analyticsData)
+
+    useEffect(() => {
+        if (!data.timezone) {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+            submit(JSON.stringify({timezone}), {method: "POST", action: "/api/timezone/init", encType: "application/json", navigate: false})
+        }
+    }, [])
 
     useEffect(() => {
        const getAnalyticsData = async () => {

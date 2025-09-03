@@ -267,14 +267,15 @@ model PendingReward {
 }
 
 model Subscription {
-  id             String @id @default(uuid())
+  id             String   @id @default(uuid())
   shop           String
-  type           String @default("free")
-  emailsSent     Int    @default(0)
+  type           String   @default("free")
+  emailsSent     Int      @default(0)
   emailQuota     Int
-  planStarted    String @default("")
-  renewalDate    String @default("")
-  subscriptionId String @default("")
+  planStarted    DateTime
+  renewalDate    DateTime
+  timezone       String?
+  subscriptionId String?
 }
 
 model Session {

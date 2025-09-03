@@ -60,7 +60,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       break;
     case "APP_SUBSCRIPTIONS_UPDATE":
-
       if (payload.app_subscription.status === "ACTIVE") {
         const storeSession = await db.session.findFirst({where: {shop: {equals: session?.shop}}}) as Session
         const subscriptionDetails = await fetchSubscriptionData(payload.app_subscription.admin_graphql_api_id, storeSession.shop, storeSession.accessToken)
@@ -69,7 +68,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         if (subscriptionDetails && subscription) {
 
           const type = subscriptionDetails.price === 9.99 ? "basic" : subscriptionDetails.price === 19.99 ? "pro" : "advanced"
-          const emailsSent = new Date().toLocaleDateString() === subscription.renewalDate ? 0 : subscription.emailsSent 
+          const emailsSent = new Date().toLocaleDateString() === subscription.renewalDate.toLocaleDateString() ? 0 : subscription.emailsSent 
+
+          const currentDate = getCurrentDate()
+          currentDate.setUTCHours(0, 0, 0, 0)
+
+          const renewalDate = new Date(subscription.renewalDate)
+          renewalDate.setUTCHours(0, 0, 0, 0)
           
           let emailQuota
           if (subscription.type === type) {
@@ -90,12 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               direction = "upgrade"
             }
 
-            const renewalDate = new Date(subscription.renewalDate)
-            renewalDate.setUTCHours(0, 0, 0, 0)
             const isoStringRenewalDate = renewalDate.toISOString()
-
-            const currentDate = getCurrentDate()
-            currentDate.setUTCHours(0, 0, 0, 0)
             const isoStringCurrentDate = currentDate.toISOString()
 
             const planStarted = new Date(subscription.planStarted)
@@ -119,10 +119,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           }
           await db.subscription.update({where: {id: subscription.id}, data: { 
             type, 
-            renewalDate: new Date(subscriptionDetails.endsAt).toLocaleDateString(), 
+            renewalDate, 
             emailsSent, 
             emailQuota, 
-            planStarted: getCurrentDate().toLocaleDateString(), 
+            planStarted: getCurrentDate(),
+            subscriptionId: payload.app_subscription.admin_graphql_api_id
           }})
         }
       }

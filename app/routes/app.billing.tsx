@@ -39,7 +39,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             }`
 
             await admin.graphql(cancelSubscriptionMutation, {variables: {
-                "id": currentSubscription.subscriptionId,
+                "id": currentSubscription?.subscriptionId,
                 "prorate": true
             }})
 
