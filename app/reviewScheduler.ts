@@ -1,17 +1,23 @@
 import { CronJob } from 'cron';
 import db from './db.server'
+import { DateTime } from 'luxon';
 
 new CronJob(
   '00 * * * *', 
   async function () {
     try {     
-        const fourteenDaysAgo = new Date();
-        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-    
-        const unpublishedReviews = await db.productReview.findMany({where: {isPublished: {equals: false}, date: {lte: fourteenDaysAgo}}})
+        const unpublishedReviews = await db.productReview.findMany({where: {isPublished: {equals: false}}})
 
         const jobs = unpublishedReviews.map(async (review) => {
-          await db.productReview.update({where: {id: review.id}, data: {isPublished: true}})
+
+          const reviewDate = DateTime.fromJSDate(review.date)
+          const now = DateTime.now().setZone(review.timezone || "America/Chicago")
+          const fourteenDaysAgo = now.minus({days: 14}).toUTC()
+
+          if (reviewDate < fourteenDaysAgo) {
+            await db.productReview.update({where: {id: review.id}, data: {isPublished: true}})
+          }
+
         })
         
         await Promise.allSettled(jobs)

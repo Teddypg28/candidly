@@ -192,7 +192,7 @@ model ReviewFormSettings {
 }
 
 model ReviewRequest {
-  id                String   @id @default(uuid())
+  id                String    @id @default(uuid())
   store             String
   createdAt         DateTime
   orderName         String
@@ -200,10 +200,11 @@ model ReviewRequest {
   firstName         String
   email             String
   fulfillmentStatus String?
-  isComplete        Boolean  @default(false)
-  nextRequestDate   String?
-  emailsSent        Int      @default(0)
+  isComplete        Boolean   @default(false)
+  nextRequestDate   DateTime? @default(now())
+  emailsSent        Int       @default(0)
   authToken         String
+  timezone          String
 }
 
 model RewardSettings {
@@ -265,6 +266,7 @@ model PendingReward {
   toAddress    String
   sent         Boolean        @default(false)
   review       ProductReview?
+  timezone     String
 }
 
 model Subscription {

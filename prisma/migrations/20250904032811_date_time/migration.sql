@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Subscription" ALTER COLUMN "renewalDate" SET DATA TYPE TIMESTAMP(3),
+ALTER COLUMN "planStarted" SET DATA TYPE TIMESTAMP(3);

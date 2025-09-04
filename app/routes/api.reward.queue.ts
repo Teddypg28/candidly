@@ -7,6 +7,7 @@ import createFreeShippingDiscount from "~/helpers/rewards/discountCodeMutations/
 import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
 import fetchMinPurchaseRequirementStatement from "~/helpers/rewards/fetchMinPurchaseRequirementStatement";
 import fetchCollectionTitle from "~/helpers/rewards/fetchCollectionTitle";
+import { Subscription } from "@prisma/client";
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {      
@@ -25,6 +26,8 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
         // if rewards are disabled
         if (reward.type === "none") return new Response(JSON.stringify({status: "rewards disabled"}), {status: 200})
+
+        const subscription = await db.subscription.findFirst({where: {shop: {equals: reward.store}}}) as Subscription
 
         // if rewards are tiers
         const reviewScore = data.tierReviewScore as number
@@ -154,9 +157,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             firstName: data.firstName,
             toAddress: data.toAddress,
             discountId,
-            autoSendDate
+            autoSendDate,
+            timezone: subscription.timezone as string
         }
-
         const pendingReward = await db.pendingReward.create({data: pendingRewardData})
         await db.productReview.update({where: {id: data.reviewId}, data: {pendingRewardId: pendingReward.id}})
 

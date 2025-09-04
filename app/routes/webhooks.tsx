@@ -29,6 +29,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       break;
     case "ORDERS_CREATE":
       if (session) {
+
+          const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+
           const data = {
             createdAt: new Date(payload.created_at),
             orderName: payload.name,
@@ -37,7 +40,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             email: payload.customer.email,
             firstName: payload.customer.first_name,
             fulfillmentStatus: payload.fulfillment_status,
-            authToken: await generateReviewRequestHash()
+            authToken: await generateReviewRequestHash(),
+            timezone: subscription.timezone as string
           }
           await db.reviewRequest.create({ data })
         }
@@ -54,7 +58,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           const nextRequestDate = new Date(payload.created_at)
           nextRequestDate.setDate(nextRequestDate.getDate() + daysAfterFulfillment)
 
-          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate: nextRequestDate.toLocaleDateString()}})
+          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate}})
         }
       }
 

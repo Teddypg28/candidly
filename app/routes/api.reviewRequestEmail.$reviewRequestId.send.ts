@@ -2,7 +2,7 @@ import { ActionFunctionArgs } from "@remix-run/node";
 import db from '../db.server'
 
 import sendEmail from "~/helpers/email/sendEmail";
-import { ReviewRequest, ReviewRequestEmailSettings, Subscription } from "@prisma/client";
+import { AppSettings, ReviewRequest, ReviewRequestEmailSettings, Subscription } from "@prisma/client";
 import { ReviewRequestEmailVariables } from "~/types/types";
 import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
@@ -103,6 +103,23 @@ export async function action( { request, params } : ActionFunctionArgs) {
     
     // update emails left count
     await db.subscription.update({where: {id: subscriptionData.id}, data: {emailsSent: subscriptionData.emailsSent + 1}})
+
+    // update review request record
+    const storeSettings = await db.appSettings.findFirst({where: {store: {equals: reviewRequest.store}}}) as AppSettings
+
+    const generateNextDate = () => {
+      // returns the next review request date using the second review request number of days setting
+      const nextRequestDate = new Date(reviewRequest.nextRequestDate as any)
+      nextRequestDate.setDate(nextRequestDate.getDate() + storeSettings.secondReviewRequest)
+      nextRequestDate.setUTCHours(0, 0, 0, 0)
+      return nextRequestDate
+    }
+
+    const updatedData = {
+        emailsSent: reviewRequest.emailsSent + 1,
+        nextRequestDate: reviewRequest.emailsSent === 0 ? generateNextDate() : null
+    }
+    await db.reviewRequest.update({where: {id: reviewRequest.id}, data: updatedData})
 
     return new Response(JSON.stringify({message: 'Email successfully sent'}), {status: 200, headers: {'Content-Type': 'application/json'}})
 

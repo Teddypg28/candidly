@@ -1,11 +1,28 @@
 import { CronJob } from 'cron';
-import sendReviewRequestEmails from './helpers/sendReviewRequestEmails.server';
+import appUrl from  '../app/helpers/appUrl'
+import db from './db.server'
+
+import { DateTime } from 'luxon';
 
 new CronJob(
-  '31 20 * * *', 
+  '00 * * * *', 
   async function () {
     try {
-      await sendReviewRequestEmails()
+      const incompleteReviewRequests = await db.reviewRequest.findMany({where: {isComplete: {equals: false}}})
+
+      const jobs = incompleteReviewRequests.map(async (request) => {
+
+        const now = DateTime.now().setZone(request.timezone || "America/Chicago")
+        const nowIso = now.toISODate();
+        const requestDateIso = DateTime.fromJSDate(request.nextRequestDate as Date).toISODate();
+
+        if (nowIso === requestDateIso && now.hour === 10) {
+          await fetch(`https://${appUrl}/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
+        }
+        
+      })
+      await Promise.allSettled(jobs)
+
     } catch (error) {
       console.log(error)
     }
@@ -14,3 +31,4 @@ new CronJob(
   true, // start immediately
   'UTC' // timezone
 )
+

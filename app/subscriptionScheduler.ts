@@ -1,19 +1,28 @@
 import { CronJob } from 'cron';
 import db from './db.server'
+import { DateTime } from 'luxon';
 
 new CronJob(
   '00 * * * *', 
   async function () {
     try {
-      const currentDate = new Date()
+      const subscriptions = await db.subscription.findMany({where: {type: {equals: "free"}}})
 
-      const nextBillingCycleDate = new Date(currentDate)
-      nextBillingCycleDate.setDate(nextBillingCycleDate.getDate() + 30)
-      const nextBillingCycleStartDate = nextBillingCycleDate
-
-      const subscriptions = await db.subscription.findMany({where: {type: {equals: "free"}, AND: {renewalDate: {lte: currentDate}}}})
       await Promise.allSettled(subscriptions.map(async (subscription) => {
-          await db.subscription.update({where: {id: subscription.id}, data: {emailQuota: 50, emailsSent: 0, renewalDate: nextBillingCycleStartDate}})
+
+        const now = DateTime.now().setZone(subscription.timezone || "America/Chicago").toUTC()
+        const subRenewalDate = DateTime.fromJSDate(subscription.renewalDate)
+
+        if (now >= subRenewalDate) {
+          const nextBillingCycleDate = subRenewalDate.plus({ months: 1 });
+          await db.subscription.update({
+            where: {id: subscription.id}, 
+            data: {
+              emailQuota: 50, 
+              emailsSent: 0, 
+              renewalDate: nextBillingCycleDate.toJSDate()
+            }})
+        }
       }))
     } catch (error) {
       console.log(error)

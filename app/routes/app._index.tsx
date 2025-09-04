@@ -5,7 +5,7 @@ import { authenticate } from "~/shopify.server";
 import { ClipboardCheckIcon, ClipboardCheckFilledIcon } from '@shopify/polaris-icons';
 
 import db from '../db.server'
-import { useLoaderData, useRevalidator, useSubmit } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
 import { AnalyticsData } from "~/types/types";
@@ -18,12 +18,11 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
 
     const storeSubscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}})
     if (!storeSubscription) {
-        const currentDate = new Date()
-        currentDate.setUTCHours(0, 0, 0, 0)
+        const currentDate = new Date();
 
         const nextBillingCycleStartDate = new Date(currentDate)
         nextBillingCycleStartDate.setDate(nextBillingCycleStartDate.getDate() + 30)
-        
+
         await db.subscription.create({data: {shop: session.shop, renewalDate: nextBillingCycleStartDate, planStarted: currentDate, emailQuota: free}})
     }
 
