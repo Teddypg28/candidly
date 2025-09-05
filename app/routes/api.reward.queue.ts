@@ -8,6 +8,7 @@ import fetchProductTitle from "~/helpers/rewards/fetchProductTitle";
 import fetchMinPurchaseRequirementStatement from "~/helpers/rewards/fetchMinPurchaseRequirementStatement";
 import fetchCollectionTitle from "~/helpers/rewards/fetchCollectionTitle";
 import { Subscription } from "@prisma/client";
+import { DateTime } from 'luxon';
 
 export const action = async ({ request } : ActionFunctionArgs) => {
     try {      
@@ -148,8 +149,9 @@ export const action = async ({ request } : ActionFunctionArgs) => {
 
         if (discountCode === "" || discountId === "") return new Response(JSON.stringify({status: "error generating reward"}), {status: 401})
 
-        const autoSendDate = new Date()
-        autoSendDate.setDate(autoSendDate.getDate() + 2)
+        const now = DateTime.now().setZone(subscription.timezone as string || "UTC")
+        const autoSendDate = now.plus({days: 2}).toJSDate()
+        
         const pendingRewardData = {
             store: reward.store,
             title: rewardTitle, 

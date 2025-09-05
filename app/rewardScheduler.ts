@@ -1,7 +1,7 @@
 import { CronJob } from 'cron';
 import db from './db.server'
-import sendRewardEmail from './helpers/rewards/sendRewardEmail.server';
 import { DateTime } from 'luxon';
+import sendRewardEmail from './helpers/rewards/sendRewardEmail.server';
 
 new CronJob(
   '00 * * * *', 
@@ -9,8 +9,8 @@ new CronJob(
     try {     
         const pendingRewards = await db.pendingReward.findMany({where: {sent: {equals: false}}})
         await Promise.allSettled(pendingRewards.map(async (reward) => {
-            const autoSendDate = DateTime.fromJSDate(reward.autoSendDate)
-            const now = DateTime.now().setZone(reward.timezone || "America/Chicago").toUTC()
+            const autoSendDate = DateTime.fromJSDate(reward.autoSendDate).setZone(reward.timezone || "UTC")
+            const now = DateTime.now().setZone(reward.timezone || "UTC")
             if (autoSendDate < now) {
               await sendRewardEmail(reward)
             }

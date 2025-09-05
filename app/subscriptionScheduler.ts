@@ -10,17 +10,22 @@ new CronJob(
 
       await Promise.allSettled(subscriptions.map(async (subscription) => {
 
-        const now = DateTime.now().setZone(subscription.timezone || "America/Chicago").toUTC()
-        const subRenewalDate = DateTime.fromJSDate(subscription.renewalDate)
+        const now = DateTime.now().setZone(subscription.timezone || "UTC")
+        let renewalDate = DateTime.fromJSDate(subscription.renewalDate).setZone(subscription.timezone || "UTC")
 
-        if (now >= subRenewalDate) {
-          const nextBillingCycleDate = subRenewalDate.plus({ months: 1 });
+        if (now >= renewalDate) {
+
+          // Handle missed renewals
+          while (now >= renewalDate) {
+            renewalDate = renewalDate.plus({ days: 30 });
+          }
+          
           await db.subscription.update({
             where: {id: subscription.id}, 
             data: {
               emailQuota: 50, 
               emailsSent: 0, 
-              renewalDate: nextBillingCycleDate.toJSDate()
+              renewalDate: renewalDate.toJSDate()
             }})
         }
       }))

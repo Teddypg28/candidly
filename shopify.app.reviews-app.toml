@@ -3,7 +3,7 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://deposit-strategy-always-statewide.trycloudflare.com"
+application_url = "https://tracked-compound-old-certificate.trycloudflare.com"
 embedded = true
 
 [build]
@@ -16,13 +16,13 @@ include_config_on_deploy = true
 scopes = "read_customers,read_orders,read_products,read_themes,write_products,write_discounts"
 
 [auth]
-redirect_urls = ["https://deposit-strategy-always-statewide.trycloudflare.com/auth/callback", "https://deposit-strategy-always-statewide.trycloudflare.com/auth/shopify/callback", "https://deposit-strategy-always-statewide.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://tracked-compound-old-certificate.trycloudflare.com/auth/callback", "https://tracked-compound-old-certificate.trycloudflare.com/auth/shopify/callback", "https://tracked-compound-old-certificate.trycloudflare.com/api/auth/callback"]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://deposit-strategy-always-statewide.trycloudflare.com/api"
+url = "https://tracked-compound-old-certificate.trycloudflare.com/api"
 subpath = "api"
 prefix = "apps"
 

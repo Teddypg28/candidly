@@ -4,10 +4,13 @@ import db from "../db.server";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 import fetchSubscriptionData from "~/helpers/fetchSubscriptionData";
 import { Session, Subscription } from "@prisma/client";
+import fs from 'fs/promises';
+import nodemailer from 'nodemailer'
 
 import { getCurrentDate } from "~/helpers/getCurrentDate";
 
 import { basic, pro, advanced } from "~/emailQuotaVariables";
+import { DateTime } from "luxon";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
@@ -31,9 +34,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session) {
 
           const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
+          const createdAt = DateTime.fromJSDate(payload.created_at).setZone(subscription.timezone as string || "UTC").toJSDate()
 
           const data = {
-            createdAt: new Date(payload.created_at),
+            createdAt,
             orderName: payload.name,
             orderId: payload.id,
             store: session.shop,
@@ -74,11 +78,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           const type = subscriptionDetails.price === 9.99 ? "basic" : subscriptionDetails.price === 19.99 ? "pro" : "advanced"
           const emailsSent = new Date().toLocaleDateString() === subscription.renewalDate.toLocaleDateString() ? 0 : subscription.emailsSent 
 
-          const currentDate = getCurrentDate()
-          currentDate.setUTCHours(0, 0, 0, 0)
-
+          const currentDate = new Date()
           const renewalDate = new Date(subscription.renewalDate)
-          renewalDate.setUTCHours(0, 0, 0, 0)
           
           let emailQuota
           if (subscription.type === type) {
@@ -99,15 +100,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               direction = "upgrade"
             }
 
-            const isoStringRenewalDate = renewalDate.toISOString()
-            const isoStringCurrentDate = currentDate.toISOString()
-
             const planStarted = new Date(subscription.planStarted)
-            planStarted.setUTCHours(0, 0, 0, 0)
-            const isoStringPlanStartedDate = planStarted.toISOString()
 
-            const daysRemaining = Math.floor((new Date(isoStringRenewalDate).getTime() - new Date(isoStringCurrentDate).getTime()) / (1000 * 60 * 60 * 24))
-            const daysUsed = Math.floor((new Date(isoStringCurrentDate).getTime() - new Date(isoStringPlanStartedDate).getTime()) / (1000 * 60 * 60 * 24))
+            const daysRemaining = Math.floor((renewalDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+            const daysUsed = Math.floor((currentDate.getTime() - planStarted.getTime()) / (1000 * 60 * 60 * 24))
 
             const paidQuotaSoFar = subscription.emailQuota
 
@@ -141,11 +137,106 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       break;
     case "CUSTOMERS_DATA_REQUEST":
-      throw new Response("Unhandled webhook topic", { status: 200 });
+
+      const appSettings = await db.appSettings.findFirst({where: {store: {equals: shop}}})
+
+      if (!appSettings) throw new Response("store email could not be fetched", { status: 400 });
+
+      const dataRequestCustomerEmail = payload.customer.email
+      const dataRequestCustomerId = payload.customer.id
+
+      const reviews = await db.productReview.findMany({
+        where: {
+          email: dataRequestCustomerEmail
+        }
+      });
+
+      const questions = await db.customerQuestion.findMany({ 
+        where: { store: {equals: shop}, AND: {email: {equals: dataRequestCustomerEmail}}  
+      }})
+
+      const exportData = {
+        customer: {
+          email: dataRequestCustomerEmail,
+          firstName: reviews[0]?.firstName || null
+        },
+        reviews: reviews.map(review => ({
+          productId: review.productId,
+          review: review.body,
+          rating: review.rating,
+          submittedAt: review.date.toISOString()
+        })),
+        questions: questions.map(question => ({
+          questonId: question.id,
+          question: question.title,
+          createdAt: question.createdAt
+        }))
+      };
+
+      const filePath = `/tmp/customer-data-${dataRequestCustomerId}.json`;
+
+      await fs.writeFile(filePath, JSON.stringify(exportData, null, 2), 'utf-8');
+
+      const transporter = nodemailer.createTransport({
+        host: 'email-smtp.us-east-2.amazonaws.com',
+        port: 587, 
+        secure: false,
+        auth: {
+          user: `${process.env.SES_SMTP_USERNAME}`,
+          pass: `${process.env.SES_SMTP_PASSWORD}`
+        }
+      });
+
+      await transporter.sendMail({
+        from: 'privacy@trycandidly.app',
+        to: appSettings.primaryEmail,
+        subject: `Customer Data Request – ${exportData.customer.email}`,
+        text: `Attached is the requested customer data`,
+        attachments: [
+          {
+            filename: 'customer-data.json',
+            path: filePath
+          }
+        ]
+      });
+
+      await fs.unlink(filePath);
+
+      throw new Response("Customer data successfully emailed to the store owner", { status: 200 });
     case "CUSTOMERS_REDACT":
-      throw new Response("Unhandled webhook topic", { status: 200 });
+      const customerEmail: string = payload.customer.email
+
+      await db.$transaction([
+        db.customerQuestion.deleteMany({ where: { store: {equals: shop}, AND: {email: {equals: customerEmail}}  } }),
+        db.productReview.deleteMany({ where: { store: {equals: shop}, AND: {email: {equals: customerEmail}} } }),
+      ]);
+
+      throw new Response("customer data successfully deleted", { status: 200 });
     case "SHOP_REDACT":
-      throw new Response("Unhandled webhook topic", { status: 200 });
+       await db.$transaction([
+        db.appSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.currentOrdersStatus.deleteMany({ where: { store: {equals: shop} } }),
+        db.customerQuestion.deleteMany({ where: { store: {equals: shop} } }),
+        db.customerQuestionAnswer.deleteMany({ where: { store: {equals: shop} } }),
+        db.customerQuestionEmailSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.customerRewardEmailSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.emailDesignSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.onboardingDismissalState.deleteMany({ where: { store: {equals: shop} } }),
+        db.pendingReward.deleteMany({ where: { store: {equals: shop} } }),
+        db.productReview.deleteMany({ where: { store: {equals: shop} } }),
+        db.reviewFormQuestion.deleteMany({ where: { store: {equals: shop} } }),
+        db.reviewFormSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.reviewRequest.deleteMany({ where: { store: {equals: shop} } }),
+        db.reviewRequestEmailSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.reward.deleteMany({ where: { store: {equals: shop} } }),
+        db.rewardSettings.deleteMany({ where: { store: {equals: shop} } }),
+        db.savedCustomQuestionTableView.deleteMany({ where: { store: {equals: shop} } }),
+        db.savedQuestionAnswerTableView.deleteMany({ where: { store: {equals: shop} } }),
+        db.savedReviewRequestTableView.deleteMany({ where: { store: {equals: shop} } }),
+        db.savedReviewsTableViews.deleteMany({ where: { store: {equals: shop} } }),
+        db.subscription.deleteMany({ where: { shop } })
+      ]);
+      throw new Response("shop data successfully deleted", { status: 200 });
     default:
       throw new Response("Unhandled webhook topic", { status: 404 });
   }

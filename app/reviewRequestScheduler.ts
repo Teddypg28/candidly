@@ -1,7 +1,6 @@
 import { CronJob } from 'cron';
 import appUrl from  '../app/helpers/appUrl'
 import db from './db.server'
-
 import { DateTime } from 'luxon';
 
 new CronJob(
@@ -12,10 +11,12 @@ new CronJob(
 
       const jobs = incompleteReviewRequests.map(async (request) => {
 
-        const now = DateTime.now().setZone(request.timezone || "America/Chicago")
+        const now = DateTime.now().setZone(request.timezone || "UTC")
         const nowIso = now.toISODate();
-        const requestDateIso = DateTime.fromJSDate(request.nextRequestDate as Date).toISODate();
 
+        const requestDate = DateTime.fromJSDate(request.nextRequestDate as Date).setZone(request.timezone || "UTC")
+        const requestDateIso = requestDate.toISODate();
+        
         if (nowIso === requestDateIso && now.hour === 10) {
           await fetch(`https://${appUrl}/api/reviewRequestEmail/${request.id}/send`, {method: 'POST', body: JSON.stringify({store: request.store})})
         }

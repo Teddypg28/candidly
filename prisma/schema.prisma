@@ -121,7 +121,6 @@ model ProductReview {
   isPublished            Boolean
   reviewRequestId        String?
   radioQuestionResponses AnswerChoiceSnapshot[]
-  textQuestionResponses  TextAnswer[]
   pendingRewardId        String?                @unique
   pendingReward          PendingReward?         @relation(fields: [pendingRewardId], references: [id], onDelete: Cascade)
   timezone               String
@@ -146,7 +145,6 @@ model ReviewFormQuestion {
   isRequired                String[]
   radioAnswerChoices        RadioAnswerChoice[]
   answerChoiceSnapshots     AnswerChoiceSnapshot[]
-  textAnswers               TextAnswer[]
   radioAllowMultipleAnswers String[]
   radioDisplayAnswer        String[]
   radioDisplayedAnswerLabel String
@@ -338,13 +336,4 @@ model SavedReviewRequestTableView {
   selectedFulfillmentFilters  String[]
   selectedReviewStatusFilters String[]
   sortSelected                String[]
-}
-
-model TextAnswer {
-  id         String             @id @default(uuid())
-  value      String
-  reviewId   String
-  review     ProductReview      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  questionId String
-  question   ReviewFormQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }

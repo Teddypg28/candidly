@@ -12,7 +12,7 @@ export async function action({ request } : ActionFunctionArgs) {
 
         if (!data.timezone || !subscription) return new Response(JSON.stringify({status: "missing required data or subscription does not exist"}), {status: 200})
     
-        await db.subscription.update({where: {id: subscription.id}, data: {timezone: data.timezone}})
+        await db.subscription.update({where: {id: subscription.id}, data: {...data}})
     
         return new Response(JSON.stringify({status: "timezone successfully initialized"}), {status: 200})
     } catch (error) {

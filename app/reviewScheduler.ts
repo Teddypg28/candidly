@@ -10,9 +10,9 @@ new CronJob(
 
         const jobs = unpublishedReviews.map(async (review) => {
 
-          const reviewDate = DateTime.fromJSDate(review.date)
-          const now = DateTime.now().setZone(review.timezone || "America/Chicago")
-          const fourteenDaysAgo = now.minus({days: 14}).toUTC()
+          const reviewDate = DateTime.fromJSDate(review.date).setZone(review.timezone || "UTC")
+          const now = DateTime.now().setZone(review.timezone || "UTC")
+          const fourteenDaysAgo = now.minus({days: 14})
 
           if (reviewDate < fourteenDaysAgo) {
             await db.productReview.update({where: {id: review.id}, data: {isPublished: true}})
