@@ -15,6 +15,8 @@ import { DateTime } from "luxon";
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
 
+  const subscription = await db.subscription.findFirst({where: { shop }}) as Subscription
+
   if (!admin && topic !== 'SHOP_REDACT') {
     // The admin context isn't returned if the webhook fired after a shop was uninstalled.
     // The SHOP_REDACT webhook will be fired up to 48 hours after a shop uninstalls the app.
@@ -33,8 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "ORDERS_CREATE":
       if (session) {
 
-          const subscription = await db.subscription.findFirst({where: {shop: {equals: session.shop}}}) as Subscription
-          const createdAt = DateTime.fromJSDate(payload.created_at).setZone(subscription.timezone as string || "UTC").toJSDate()
+          const createdAt = DateTime.fromJSDate(payload.created_at).setZone(subscription.timezone as string || "UTC").toUTC().toJSDate()
 
           const data = {
             createdAt,
@@ -55,14 +56,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "ORDERS_FULFILLED":
 
       if (session) {
-        const storeSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+        const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
   
-        if (storeSettings) {
-          const daysAfterFulfillment = storeSettings.firstReviewRequest
-          const nextRequestDate = new Date(payload.created_at)
-          nextRequestDate.setDate(nextRequestDate.getDate() + daysAfterFulfillment)
+        if (appSettings) {
+          const daysAfterFulfillment = appSettings.firstReviewRequest
+          const currentDate = DateTime.now().setZone(subscription.timezone as string).set({hour: 10})
+          const nextRequestDate = currentDate.plus({days: daysAfterFulfillment}).toUTC()
 
-          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate}})
+          await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate: nextRequestDate.toJSDate()}})
         }
       }
 
