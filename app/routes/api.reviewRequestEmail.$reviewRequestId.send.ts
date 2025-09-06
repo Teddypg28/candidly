@@ -109,9 +109,8 @@ export async function action( { request, params } : ActionFunctionArgs) {
 
     const generateNextDate = () => {
       // returns the next review request date using the second review request number of days setting
-      const nextRequestDate = new Date(reviewRequest.nextRequestDate as any)
+      const nextRequestDate = new Date(reviewRequest.nextRequestDate as Date)
       nextRequestDate.setDate(nextRequestDate.getDate() + storeSettings.secondReviewRequest)
-      nextRequestDate.setUTCHours(0, 0, 0, 0)
       return nextRequestDate
     }
 

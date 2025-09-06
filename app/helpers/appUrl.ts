@@ -1,1 +1,1 @@
-export default "institution-difference-executive-translator.trycloudflare.com"
+export default "trycandidly.app"

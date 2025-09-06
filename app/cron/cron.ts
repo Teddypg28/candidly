@@ -18,12 +18,13 @@ async function handleReviewRequestEmails(now: Date) {
 
 // Task 2: Renew Free Subscriptions
 async function handleFreeSubscriptionRenewals(now: Date) {
-  const newRenewalDate = new Date(now)
-  newRenewalDate.setDate(newRenewalDate.getDate() + 30)
-
   const subscriptions = await db.subscription.findMany({ where: { type: "free", renewalDate: {lte: now} } });
 
   await Promise.allSettled(subscriptions.map(async (subscription) => {
+
+      const newRenewalDate = new Date(subscription.renewalDate)
+      newRenewalDate.setDate(newRenewalDate.getDate() + 30)
+
       await db.subscription.update({
         where: { id: subscription.id },
         data: {

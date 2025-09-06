@@ -35,7 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "ORDERS_CREATE":
       if (session) {
 
-          const createdAt = DateTime.fromJSDate(payload.created_at).setZone(subscription.timezone as string || "UTC").toUTC().toJSDate()
+          const createdAt = new Date(payload.created_at)
 
           const data = {
             createdAt,
@@ -60,7 +60,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   
         if (appSettings) {
           const daysAfterFulfillment = appSettings.firstReviewRequest
-          const currentDate = DateTime.now().setZone(subscription.timezone as string).set({hour: 10})
+          const currentDate = DateTime.now().setZone(subscription.timezone as string).set({hour: 10, minute: 0, second: 0, millisecond: 0})
           const nextRequestDate = currentDate.plus({days: daysAfterFulfillment}).toUTC()
 
           await db.reviewRequest.updateMany({where: {orderId: payload.id}, data: {fulfillmentStatus: payload.fulfillment_status, nextRequestDate: nextRequestDate.toJSDate()}})

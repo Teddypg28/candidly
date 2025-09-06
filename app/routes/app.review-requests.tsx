@@ -9,6 +9,7 @@ import { useState } from "react";
 import { initialReviewRequestTableState, ReviewRequestTableState } from "~/types/types";
 import generateReviewRequestHash from "~/auth/generateReviewRequestHash.server";
 import { Subscription } from "@prisma/client";
+import { DateTime } from "luxon";
 
 export async function loader({ request } : LoaderFunctionArgs) {
 
@@ -21,6 +22,7 @@ export async function loader({ request } : LoaderFunctionArgs) {
 
     const currentOrdersStatus = await db.currentOrdersStatus.findFirst({where: {store: {equals: session.shop}}})
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    const subscription = await db.subscription.findFirst({where: {shop: session.shop}})
 
     // Retrieve all current orders if current orders aren't handled and store settings are set
     if (!currentOrdersStatus?.handled && appSettings) {
@@ -59,14 +61,13 @@ export async function loader({ request } : LoaderFunctionArgs) {
                     let nextRequestDate
         
                     if (node.displayFulfillmentStatus.toLowerCase() === 'fulfilled') {
+                        const currentDate = DateTime.now().setZone(subscription?.timezone as string).set({hour: 10, minute: 0, second: 0, millisecond: 0})
                         if (numOfDaysSince >= appSettings.firstReviewRequest) {                            
-                            nextRequestDate = new Date()
-                            nextRequestDate.setDate(nextRequestDate.getDate() + 1) 
+                            nextRequestDate = currentDate.plus({day: 1}).toUTC()
                         } else {
-                            nextRequestDate = new Date(node.createdAt)
-                            nextRequestDate.setDate(nextRequestDate.getDate() + appSettings.firstReviewRequest)
+                            nextRequestDate = DateTime.fromISO(node.createdAt).setZone(subscription?.timezone as string).set({hour: 10, minute: 0, second: 0, millisecond: 0})
+                            nextRequestDate = nextRequestDate.plus({days: appSettings.firstReviewRequest}).toUTC()
                         }
-                        nextRequestDate = nextRequestDate.toLocaleDateString()
                     }      
 
                     reviewRequestObjects.push({
@@ -78,7 +79,8 @@ export async function loader({ request } : LoaderFunctionArgs) {
                         email: node.email || "",
                         authToken: await generateReviewRequestHash(),
                         nextRequestDate,
-                        fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending'
+                        fulfillmentStatus: node.displayFulfillmentStatus.toLowerCase() === 'fulfilled' ? 'fulfilled' : 'pending',
+                        timezone: subscription?.timezone as string
                     })
 
                 }
@@ -252,7 +254,7 @@ export default function ReviewRequests() {
                     </Badge>
                 </IndexTable.Cell>
                 <IndexTable.Cell>{reviewRequest.emailsSent}</IndexTable.Cell>
-                <IndexTable.Cell>{reviewRequest.emailsSent === 2 ? <Badge tone="info">max emails sent</Badge> : reviewRequest.isComplete ? <Badge tone="success">complete</Badge> : reviewRequest.nextRequestDate}</IndexTable.Cell>
+                <IndexTable.Cell>{reviewRequest.emailsSent === 2 ? <Badge tone="info">max emails sent</Badge> : reviewRequest.isComplete ? <Badge tone="success">complete</Badge> : new Date(reviewRequest.nextRequestDate as string).toLocaleDateString()}</IndexTable.Cell>
             </IndexTable.Row>
 
         )
