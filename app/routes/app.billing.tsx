@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { authenticate } from "~/shopify.server";
 import db from '../db.server'
 import { Subscription } from "@prisma/client";
-import { advanced, basic, free, pro } from "~/emailQuotaVariables";
+import { advanced, basic, free, pro } from "~/helpers/subscriptionData/emailQuotaVariables";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session } = await authenticate.admin(request)

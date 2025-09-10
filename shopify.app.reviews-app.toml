@@ -3,26 +3,25 @@
 client_id = "8000cf7a96c4069469b9760940699882"
 name = "Candidly"
 handle = "candidly-app"
-application_url = "https://supervisor-temperature-geographical-terrain.trycloudflare.com"
+application_url = "https://trycandidly.app"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = "powderedslopes.myshopify.com"
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customers,read_orders,read_products,read_themes,write_products,write_discounts"
 
 [auth]
-redirect_urls = ["https://supervisor-temperature-geographical-terrain.trycloudflare.com/auth/callback", "https://supervisor-temperature-geographical-terrain.trycloudflare.com/auth/shopify/callback", "https://supervisor-temperature-geographical-terrain.trycloudflare.com/api/auth/callback"]
+redirect_urls = ["https://trycandidly.app/auth/callback", "https://trycandidly.app/auth/shopify/callback", "https://trycandidly.app/api/auth/callback"]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://supervisor-temperature-geographical-terrain.trycloudflare.com/api"
+url = "https://trycandidly.app/api"
 subpath = "api"
 prefix = "apps"
 

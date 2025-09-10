@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import getAnalyticsData from "~/helpers/getAnalyticsData";
 import { AnalyticsData } from "~/types/types";
 import isBlockEnabled from "~/helpers/isBlockEnabled";
-import { free } from "~/emailQuotaVariables";
+import { free } from "~/helpers/subscriptionData/emailQuotaVariables";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
 
