@@ -212,10 +212,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "CUSTOMERS_REDACT":
       const customerEmail: string = payload.customer.email
 
-      await db.$transaction([
-        db.customerQuestion.deleteMany({ where: { store: {equals: shop}, AND: {email: {equals: customerEmail}}  } }),
-        db.productReview.deleteMany({ where: { store: {equals: shop}, AND: {email: {equals: customerEmail}} } }),
-      ]);
+      await db.customerQuestion.deleteMany({ where: { store: {equals: shop}, AND: {email: {equals: customerEmail}}  } })
+   
+      const userProductReviews = await db.productReview.findMany({ where: { email: {equals: customerEmail} }, include: {media: true} })
+      await Promise.allSettled(userProductReviews.map(async (productReview) => {
+        await Promise.allSettled(productReview.media.map(deleteS3Upload))
+        await db.productReview.delete({where: {id: productReview.id}})
+      }))
 
       throw new Response("customer data successfully deleted", { status: 200 });
     case "SHOP_REDACT":
@@ -243,7 +246,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       const emailDesignSettings = await db.emailDesignSettings.findFirst({ where: { store: {equals: shop} }, include: {logo: true} })
       if (emailDesignSettings) {
-        await deleteS3Upload(emailDesignSettings.logo)
+        if (emailDesignSettings.logo) await deleteS3Upload(emailDesignSettings.logo)
         await db.emailDesignSettings.delete({where: {id: emailDesignSettings.id}})
       }
 
