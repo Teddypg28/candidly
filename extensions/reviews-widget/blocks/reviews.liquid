@@ -4,7 +4,6 @@
 {% assign product = block.settings.product %}
 {% assign avg_rating = block.settings.product.metafields.reviews.rating.value %}
 {% assign rating_count = block.settings.product.metafields.reviews.rating_count.value %}
-{% assign shop_name = shop.myshopify_domain %}
 
 {{ 'activateUploadMediaContainer.js' | asset_url | script_tag }}
 {{ 'renderCustomerQuestionForm.js' | asset_url | script_tag }}

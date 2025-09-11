@@ -98,19 +98,19 @@ export default function Index() {
             name: 'Visit the Settings Page', 
             description: 'Make any necessary changes to the default settings that are currently in place', 
             complete: data.appSettings,
-            url: `https://admin.shopify.com/store/${data.store.split('.')[0]}/apps/candidly-app/app/settings/general`
+            url: `/app/settings/general`
         },
         {
             name: 'Customize Your Review Request Email Template', 
             description: 'Add a logo and configure how you want your email to look when you send review requests to customers', 
             complete: data.reviewRequestEmailSettings,
-            url: `https://admin.shopify.com/store/${data.store.split('.')[0]}/apps/candidly-app/app/email-templates`
+            url: `/app/email-templates`
         },
         {
             name: 'Customize Your Review Form', 
             description: 'Customize the look and messaging on the review form that your customers will fill out', 
             complete: data.reviewFormDesignSettings,
-            url: `https://admin.shopify.com/store/${data.store.split('.')[0]}/apps/candidly-app/app/review-form`
+            url: `/app/review-form`
         }
     ]
 
@@ -128,7 +128,7 @@ export default function Index() {
                         <Text as="p" variant="bodySm">{step.description}</Text>
                         {index === indexOfFirstIncompleteStep && (
                         <InlineStack>
-                            <Button target="_blank" url={step.url} variant="primary">Complete Step</Button>
+                            <Button target={index === 0 ? "_blank" : undefined} url={step.url} variant="primary">Complete Step</Button>
                         </InlineStack>
                         )}
                     </BlockStack>
