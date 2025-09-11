@@ -1,4 +1,4 @@
-import { Badge, Banner, BlockStack, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
+import { Badge, BlockStack, ChoiceList, EmptyState, IndexFilters, IndexFiltersProps, IndexTable, Link, Page, PageActions, useIndexResourceState, useSetIndexFiltersMode } from "@shopify/polaris";
 
 import { Card } from "@shopify/polaris"
 
@@ -62,11 +62,10 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
 
         if (subscription.type === "free") return redirect('/app/billing')
 
-        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true, textAnswers: true, answerChoiceSnapshots: true}, omit: {store: true}})
+        const questions = await db.reviewFormQuestion.findMany({where: {store: {equals: session.shop}}, include: {radioAnswerChoices: true, answerChoiceSnapshots: true}, omit: {store: true}})
         const savedViews = await db.savedCustomQuestionTableView.findMany({where: {store: {equals: session.shop}}, omit: {store: true, id: true}})
 
         const questionData = await Promise.all(questions.map(async (question) => {
-            if (question.answerType[0] === 'radio') {
                 const answersObject: {[key: string]: number} = {}
                 question.answerChoiceSnapshots.forEach(answerChoice => {
                     if (answersObject[answerChoice.value as keyof typeof answersObject]) {
@@ -80,10 +79,6 @@ export const loader = async ({request} : LoaderFunctionArgs) => {
                     answersObject[currentValue] > answersObject[prevValue] ? currentValue : prevValue
                 ) : null
                 return {...question, numAnswers, topAnswer}
-            } else {
-                const numAnswers = question.textAnswers.length
-                return {...question, numAnswers, topAnswer: null}
-            }
         }))
 
         return json({ questions: questionData, savedViews })
