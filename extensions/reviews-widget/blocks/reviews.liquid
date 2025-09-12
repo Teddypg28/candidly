@@ -5,15 +5,15 @@
 {% assign avg_rating = block.settings.product.metafields.reviews.rating.value %}
 {% assign rating_count = block.settings.product.metafields.reviews.rating_count.value %}
 
-{{ 'activateUploadMediaContainer.js' | asset_url | script_tag }}
-{{ 'renderCustomerQuestionForm.js' | asset_url | script_tag }}
-{{ 'renderCustomQuestions.js' | asset_url | script_tag }}
-{{ 'renderReviewForm.js' | asset_url | script_tag }}
-{{ 'createReviewStars.js' | asset_url | script_tag }}
-{{ 'reviewFormFunctions.js' | asset_url | script_tag }}
-{{ 'renderQuestions.js' | asset_url | script_tag }}
-{{ 'reviewWidgetFunctions.js' | asset_url | script_tag }}
-{{ 'paginatorFunctions.js' | asset_url | script_tag }}
+<script src="{{ 'activateUploadMediaContainer.js' | asset_url }}" defer></script>
+<script src="{{ 'renderCustomerQuestionForm.js' | asset_url }}" defer></script>
+<script src="{{ 'renderCustomQuestions.js' | asset_url }}" defer></script>
+<script src="{{ 'renderReviewForm.js' | asset_url }}" defer></script>
+<script src="{{ 'createReviewStars.js' | asset_url }}" defer></script>
+<script src="{{ 'reviewFormFunctions.js' | asset_url }}" defer></script>
+<script src="{{ 'renderQuestions.js' | asset_url }}" defer></script>
+<script src="{{ 'reviewWidgetFunctions.js' | asset_url }}" defer></script>
+<script src="{{ 'paginatorFunctions.js' | asset_url }}" defer></script>
 
 <html>
     <div class='mainReviewContainer'></div>
@@ -41,7 +41,7 @@
     const customQuestions = []
 
     const productTitle = '{{product.title}}'
-    const productImage = '{{ product.featured_image | img_url: '400x' }}'
+    const productImage = '{{ product.featured_image | image_url: '400x' }}'
 
     let isReviewFormDisabled
     let companyName = ""

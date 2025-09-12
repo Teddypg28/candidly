@@ -186,7 +186,7 @@ export default function Index() {
                             :
                             <BlockStack gap='050'>
                                 <Text as="h1" variant="headingMd">Let's Get You Set Up!</Text>
-                                <Text as="p" variant="bodySm">Complete the following steps to maximize your success with RateSphere:</Text>
+                                <Text as="p" variant="bodySm">Complete the following steps to maximize your success with Candidly:</Text>
                             </BlockStack>
                             }
                             <BlockStack gap={'500'}>
