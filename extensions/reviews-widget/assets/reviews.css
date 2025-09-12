@@ -28,23 +28,13 @@
     align-items: center;
     justify-content: center;
     width: 50%;
-    height: 40vh;
+    height: 50vh;
     background-color: white;
     border-radius: 5px;
     position: relative;
     text-align: center;
     padding: 20px 10px;
     overflow: hidden;
-}
-
-.askQuestionForm > h1 {
-    font-size: 20px;
-    font-weight: bold;
-}
-
-.askQuestionForm > div > textarea {
-    height: 100px;
-    resize: none;
 }
 
 .askQuestionForm > button, .writeReviewForm > button {
@@ -97,13 +87,6 @@
 
 .customQuestionContainer > .reviewFormValidationError {
     width: 100%;
-}
-
-.customerQuestionTitle {
-    font-size: 18px;
-    font-weight: bold;
-    padding: 0;
-    margin-top: 5px;
 }
 
 .carouselReviewBody {
@@ -453,9 +436,10 @@
     border-radius: 5px;
 }
 
-.reviewFormStepTitle {
+.reviewFormStepTitle, .askQuestionFormTitle {
     font-size: 30px;
     font-weight: bold;
+    font-family: inherit;
 }
 
 .reviewDetails {
@@ -477,6 +461,11 @@
     margin: 0px;
 }
 
+.reviewsQuestionsWidgetContainer {
+    width: 55vw;
+    margin: auto;
+}
+
 .reviewsQuestionsContainer {
     display: flex;
     gap: 15px;
@@ -492,11 +481,6 @@
     width: 100%;
     background-color: lightgray;
     margin: 20px 0px;
-}
-
-.reviewsQuestionsWidgetHeader {
-    width: 55vw;
-    margin: auto;
 }
 
 .reviewFormValidationError, .askQuestionFormError {
@@ -619,22 +603,6 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.reviewForm {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: white;
-    box-sizing: border-box;
-    border-radius: 10px;
-    padding: 15px 20px;
-    width: 50vw;
-    height: 80vh;
-    overflow: auto;
-    overflow-x: hidden;
-    margin: auto;
 }
 
 .reviewStar {
@@ -991,7 +959,7 @@ textarea {
 } 
 
 @media only screen and (max-width: 1500px) {
-    .reviewForm {
+    .writeReviewForm {
         width: 50%;
     }
 
@@ -1001,16 +969,6 @@ textarea {
 }
 
 @media only screen and (max-width: 480px) {
-
-    .askQuestionForm {
-        width: 80vw;
-        height: 60vh;
-    }
-
-    .askQuestionForm > textarea {
-        width: 90%;
-        height: 60%;
-    }
 
     .customQuestionRadio {
         width: 100%
@@ -1075,6 +1033,10 @@ textarea {
         width: 80vw;
     }
 
+    .reviewsQuestionsWidgetContainer {
+        width: 100%;
+    }
+
     .reviewNameEmailWrapper {
         flex-direction: column;
         gap: 10px;
@@ -1092,13 +1054,8 @@ textarea {
         font-size: 25px;
     }
 
-    .reviewForm {
-        height: fit-content;
-        width: 90%
-    };
-
-    .reviewFormStepTitle {
-        font-size: 17px;
+    .reviewFormStepTitle, .askQuestionFormTitle {
+        font-size: 24px;
     }
 
     .reviewFormStar {
@@ -1123,9 +1080,8 @@ textarea {
         height: 200px;
     }
 
-    .writeReviewForm {
-        height: 80vh;
-        width: 80vw;
+    .writeReviewForm, .askQuestionForm {
+        width: 90vw;
     }
 
     .reviewFormValidationError, .askQuestionFormError {

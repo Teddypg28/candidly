@@ -271,6 +271,7 @@ const renderCurrentPageReviews = (currentPage, currentSortBy) => {
 // renders review metadata and calls function to render the corresponding reviews - or displays "no reviews" message
 const renderWidgetSkeleton = () => {
     document.querySelector('.mainReviewContainer').innerHTML = `
+        <div class='reviewsQuestionsWidgetContainer'>
             <div class='reviewsQuestionsWidgetHeader'>
                 <div class='headingBtnContainer'>
                     <h1 class='heading'>Customer <span class='reviewsOrQuestions'>Reviews</span></h1>
@@ -314,6 +315,7 @@ const renderWidgetSkeleton = () => {
             <div>
                 <div id='questions' class='hidden'></div>
             </div>
+        </div>
         `
 
         if (isReviewFormDisabled === "true") document.querySelector('.writeReviewBtn').classList.add('hidden')
