@@ -30,7 +30,7 @@ export const loader = async ({ request } : LoaderFunctionArgs) => {
     const reviewRequestEmailSettings = await db.reviewRequestEmailSettings.findFirst({where: {store: {equals: session.shop}}})
     const reviewFormDesignSettings = await db.reviewFormSettings.findFirst({where: {store: {equals: session.shop}}})
     const analyticsData = await getAnalyticsData(session, admin, 'all')
-    const isReviewWidgetEnabled = await isBlockEnabled(request, 'reviews', 'appBlock')
+    const isReviewWidgetEnabled = await isBlockEnabled(request, 'appBlock')
     
     const themes = await admin.rest.resources.Theme.all({ session })
     const activeTheme = themes.data.find(theme => theme.role === "main")
