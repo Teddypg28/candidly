@@ -54,9 +54,9 @@
 .reviewBarContainer,
 .reviewStatsWrapper,
 .reviewBarContainersWrapper {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+display: flex;
+align-items: center;
+gap: 15px;
 }
 
 .flexContainer {
@@ -158,7 +158,6 @@
   padding: 15px 20px;
 }
 
-.reviewFormInput,
 .formQuestionInput,
 .reviewFormTextArea,
 .writeReviewForm > div > input {
@@ -168,9 +167,9 @@
   padding: 8px;
   font-size: var(--form-font-size);
   resize: none;
+  font-family: inherit;
 }
 
-.reviewFormInput:focus,
 .formQuestionInput:focus {
   box-shadow: none;
 }
@@ -250,7 +249,6 @@
     color: black;
     cursor: pointer;
   }
-
   
   .closeModalBtnContainer {
     position: absolute;
@@ -261,16 +259,15 @@
     padding: 5px;
     cursor: pointer;
     z-index: 100;
+    height: 30px;
+    width: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .closeModalBtnContainer:hover {
     background-color: rgb(61, 61, 61);
-  }
-  
-  .closeModalBtn,
-  .closeFormSvg {
-    height: 30px;
-    width: 30px;
   }
   
   .checkbox {
@@ -296,7 +293,7 @@
     }
   
     .reviewForm {
-      width: 90%;
+      width: 95%;
       height: fit-content;
     }
   
