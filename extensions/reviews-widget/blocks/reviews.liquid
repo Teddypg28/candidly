@@ -86,14 +86,6 @@
             createReviewStars();
             document.querySelector('.hasReviewsWrapper').classList.remove('hidden');
         }
-
-        // Change reviews section background color
-        const divs = Array.from(document.querySelectorAll('div'));
-        const targetDiv = divs.find(div => div.id.includes('candidly'));
-        if (targetDiv) {
-            const section = targetDiv.closest('section');
-            // Apply background color here if needed
-        }
     })();
 
 </script>
