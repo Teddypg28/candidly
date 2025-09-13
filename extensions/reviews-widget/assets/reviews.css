@@ -85,6 +85,13 @@
     align-items: flex-start;
 }
 
+.customerQuestionTitle {
+    font-size: 18px;
+    font-weight: bold;
+    padding: 0;
+    margin-top: 5px;
+}
+
 .customQuestionContainer > .reviewFormValidationError {
     width: 100%;
 }
@@ -1059,8 +1066,8 @@ textarea {
     }
 
     .reviewFormStar {
-        height: 30px;
-        width: 30px;
+        height: 25px;
+        width: 25px;
     }
 
     .reviewStatsContainer {
