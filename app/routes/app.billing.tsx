@@ -6,6 +6,7 @@ import { authenticate } from "~/shopify.server";
 import db from '../db.server'
 import { Subscription } from "@prisma/client";
 import { advanced, basic, free, pro } from "~/helpers/subscriptionData/emailQuotaVariables";
+import cancelSubscription from "~/helpers/cancelSubscription";
 
 export const loader = async ({ request } : LoaderFunctionArgs) => {
     const { session } = await authenticate.admin(request)
@@ -43,22 +44,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
                 "prorate": true
             }})
 
-            const renewalDate = new Date(currentSubscription.renewalDate)
-            renewalDate.setUTCHours(0, 0, 0, 0)
-            const isoStringRenewalDate = renewalDate.toISOString()
-
-            const currentDate = new Date()
-            currentDate.setUTCHours(0, 0, 0, 0)
-            const isoStringCurrentDate = currentDate.toISOString()
-
-            const daysLeftInCycle = Math.floor((new Date(isoStringRenewalDate).getTime() - new Date(isoStringCurrentDate).getTime()) / (1000 * 60 * 60 * 24))
-            const daysUsed = 30 - daysLeftInCycle
-
-            const paidQuotaSoFar = currentSubscription.emailQuota
-            const newEmailQuota = free
-            const updatedEmailQuota = newEmailQuota + ((paidQuotaSoFar - newEmailQuota) * (daysUsed/30))
-
-            await db.subscription.update({where: {id: currentSubscription.id}, data: {type: "free", emailQuota: updatedEmailQuota}})
+            await cancelSubscription(session.shop)
 
             return null
         }

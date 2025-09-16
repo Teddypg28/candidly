@@ -11,6 +11,7 @@ import { basic, pro, advanced } from "~/helpers/subscriptionData/emailQuotaVaria
 import { DateTime } from "luxon";
 import { basicTierPrice, proTierPrice } from "~/helpers/subscriptionData/tierPrices";
 import deleteS3Upload from "~/utils/deleteS3Upload";
+import cancelSubscription from "~/helpers/cancelSubscription";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(request);
@@ -31,6 +32,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       if (session) {
         await db.session.deleteMany({ where: { shop } });
       }
+      await cancelSubscription(shop)
       break;
     case "ORDERS_CREATE":
       if (session) {
