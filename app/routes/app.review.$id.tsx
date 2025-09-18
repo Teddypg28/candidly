@@ -208,6 +208,8 @@ export default function Review() {
     const handleDrop = (files: File[], acceptedFiles: File[], rejectedFiles: File[]) => {
         const currentUploadedFileNames = state.media.map(file => file.name)
         const newUploadedFiles = acceptedFiles.filter(file => !currentUploadedFileNames.includes(file.name))
+        // don't allow more than the maximum file uploads
+        if (state.media.length + newUploadedFiles.length > 5) return
         const newUploadedFileObjects = newUploadedFiles.map(file => {return {name: file.name, url: '', file}})
         setState(prevState => {return {...prevState, media: [...state.media, ...newUploadedFileObjects]}})
     }

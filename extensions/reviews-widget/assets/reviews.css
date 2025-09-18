@@ -236,6 +236,8 @@
 }
 
 .flex {
+    display: flex;
+    gap: 20px;
     height: 100%;
 }
 
@@ -289,6 +291,7 @@
     width: 100%;
     align-items: center;
     display: flex;
+    gap: 25px;
     justify-content: space-between;
 }
 
@@ -689,7 +692,7 @@ textarea {
     align-items: center;
     gap: 15px;
     width: 100%;
-    overflow-x: scroll;
+    overflow-x: auto;
     border-radius: 5px;
 }
 
@@ -1000,7 +1003,6 @@ textarea {
     }
 
     .flex {
-        display: flex;
         flex-direction: column;
     }
 
