@@ -70,7 +70,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         
         // send customer a review edit notification email
         const appSettings = await db.appSettings.findFirst({where: {store: {equals: updatedProductReview.store}}})
-        let fromAddress = "reviews@trycandidly.app"
+        // let fromAddress = "reviews@trycandidly.app"
         // const currentDomain = appSettings?.domain
         // if (currentDomain) {
         //   const verificationStatus = await verifyRecords(currentDomain)
@@ -83,7 +83,7 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
             customerName: updatedProductReview.firstName,
             customerEmail: updatedProductReview.email,
             storeName: appSettings?.companyName,
-            fromAddress,
+            fromAddress: "reviews@trycandidly.app",
             mediaEdited
         }
         

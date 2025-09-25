@@ -10,7 +10,7 @@ export default async function sendRewardEmail(pendingReward: PendingReward) {
         // const appSettings = await db.appSettings.findFirst({where: {store: {equals: pendingReward.store}}})
         const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: pendingReward.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
 
-        let fromEmailAddress = "rewards@trycandidly.app"
+        // let fromEmailAddress = "rewards@trycandidly.app"
         // const currentDomain = appSettings?.domain
         // if (currentDomain) {
         //     const verificationStatus = await verifyRecords(currentDomain)
@@ -23,7 +23,7 @@ export default async function sendRewardEmail(pendingReward: PendingReward) {
         {reward: pendingReward.title, discountCode: pendingReward.code, firstName: pendingReward.firstName}, 
         emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
         pendingReward.toAddress, 
-        fromEmailAddress,
+        "rewards@trycandidly.app",
         "customer-reward"
     )
 

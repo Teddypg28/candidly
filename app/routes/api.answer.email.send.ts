@@ -18,7 +18,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: data.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
 
         // const currentDomain = appSettings?.domain
-        let fromEmailAddress = "questions@trycandidly.app"
+        // let fromEmailAddress = "questions@trycandidly.app"
         // if (currentDomain) {
         //     const verificationStatus = await verifyRecords(currentDomain)
         //     if (verificationStatus === "Success") fromEmailAddress = `questions@${currentDomain}`
@@ -30,7 +30,7 @@ export const action = async ({ request } : ActionFunctionArgs) => {
             {...emailVariables}, 
             emailDesignSettings || {bannerBgColor: 'black', logo: null}, 
             data.toAddress, 
-            fromEmailAddress,
+            "questions@trycandidly.app",
             "customer-question"
         )
 
