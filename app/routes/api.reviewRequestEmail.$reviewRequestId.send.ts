@@ -91,12 +91,12 @@ export async function action( { request, params } : ActionFunctionArgs) {
 
     // verify that we are able to send emails on behalf of the store's domain
     const appSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
-    const currentDomain = appSettings?.domain
+    // const currentDomain = appSettings?.domain
     let fromEmailAddress = "reviews@trycandidly.app"
-    if (currentDomain) {
-      const verificationStatus = await verifyRecords(currentDomain)
-      if (verificationStatus === "Success") fromEmailAddress = `reviews@${currentDomain}`
-    }
+    // if (currentDomain) {
+    //   const verificationStatus = await verifyRecords(currentDomain)
+    //   if (verificationStatus === "Success") fromEmailAddress = `reviews@${currentDomain}`
+    // }
 
     // send the email 
     await sendEmail(emailSubject, emailBody, emailVariables, storeEmailDesignSettings || {bannerBgColor: "black", logo: null}, reviewRequest.email, fromEmailAddress, "review-request")

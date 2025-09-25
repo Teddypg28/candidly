@@ -186,12 +186,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await fs.writeFile(filePath, JSON.stringify(exportData, null, 2), 'utf-8');
 
       const transporter = nodemailer.createTransport({
-        host: 'email-smtp.us-east-2.amazonaws.com',
+        host: 'smtp.resend.com',
         port: 587, 
         secure: false,
         auth: {
-          user: `${process.env.SES_SMTP_USERNAME}`,
-          pass: `${process.env.SES_SMTP_PASSWORD}`
+          user: `${process.env.RESEND_SMTP_USERNAME}`,
+          pass: `${process.env.RESEND_API_KEY}`
         }
       });
 

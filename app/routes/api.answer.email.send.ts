@@ -17,12 +17,12 @@ export const action = async ({ request } : ActionFunctionArgs) => {
         const appSettings = await db.appSettings.findFirst({where: {store: {equals: data.store}}})
         const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: data.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
 
-        const currentDomain = appSettings?.domain
+        // const currentDomain = appSettings?.domain
         let fromEmailAddress = "questions@trycandidly.app"
-        if (currentDomain) {
-            const verificationStatus = await verifyRecords(currentDomain)
-            if (verificationStatus === "Success") fromEmailAddress = `questions@${currentDomain}`
-        }
+        // if (currentDomain) {
+        //     const verificationStatus = await verifyRecords(currentDomain)
+        //     if (verificationStatus === "Success") fromEmailAddress = `questions@${currentDomain}`
+        // }
 
         await sendEmail(
             emailSettings?.subject as string,

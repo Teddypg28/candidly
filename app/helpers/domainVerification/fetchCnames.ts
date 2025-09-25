@@ -1,11 +1,5 @@
-import { SESClient, VerifyDomainDkimCommand } from "@aws-sdk/client-ses";
-
-const ses = new SESClient({ 
-    region: "us-east-2", 
-    credentials: { 
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string
-}});
+import { VerifyDomainDkimCommand } from "@aws-sdk/client-ses";
+import SESClient from "~/utils/SESClient";
 
 export const fetchCnames = async (domain: string) => {
 
@@ -14,7 +8,7 @@ export const fetchCnames = async (domain: string) => {
         const command = new VerifyDomainDkimCommand({ Domain: domain });
     
         try {
-            const response = await ses.send(command);
+            const response = await SESClient.send(command);
             const tokens = response.DkimTokens;
     
             if (tokens) {

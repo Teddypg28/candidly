@@ -13,29 +13,25 @@ import SettingsTabs from "~/components/SettingsTabs";
 import ReviewVerificationSettings from "~/components/settings/ReviewVerificationSettings";
 import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
 import GeneralSettings from "~/components/settings/GeneralSettings";
-import DomainVerificationSettings from "~/components/settings/DomainVerificationSettings";
-
-import { fetchCnames } from "~/helpers/domainVerification/fetchCnames";
-import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
 export async function loader({request, params} : LoaderFunctionArgs) {
     const { session, admin } = await authenticate.admin(request)
     
-    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
-    if (appSettings) {
-        const cNames = await fetchCnames(appSettings.domain)
-        const verificationStatus: string = await verifyRecords(appSettings.domain)
-        if (cNames) {
-            const records = [
-                ...cNames, 
-                {Type: "MX", Name: `mail.${appSettings.domain}`, Value: "10 feedback-smtp.us-east-2.amazonses.com"}, 
-                {Type: "TXT", Name: `mail.${appSettings.domain}`, Value: `"v=spf1 include:amazonses.com ~all"`}, 
-                {Type: "TXT", Name: `_dmarc.${appSettings.domain}`, Value: `"v=DMARC1; p=none;"`}
-            ]
-            return {appSettings: {...appSettings, path: params.path}, records, verificationStatus}
-        }
-        return {appSettings: {...appSettings, path: params.path}, records: [], verificationStatus: "Pending"}
-    } 
+    // const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    // if (appSettings) {
+    //     const cNames = await fetchCnames(appSettings.domain)
+    //     const verificationStatus: string = await verifyRecords(appSettings.domain)
+    //     if (cNames) {
+    //         const records = [
+    //             ...cNames, 
+    //             {Type: "MX", Name: `mail.${appSettings.domain}`, Value: "10 feedback-smtp.us-east-2.amazonses.com"}, 
+    //             {Type: "TXT", Name: `mail.${appSettings.domain}`, Value: `"v=spf1 include:amazonses.com ~all"`}, 
+    //             {Type: "TXT", Name: `_dmarc.${appSettings.domain}`, Value: `"v=DMARC1; p=none;"`}
+    //         ]
+    //         return {appSettings: {...appSettings, path: params.path}, records, verificationStatus}
+    //     }
+    //     return {appSettings: {...appSettings, path: params.path}, records: [], verificationStatus: "Pending"}
+    // } 
 
     // fetch store owner email and set it as primary email
     const getEmailQuery = `
@@ -98,9 +94,9 @@ export default function Settings() {
         case "review-verification":
             SettingsComponent = <ReviewVerificationSettings state={settingsState} setState={setSettingsState} errors={errors} />
             break
-        case "domain-verification":
-            SettingsComponent = <DomainVerificationSettings state={settingsState} setState={setSettingsState} records={data.records} errors={errors} verificationStatus={data.verificationStatus} />
-            break
+        // case "domain-verification":
+        //     SettingsComponent = <DomainVerificationSettings state={settingsState} setState={setSettingsState} records={data.records} errors={errors} verificationStatus={data.verificationStatus} />
+        //     break
     }
 
     return (

@@ -7,15 +7,15 @@ import sendEmail from '../email/sendEmail'
 export default async function sendRewardEmail(pendingReward: PendingReward) {
     try {      
         const emailSettings = await db.customerRewardEmailSettings.findFirst({where: {store: {equals: pendingReward.store}}})
-        const appSettings = await db.appSettings.findFirst({where: {store: {equals: pendingReward.store}}})
+        // const appSettings = await db.appSettings.findFirst({where: {store: {equals: pendingReward.store}}})
         const emailDesignSettings = await db.emailDesignSettings.findFirst({where: {store: {equals: pendingReward.store}}, include: {logo: {omit: {id: true, emailDesignSettingsId: true}}}})
 
         let fromEmailAddress = "rewards@trycandidly.app"
-        const currentDomain = appSettings?.domain
-        if (currentDomain) {
-            const verificationStatus = await verifyRecords(currentDomain)
-            if (verificationStatus === "Success") fromEmailAddress = `rewards@${currentDomain}`
-        }
+        // const currentDomain = appSettings?.domain
+        // if (currentDomain) {
+        //     const verificationStatus = await verifyRecords(currentDomain)
+        //     if (verificationStatus === "Success") fromEmailAddress = `rewards@${currentDomain}`
+        // }
 
     await sendEmail(
         emailSettings?.subject || `Here is your reward, ${pendingReward.firstName}!`,

@@ -20,11 +20,11 @@ export async function action({ request } : ActionFunctionArgs) {
     if (!type || !store || !emailHeaderStyles || !appSettings || !emailBody || !emailSubject || !variables) return new Response(JSON.stringify({error: "missing required variables"}), {status: 401})
     
     let fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@trycandidly.app`
-    const currentDomain = appSettings?.domain
-    if (currentDomain) {
-      const verificationStatus = await verifyRecords(currentDomain)
-      if (verificationStatus === "Success") fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@${currentDomain}`
-    }
+    // const currentDomain = appSettings?.domain
+    // if (currentDomain) {
+    //   const verificationStatus = await verifyRecords(currentDomain)
+    //   if (verificationStatus === "Success") fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@${currentDomain}`
+    // }
 
     await sendEmail(emailSubject, emailBody, variables, emailHeaderStyles, appSettings.primaryEmail, fromEmailAddress, type as "review-request" | "customer-question" | "customer-reward")
      

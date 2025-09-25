@@ -14,7 +14,7 @@ export default function SettingsTabs({store, path}: SettingsTab) {
         {name: 'General', path: 'general', icon: <SettingsIcon height={20} width={20} />},
         {name: 'Review Request Timing', path: 'review-request-timing', icon: <ClockIcon height={20} width={20} />},
         {name: 'Review Verification', path: 'review-verification', icon: <ShieldCheckMarkIcon height={20} width={20} />},
-        {name: 'Domain Verification', path: 'domain-verification', icon: <EmailIcon height={20} width={20} />}
+        // {name: 'Domain Verification', path: 'domain-verification', icon: <EmailIcon height={20} width={20} />}
     ]
 
     return (

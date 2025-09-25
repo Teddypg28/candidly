@@ -1,8 +1,7 @@
-import { SendEmailCommand } from '@aws-sdk/client-ses'
 import { CustomerQuestionEmailVariables, CustomerRewardEmailVariables, EmailHeaderStyles, ReviewRequestEmailVariables } from '~/types/types';
 import generateEmailMarkup from './generateEmailMarkup';
 
-import SESClient from '~/utils/SESClient';
+import ResendClient from '~/utils/ResendClient';
 
 export default async function sendEmail(
   emailSubject: string,
@@ -14,32 +13,17 @@ export default async function sendEmail(
   type: "review-request" | "customer-question" | "customer-reward"
   ) {
 
-    const emailMarkup = generateEmailMarkup(emailBody, emailVariables, emailHeaderStyles, type)
+    try {
+      const emailMarkup = generateEmailMarkup(emailBody, emailVariables, emailHeaderStyles, type)
+  
+      await ResendClient.emails.send({
+        from: fromAddress,
+        to: [toAddress],
+        subject: emailSubject.includes('{{firstName}}') && emailVariables.firstName ? emailSubject.replace('{{firstName}}', emailVariables.firstName) : emailSubject,
+        html: emailMarkup
+      })
 
-    const emailParams = {
-        Destination: {
-          ToAddresses: [
-            toAddress
-          ],
-        },
-        Message: {
-          Body: {
-            Html: {
-              Charset: 'UTF-8',
-              Data: emailMarkup
-            },
-          },
-          Subject: {
-            Data: emailSubject.includes('{{firstName}}') && emailVariables.firstName ? emailSubject.replace('{{firstName}}', emailVariables.firstName) : emailSubject,
-            Charset: 'UTF-8',
-          },
-        },
-        Source: fromAddress
-      };
-      try {
-        const emailCommand = new SendEmailCommand(emailParams)
-        await SESClient.send(emailCommand);
-      } catch (err) {
-        console.error('Error sending email:', err);
-      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
 }
