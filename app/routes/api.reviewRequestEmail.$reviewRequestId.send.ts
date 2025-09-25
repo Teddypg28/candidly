@@ -4,7 +4,6 @@ import db from '../db.server'
 import sendEmail from "~/helpers/email/sendEmail";
 import { AppSettings, ReviewRequest, ReviewRequestEmailSettings, Subscription } from "@prisma/client";
 import { ReviewRequestEmailVariables } from "~/types/types";
-import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 
 export async function action( { request, params } : ActionFunctionArgs) {
   try {
@@ -88,15 +87,6 @@ export async function action( { request, params } : ActionFunctionArgs) {
     }
 
     const emailSubject = reviewRequest.emailsSent === 0 ? storeEmailSettings.initialEmailSubject : storeEmailSettings.followUpEmailSubject
-
-    // verify that we are able to send emails on behalf of the store's domain
-    const appSettings = await db.appSettings.findFirst({where: {store: {equals: store}}})
-    // const currentDomain = appSettings?.domain
-    // let fromEmailAddress = "reviews@trycandidly.app"
-    // if (currentDomain) {
-    //   const verificationStatus = await verifyRecords(currentDomain)
-    //   if (verificationStatus === "Success") fromEmailAddress = `reviews@${currentDomain}`
-    // }
 
     // send the email 
     await sendEmail(

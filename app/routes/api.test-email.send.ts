@@ -2,7 +2,6 @@ import { ActionFunctionArgs } from "@remix-run/node"
 
 import db from '../db.server'
 import sendEmail from "~/helpers/email/sendEmail"
-import { verifyRecords } from "~/helpers/domainVerification/verifyRecords"
 
 export async function action({ request } : ActionFunctionArgs) {
     const data = await request.formData()
@@ -19,12 +18,7 @@ export async function action({ request } : ActionFunctionArgs) {
 
     if (!type || !store || !emailHeaderStyles || !appSettings || !emailBody || !emailSubject || !variables) return new Response(JSON.stringify({error: "missing required variables"}), {status: 401})
     
-    let fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@trycandidly.app`
-    // const currentDomain = appSettings?.domain
-    // if (currentDomain) {
-    //   const verificationStatus = await verifyRecords(currentDomain)
-    //   if (verificationStatus === "Success") fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@${currentDomain}`
-    // }
+    const fromEmailAddress = `${type === "review-request" ? "reviews" : type === "customer-question" ? "questions" : "rewards"}@trycandidly.app`
 
     await sendEmail(emailSubject, emailBody, variables, emailHeaderStyles, appSettings.primaryEmail, fromEmailAddress, type as "review-request" | "customer-question" | "customer-reward")
      

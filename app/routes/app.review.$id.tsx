@@ -13,7 +13,6 @@ import { useEffect, useRef, useState } from "react";
 import { SaveBar } from "@shopify/app-bridge-react";
 import { ProductReview } from "~/types/types";
 import notifyCustomerReviewEdits from "~/helpers/email/notifyCustomerReviewEdits";
-import { verifyRecords } from "~/helpers/domainVerification/verifyRecords";
 import s3Client from "~/utils/s3Client";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import uploadMedia from "~/helpers/uploadMedia";
@@ -70,12 +69,6 @@ export const action = async ({ request, params } : ActionFunctionArgs) => {
         
         // send customer a review edit notification email
         const appSettings = await db.appSettings.findFirst({where: {store: {equals: updatedProductReview.store}}})
-        // let fromAddress = "reviews@trycandidly.app"
-        // const currentDomain = appSettings?.domain
-        // if (currentDomain) {
-        //   const verificationStatus = await verifyRecords(currentDomain)
-        //   if (verificationStatus === "Success") fromAddress = `reviews@${currentDomain}`
-        // }
 
         const emailData = {
             title: updatedProductReview.title,
