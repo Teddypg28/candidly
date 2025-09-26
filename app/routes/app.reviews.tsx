@@ -401,11 +401,25 @@ export default function Reviews() {
     }, [selectedResources])
 
     const exportAsCsv = () => {
-        const rows = filteredReviews.map(review => [review.email, review.title, review.body, review.firstName, review.rating, new Date(review.date).toLocaleDateString(), review.isPublished, review.media.map(mediaObj => mediaObj.url)])
-        const rowHeadings = Object.keys(filteredReviews[0]).filter(key => !['id', 'productTitle', 'productId', 'reviewRequestId', 'store'].includes(key))
-        rows.unshift(rowHeadings)
-        const encodedReviewData = rows.map(row => row.join()).join('\n')
-        setFileData(`data:text/csv;charset=utf-8,${encodedReviewData}`)
+        const headers = ["Email", "Title", "Body", "First Name", "Rating", "Date", "Media URLs"]
+    
+        const rows = filteredReviews.map(review => [
+            review.email,
+            review.title,
+            review.body,
+            review.firstName,
+            review.rating,
+            new Date(review.date).toLocaleDateString(),
+            review.media.map(m => m.url).join("; ")
+        ])
+    
+        const allRows = [headers, ...rows]
+    
+        const csvContent = allRows.map(row =>
+            row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")
+        ).join("\n")
+    
+        setFileData(`data:text/csv;charset=utf-8,${csvContent}`)
     }
 
     const downloadSampleFile = () => {
