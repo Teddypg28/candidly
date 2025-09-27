@@ -14,9 +14,13 @@ import ReviewVerificationSettings from "~/components/settings/ReviewVerification
 import ReviewRequestTimingSettings from "~/components/settings/ReviewRequestTimingSettings";
 import GeneralSettings from "~/components/settings/GeneralSettings";
 
-export async function loader({request, params} : LoaderFunctionArgs) {
+export async function loader({ request } : LoaderFunctionArgs) {
     const { session, admin } = await authenticate.admin(request)
-    
+
+    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    if (appSettings) {
+        return {appSettings: {...appSettings}}
+    }
     // fetch store owner email and set it as primary email
     const getEmailQuery = `
         query getStoreEmail {
@@ -36,13 +40,14 @@ export async function loader({request, params} : LoaderFunctionArgs) {
 
     const initializedSettings = await db.appSettings.create({data: defaultSettings})
 
-    return {appSettings: {...initializedSettings, path: params.path}, records: [], verificationStatus: "Pending"}
+    return {appSettings: {...initializedSettings}}
 }
 
 export async function action({ request } : ActionFunctionArgs) {
     const { session } = await authenticate.admin(request)
     const data = await request.json()
-    await db.appSettings.updateMany({where: {store: {equals: session.shop}}, data: {...data.settingsState}})
+    const appSettings = await db.appSettings.findFirst({where: {store: {equals: session.shop}}})
+    await db.appSettings.update({where: {id: appSettings?.id}, data: {...data.settingsState}})
     return true
 }
 
