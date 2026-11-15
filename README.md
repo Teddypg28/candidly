@@ -9,6 +9,3 @@ The main functionality of this app includes:
 2) A complete front end widget for displaying and filtering customer reviews
 3) A rewards feature that enables stores to configure rewards that incentivize customers to leave better reviews
 4) A custom question feature that enables store owners to configure custom questions on their review forms to gain valulable feedback about purchases
-
-I have learned a lot since my failed launch about validating the business side of things and how to create something that carves a niche in 
-the market and serves a particular target customer that I look forward to implementing in future ventures.
